@@ -16,7 +16,7 @@ namespace CompetitionsTimeControl
         private BeepsController _beepsController = null!;
         private Timer _timer;
         private int _lastMillisecond;
-        int test;
+        bool test;
 
         public MainForm()
         {
@@ -51,6 +51,7 @@ namespace CompetitionsTimeControl
 
         private void ConfigureTooltip()
         {
+            //BtnConfigTest // Configurar tip dinâmico para obter valores dos tempos.
             //ToolTip.SetToolTip(LblBeepPair, "Define o par dos beeps (tonalidade) a tocar.");
             //ToolTip.SetToolTip(LblTimeBeforePlayBeeps, "Tempo antes dos beeps e após volume baixo das músicas.");
             //ToolTip.SetToolTip(LblAmountOfBeeps, "Quantidade de beeps (incluindo o último beep de início da prova).");
@@ -131,6 +132,7 @@ namespace CompetitionsTimeControl
 
         private void BtnStopTest_Click(object sender, EventArgs e)
         {
+            test = false;
             MusicMediaPlayer.Ctlcontrols.stop();
             //MusicMediaPlayer.Ctlcontrols.next();
         }
@@ -145,15 +147,22 @@ namespace CompetitionsTimeControl
 
             _lastMillisecond = currentMillisecond;
 
+            //elapsedTime = 16; // Teste de contador no debug.
+
             bool keepPerformingBeeps = false;
 
             MusicMediaPlayer.settings.volume = TBMusicCurrentVol.Value * -1;
 
             _beepsController?.TryPerformBeeps(_canPerformBeeps, elapsedTime, out keepPerformingBeeps);
 
+            if (!test)
+            {
+                LblTempStatus.Text = elapsedTime.ToString();
+            }
+
             if (_canPerformBeeps && !keepPerformingBeeps)
             {
-                LblTempStatus.Text = "Acabou!";
+                PrepareBeepTest(false);
             }
 
             _canPerformBeeps = keepPerformingBeeps;
@@ -180,7 +189,8 @@ namespace CompetitionsTimeControl
 
         private void BtnConfigTest_Click(object sender, EventArgs e)
         {
-            PrepareBeepTest();
+            _canPerformBeeps = true;
+            PrepareBeepTest(true);
             /*if (_beepCount > 0)
             {
                 _beepCount--;
@@ -193,14 +203,13 @@ namespace CompetitionsTimeControl
             }*/
         }
 
-        private void PrepareBeepTest()
+        private void PrepareBeepTest(bool startTest)
         {
-            _canPerformBeeps = true;
-            SetEnableBeepsControls(false);
-            BtnConfigTest.Visible = false;
-            BtnCountdownBeepTest.Visible = false;
-            BtnStartBeepTest.Visible = false;
-            LblTestMessages.Visible = true;
+            SetEnableBeepsControls(!startTest);
+            BtnConfigTest.Visible = !startTest;
+            BtnCountdownBeepTest.Visible = !startTest;
+            BtnStartBeepTest.Visible = !startTest;
+            LblTestMessages.Visible = startTest;
         }
 
         private void SetEnableBeepsControls(bool enable)
@@ -292,6 +301,13 @@ namespace CompetitionsTimeControl
         {
             _timer.Stop();
             _timer.Dispose();
+        }
+
+        private void BtnConfigTest_MouseHover(object sender, EventArgs e)
+        {
+            ToolTip.SetToolTip(BtnConfigTest, "Config.");
+            test = true;
+            LblTempStatus.Text = "Hover";
         }
     }
 }

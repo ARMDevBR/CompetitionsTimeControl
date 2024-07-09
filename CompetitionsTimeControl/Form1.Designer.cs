@@ -58,6 +58,7 @@
             LblAmountOfBeeps = new Label();
             LblTimeForEachBeep = new Label();
             LblTimeForResumeMusics = new Label();
+            LblBeepVolume = new Label();
             BeepMediaPlayer = new AxWMPLib.AxWindowsMediaPlayer();
             BtnConfigTest = new Button();
             MenuStrip = new MenuStrip();
@@ -67,7 +68,6 @@
             GroupBoxControlsAndTest = new GroupBox();
             LblTestMessages = new Label();
             LblBeepVolumePercent = new Label();
-            LblBeepVolume = new Label();
             TBBeepVolume = new TrackBar();
             BtnStartBeepTest = new Button();
             BtnCountdownBeepTest = new Button();
@@ -237,6 +237,7 @@
             LblMusicCurrentVol.Size = new Size(55, 19);
             LblMusicCurrentVol.TabIndex = 2;
             LblMusicCurrentVol.Text = "Volume";
+            ToolTip.SetToolTip(LblMusicCurrentVol, "Define o volume atual em teste para as músicas ou mostra o volume corrente se os beeps forem ativados pelo programa.");
             // 
             // TBMusicCurrentVol
             // 
@@ -301,7 +302,7 @@
             LblMusicVolMax.Size = new Size(58, 19);
             LblMusicVolMax.TabIndex = 4;
             LblMusicVolMax.Text = "Máximo";
-            ToolTip.SetToolTip(LblMusicVolMax, "Define o volume enquanto não há beeps e apenas as músicas estão tocando.");
+            ToolTip.SetToolTip(LblMusicVolMax, "Define o volume máximo para as músicas enquanto não há beeps.");
             // 
             // TBMusicVolumeMax
             // 
@@ -330,6 +331,7 @@
             LblMusicVolMin.Size = new Size(56, 19);
             LblMusicVolMin.TabIndex = 2;
             LblMusicVolMin.Text = "Mínimo";
+            ToolTip.SetToolTip(LblMusicVolMin, "Define o volume mínimo para as músicas enquanto os beeps tocam.");
             // 
             // LblTempStatus
             // 
@@ -364,7 +366,7 @@
             LblTimeBeforePlayBeeps.Size = new Size(187, 19);
             LblTimeBeforePlayBeeps.TabIndex = 19;
             LblTimeBeforePlayBeeps.Text = "Tempo extra antes dos beeps";
-            ToolTip.SetToolTip(LblTimeBeforePlayBeeps, "Tempo antes dos beeps e após volume baixo das músicas.");
+            ToolTip.SetToolTip(LblTimeBeforePlayBeeps, "Tempo antes dos beeps e após volume mínimo das músicas.");
             // 
             // LblAmountOfBeeps
             // 
@@ -394,7 +396,18 @@
             LblTimeForResumeMusics.Size = new Size(186, 19);
             LblTimeForResumeMusics.TabIndex = 17;
             LblTimeForResumeMusics.Text = "Tempo para retomar músicas";
-            ToolTip.SetToolTip(LblTimeForResumeMusics, "Tempo após último beep para começar a retomar volume alto das músicas.");
+            ToolTip.SetToolTip(LblTimeForResumeMusics, "Tempo após último beep para começar a retomar volume máximo das músicas.");
+            // 
+            // LblBeepVolume
+            // 
+            LblBeepVolume.AutoSize = true;
+            LblBeepVolume.Font = new Font("Segoe UI", 10F);
+            LblBeepVolume.Location = new Point(15, 28);
+            LblBeepVolume.Name = "LblBeepVolume";
+            LblBeepVolume.Size = new Size(55, 19);
+            LblBeepVolume.TabIndex = 2;
+            LblBeepVolume.Text = "Volume";
+            ToolTip.SetToolTip(LblBeepVolume, "Define o volume para os beeps.");
             // 
             // BeepMediaPlayer
             // 
@@ -416,6 +429,7 @@
             BtnConfigTest.Text = "Testar config.";
             BtnConfigTest.UseVisualStyleBackColor = true;
             BtnConfigTest.Click += BtnConfigTest_Click;
+            BtnConfigTest.MouseHover += BtnConfigTest_MouseHover;
             // 
             // MenuStrip
             // 
@@ -484,7 +498,7 @@
             // 
             LblTestMessages.BorderStyle = BorderStyle.FixedSingle;
             LblTestMessages.Font = new Font("Segoe UI", 9F);
-            LblTestMessages.Location = new Point(15, 60);
+            LblTestMessages.Location = new Point(15, 0);
             LblTestMessages.Name = "LblTestMessages";
             LblTestMessages.Size = new Size(390, 30);
             LblTestMessages.TabIndex = 17;
@@ -501,16 +515,6 @@
             LblBeepVolumePercent.TabIndex = 5;
             LblBeepVolumePercent.Text = "50%";
             LblBeepVolumePercent.TextAlign = ContentAlignment.TopRight;
-            // 
-            // LblBeepVolume
-            // 
-            LblBeepVolume.AutoSize = true;
-            LblBeepVolume.Font = new Font("Segoe UI", 10F);
-            LblBeepVolume.Location = new Point(15, 28);
-            LblBeepVolume.Name = "LblBeepVolume";
-            LblBeepVolume.Size = new Size(55, 19);
-            LblBeepVolume.TabIndex = 2;
-            LblBeepVolume.Text = "Volume";
             // 
             // TBBeepVolume
             // 
