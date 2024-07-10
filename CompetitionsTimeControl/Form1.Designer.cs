@@ -498,7 +498,7 @@
             // 
             LblTestMessages.BorderStyle = BorderStyle.FixedSingle;
             LblTestMessages.Font = new Font("Segoe UI", 9F);
-            LblTestMessages.Location = new Point(15, 0);
+            LblTestMessages.Location = new Point(15, 60);
             LblTestMessages.Name = "LblTestMessages";
             LblTestMessages.Size = new Size(390, 30);
             LblTestMessages.TabIndex = 17;

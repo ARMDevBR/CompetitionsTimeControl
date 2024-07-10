@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Metrics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using WMPLib;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace CompetitionsTimeControl
 {
@@ -28,11 +30,11 @@ namespace CompetitionsTimeControl
         public float TimeForEachBeep { get; set; }
         public float TimeForResumeMusics { get; private set; }
 
-        private int _timeBeforePlayBeepsInMiliSec;
-        private int _timeForAllBeepsInMiliSec;
-        private int _timeForEachBeepInMiliSec;
-        private int _timeForResumeMusicsInMiliSec;
-        private int _countdownAmountOfBeeps;
+        private int _timerBeforePlayBeepsInMiliSec;
+        private int _timerForAllBeepsInMiliSec;
+        private int _timerForEachBeepInMiliSec;
+        private int _rechargeForEachBeepInMiliSec;
+        private int _timerForResumeMusicsInMiliSec;
 
         private AxWMPLib.AxWindowsMediaPlayer _refBeepMediaPlayer;
         private BeepState _beepState;
@@ -84,7 +86,7 @@ namespace CompetitionsTimeControl
         {
             IWMPMedia media = _refBeepMediaPlayer.newMedia(HighBeepPath);
 
-            TimeForResumeMusics = value + (float)media.duration;
+            TimeForResumeMusics = value + (int)media.duration;
         }
 
         public bool ChangeBeepPairSelection(int selectedIndex)
@@ -95,6 +97,13 @@ namespace CompetitionsTimeControl
             _currentBeepPair = _beepPairsList[selectedIndex];
 
             return _currentBeepPair != null;
+        }
+
+        private void PlayBeep(string beepPath)
+        {
+            _refBeepMediaPlayer.Ctlcontrols.stop();
+            _refBeepMediaPlayer.URL = beepPath;
+            //_refBeepMediaPlayer.Ctlcontrols.play();
         }
 
         public void TryPerformBeeps(bool canPerform, int timeToDecrement, out bool keepPerforming)
@@ -108,21 +117,29 @@ namespace CompetitionsTimeControl
                     if (canPerform)
                     {
                         _beepState = BeepState.WaitTimeBeforeBeeps;
-                        _timeBeforePlayBeepsInMiliSec = (int)(TimeBeforePlayBeeps * 1000);
-                        _timeForEachBeepInMiliSec = (int)(TimeForEachBeep * 1000);
-                        _timeForAllBeepsInMiliSec = _timeForEachBeepInMiliSec * (AmountOfBeeps - 1);
-                        _timeForResumeMusicsInMiliSec = (int)(TimeForResumeMusics * 1000);
-                        _countdownAmountOfBeeps = AmountOfBeeps - 1;
+                        _timerBeforePlayBeepsInMiliSec = (int)(TimeBeforePlayBeeps * 1000);
+                        _timerForEachBeepInMiliSec = (int)(TimeForEachBeep * 1000);
+                        _rechargeForEachBeepInMiliSec = _timerForEachBeepInMiliSec;
+                        _timerForAllBeepsInMiliSec = _timerForEachBeepInMiliSec * (AmountOfBeeps - 1);
+                        _timerForResumeMusicsInMiliSec = (int)(TimeForResumeMusics * 1000);
+                        _refBeepMediaPlayer.settings.autoStart = true;
                         break;
                     }
-                    return;
+                    break;
                 
                 case BeepState.WaitTimeBeforeBeeps:
                     keepPerforming = true;
 
                     if (canPerform)
                     {
-                        if (_timeBeforePlayBeepsInMiliSec > 0)
+                        if (PerformCountdown(ref _timerBeforePlayBeepsInMiliSec, ref _timerForEachBeepInMiliSec,
+                            in _timerBeforePlayBeepsInMiliSec, timeToDecrement))
+                        {
+                            _timerBeforePlayBeepsInMiliSec = 0;
+                            _beepState = BeepState.PerformBeeps;
+                            PlayBeep(LowBeepPath);
+                        }
+                        /*if (_timeBeforePlayBeepsInMiliSec > 0)
                             _timeBeforePlayBeepsInMiliSec -= timeToDecrement;
 
                         if (_timeBeforePlayBeepsInMiliSec <= 0)
@@ -130,10 +147,8 @@ namespace CompetitionsTimeControl
                             _timeForEachBeepInMiliSec += _timeBeforePlayBeepsInMiliSec;
                             _timeBeforePlayBeepsInMiliSec = 0;
                             _beepState = BeepState.PerformBeeps;
-                            _refBeepMediaPlayer.Ctlcontrols.stop();
-                            _refBeepMediaPlayer.URL = LowBeepPath;
-                            _refBeepMediaPlayer.Ctlcontrols.play();
-                        }
+                            PlayBeep(LowBeepPath);
+                        }*/
                         break;
                     }
 
@@ -146,7 +161,48 @@ namespace CompetitionsTimeControl
 
                     if (canPerform)
                     {
-                        if (_countdownAmountOfBeeps > 0)
+                        void eachBeepCountdown()
+                        {
+                            if (PerformCountdown(ref _timerForEachBeepInMiliSec, ref _timerForEachBeepInMiliSec,
+                                in _rechargeForEachBeepInMiliSec, timeToDecrement))
+                            {
+                                PlayBeep((_timerForAllBeepsInMiliSec > timeToDecrement) ? LowBeepPath : HighBeepPath);
+                            }
+                        }
+
+                        // All beeps countdown
+                        if (PerformCountdown(ref _timerForAllBeepsInMiliSec, ref _timerForResumeMusicsInMiliSec,
+                            in _timerForAllBeepsInMiliSec, timeToDecrement, eachBeepCountdown))
+                        {
+                            _timerForAllBeepsInMiliSec = 0;
+                            _beepState = BeepState.TimeForResumeMusicsVolume;
+                        }
+                        /*
+                        //if (_timeForAllBeepsInMiliSec > 0)
+                        _timerForAllBeepsInMiliSec -= timeToDecrement;
+                        //else
+                        if (_timerForAllBeepsInMiliSec <= 0)
+                        {
+                            _timerForResumeMusicsInMiliSec += _timerForAllBeepsInMiliSec;
+
+                            _timerForAllBeepsInMiliSec = 0;
+                            _beepState = BeepState.TimeForResumeMusicsVolume;
+                            //PlayBeep(HighBeepPath);
+                        }
+
+                        //if (_timeForEachBeepInMiliSec > 0)
+                        {
+                            _timerForEachBeepInMiliSec -= timeToDecrement;
+                        }
+                        //else
+                        if (_timerForEachBeepInMiliSec <= 0)
+                        {
+                            _timerForEachBeepInMiliSec += (int)(TimeForEachBeep * 1000);
+
+                            PlayBeep((_timerForAllBeepsInMiliSec > timeToDecrement) ? LowBeepPath : HighBeepPath);
+                        }*/
+                        
+                        /*if (_countdownAmountOfBeeps > 0)
                         {
                             if (_timeForEachBeepInMiliSec > 0)
                             {
@@ -161,9 +217,7 @@ namespace CompetitionsTimeControl
                                 if (_countdownAmountOfBeeps > 0)
                                 {
                                     _timeForEachBeepInMiliSec = (int)(TimeForEachBeep * 1000) + _timeForEachBeepInMiliSec;
-                                    _refBeepMediaPlayer.Ctlcontrols.stop();
-                                    _refBeepMediaPlayer.URL = LowBeepPath;
-                                    _refBeepMediaPlayer.Ctlcontrols.play();
+                                    PlayBeep(LowBeepPath);
                                 }
                                 else
                                 {
@@ -171,12 +225,10 @@ namespace CompetitionsTimeControl
                                     _timeForEachBeepInMiliSec = 0;
                                     _timeForAllBeepsInMiliSec = 0;
                                     _beepState = BeepState.TimeForResumeMusicsVolume;
-                                    _refBeepMediaPlayer.Ctlcontrols.stop();
-                                    _refBeepMediaPlayer.URL = HighBeepPath;
-                                    _refBeepMediaPlayer.Ctlcontrols.play();
+                                    PlayBeep(HighBeepPath);
                                 }
                             }
-                        }
+                        }*/
                         break;
                     }
 
@@ -189,6 +241,24 @@ namespace CompetitionsTimeControl
 
                     if (canPerform)
                     {
+                        if (PerformCountdown(ref _timerForResumeMusicsInMiliSec, ref _timerForResumeMusicsInMiliSec,
+                            in _timerForResumeMusicsInMiliSec, timeToDecrement))
+                        {
+                            _timerForResumeMusicsInMiliSec = 0;
+                            keepPerforming = false;
+                            _beepState = BeepState.WaitToRunBeeps;
+                        }
+                        /*if (_timeBeforePlayBeepsInMiliSec > 0)
+                            _timeBeforePlayBeepsInMiliSec -= timeToDecrement;
+
+                        if (_timeBeforePlayBeepsInMiliSec <= 0)
+                        {
+                            _timeForEachBeepInMiliSec += _timeBeforePlayBeepsInMiliSec;
+                            _timeBeforePlayBeepsInMiliSec = 0;
+                            _beepState = BeepState.PerformBeeps;
+                            PlayBeep(LowBeepPath);
+                        }
+
                         if (_timeForResumeMusicsInMiliSec > 0)
                             _timeForResumeMusicsInMiliSec -= timeToDecrement;
 
@@ -197,7 +267,7 @@ namespace CompetitionsTimeControl
                             _timeForResumeMusicsInMiliSec = 0;
                             keepPerforming = false;
                             _beepState = BeepState.WaitToRunBeeps;
-                        }
+                        }*/
                         break;
                     }
 
@@ -208,18 +278,33 @@ namespace CompetitionsTimeControl
                 default:
                     keepPerforming = false;
                     _beepState = BeepState.WaitToRunBeeps;
-                    return;
+                    break;
             }
 
+            if (!keepPerforming)
+                _refBeepMediaPlayer.settings.autoStart = false;
+
             _lblTestMessages.Text = string.Concat(
-                $"Antes dos beeps {GetTimeSpanFormat(_timeBeforePlayBeepsInMiliSec)} | ",
-                $"Até último beep {GetTimeSpanFormat(_timeForAllBeepsInMiliSec)} | ",
-                $"Após beeps {GetTimeSpanFormat(_timeForResumeMusicsInMiliSec)}");
+                $"Antes dos beeps {GetTimeSpanFormat(_timerBeforePlayBeepsInMiliSec)} | ",
+                $"Até último beep {GetTimeSpanFormat(_timerForAllBeepsInMiliSec)} | ",
+                $"Após beeps {GetTimeSpanFormat(_timerForResumeMusicsInMiliSec)}");
         }
 
-        private void PerformCountdown()
+        private bool PerformCountdown(ref int counterValue, ref int nextCounterValue, in int nextCounterRecharge,
+            int timeToDecrement, Action? extraFunctionCallback = null)
         {
+            bool ret = false;
 
+            counterValue -= timeToDecrement;
+            
+            if (counterValue <= 0)
+            {
+                nextCounterValue += nextCounterRecharge;
+                ret = true;
+            }
+            extraFunctionCallback?.Invoke();
+
+            return ret;
         }
 
         private string GetTimeSpanFormat(double value) => TimeSpan.FromMilliseconds(value).ToString(@"ss\.fff");
