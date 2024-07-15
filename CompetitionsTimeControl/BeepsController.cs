@@ -30,19 +30,24 @@ namespace CompetitionsTimeControl
         public float TimeForEachBeep { get; set; }
         public float TimeForResumeMusics { get; private set; }
 
+        public int TotalTimeBeforeLastBeepInMs =>
+             (int)((TimeForEachBeep * (AmountOfBeeps - 1) + TimeBeforePlayBeeps) * 1000);
+
+        public int HighBeepDuration { get; private set; }
+
+        private readonly AxWMPLib.AxWindowsMediaPlayer _refBeepMediaPlayer;
+        private readonly string _beepsPath;
+        private readonly Label _lblTestMessages;
+
         private int _timerBeforePlayBeepsInMiliSec;
         private int _timerForAllBeepsInMiliSec;
         private int _timerForEachBeepInMiliSec;
         private int _rechargeForEachBeepInMiliSec;
         private int _timerForResumeMusicsInMiliSec;
 
-        private AxWMPLib.AxWindowsMediaPlayer _refBeepMediaPlayer;
         private BeepState _beepState;
-        private bool _performBeeps;
-        private string _beepsPath;
-        private Label _lblTestMessages;
-        private List<BeepPair>? _beepPairsList;
         private BeepPair? _currentBeepPair;
+        private List<BeepPair>? _beepPairsList;
 
         public BeepsController(ComboBox comboBoxBeepPair, Label lblTestMessages,
             AxWMPLib.AxWindowsMediaPlayer beepMediaPlayer)
@@ -85,8 +90,9 @@ namespace CompetitionsTimeControl
         public void SetTimeForResumeMusics(float value)
         {
             IWMPMedia media = _refBeepMediaPlayer.newMedia(HighBeepPath);
+            HighBeepDuration = (int)media.duration;
 
-            TimeForResumeMusics = value + (int)media.duration;
+            TimeForResumeMusics = value + HighBeepDuration;
         }
 
         public bool ChangeBeepPairSelection(int selectedIndex)
@@ -108,171 +114,63 @@ namespace CompetitionsTimeControl
 
         public void TryPerformBeeps(bool canPerform, int timeToDecrement, out bool keepPerforming)
         {
+            if (!canPerform)
+            {
+                keepPerforming = false;
+                _beepState = BeepState.WaitToRunBeeps;
+                return;
+            }
+            keepPerforming = true;
 
             switch (_beepState)
             {
                 case BeepState.WaitToRunBeeps:
-                    keepPerforming = canPerform;
-
-                    if (canPerform)
-                    {
-                        _beepState = BeepState.WaitTimeBeforeBeeps;
-                        _timerBeforePlayBeepsInMiliSec = (int)(TimeBeforePlayBeeps * 1000);
-                        _timerForEachBeepInMiliSec = (int)(TimeForEachBeep * 1000);
-                        _rechargeForEachBeepInMiliSec = _timerForEachBeepInMiliSec;
-                        _timerForAllBeepsInMiliSec = _timerForEachBeepInMiliSec * (AmountOfBeeps - 1);
-                        _timerForResumeMusicsInMiliSec = (int)(TimeForResumeMusics * 1000);
-                        _refBeepMediaPlayer.settings.autoStart = true;
-                        break;
-                    }
+                    _beepState = BeepState.WaitTimeBeforeBeeps;
+                    _timerBeforePlayBeepsInMiliSec = (int)(TimeBeforePlayBeeps * 1000);
+                    _timerForEachBeepInMiliSec = (int)(TimeForEachBeep * 1000);
+                    _rechargeForEachBeepInMiliSec = _timerForEachBeepInMiliSec;
+                    _timerForAllBeepsInMiliSec = _timerForEachBeepInMiliSec * (AmountOfBeeps - 1);
+                    _timerForResumeMusicsInMiliSec = (int)(TimeForResumeMusics * 1000);
+                    _refBeepMediaPlayer.settings.autoStart = true;
                     break;
-                
+
                 case BeepState.WaitTimeBeforeBeeps:
-                    keepPerforming = true;
-
-                    if (canPerform)
+                    if (PerformCountdown(ref _timerBeforePlayBeepsInMiliSec, ref _timerForEachBeepInMiliSec,
+                        in _timerBeforePlayBeepsInMiliSec, timeToDecrement))
                     {
-                        if (PerformCountdown(ref _timerBeforePlayBeepsInMiliSec, ref _timerForEachBeepInMiliSec,
-                            in _timerBeforePlayBeepsInMiliSec, timeToDecrement))
-                        {
-                            _timerBeforePlayBeepsInMiliSec = 0;
-                            _beepState = BeepState.PerformBeeps;
-                            PlayBeep(LowBeepPath);
-                        }
-                        /*if (_timeBeforePlayBeepsInMiliSec > 0)
-                            _timeBeforePlayBeepsInMiliSec -= timeToDecrement;
-
-                        if (_timeBeforePlayBeepsInMiliSec <= 0)
-                        {
-                            _timeForEachBeepInMiliSec += _timeBeforePlayBeepsInMiliSec;
-                            _timeBeforePlayBeepsInMiliSec = 0;
-                            _beepState = BeepState.PerformBeeps;
-                            PlayBeep(LowBeepPath);
-                        }*/
-                        break;
+                        _timerBeforePlayBeepsInMiliSec = 0;
+                        _beepState = BeepState.PerformBeeps;
+                        PlayBeep(LowBeepPath);
                     }
-
-                    keepPerforming = false;
-                    _beepState = BeepState.WaitToRunBeeps;
                     break;
-                
+
                 case BeepState.PerformBeeps:
-                    keepPerforming = true;
-
-                    if (canPerform)
+                    void eachBeepCountdown()
                     {
-                        void eachBeepCountdown()
+                        if (PerformCountdown(ref _timerForEachBeepInMiliSec, ref _timerForEachBeepInMiliSec,
+                            in _rechargeForEachBeepInMiliSec, timeToDecrement))
                         {
-                            if (PerformCountdown(ref _timerForEachBeepInMiliSec, ref _timerForEachBeepInMiliSec,
-                                in _rechargeForEachBeepInMiliSec, timeToDecrement))
-                            {
-                                PlayBeep((_timerForAllBeepsInMiliSec > timeToDecrement) ? LowBeepPath : HighBeepPath);
-                            }
-                        }
-
-                        // All beeps countdown
-                        if (PerformCountdown(ref _timerForAllBeepsInMiliSec, ref _timerForResumeMusicsInMiliSec,
-                            in _timerForAllBeepsInMiliSec, timeToDecrement, eachBeepCountdown))
-                        {
-                            _timerForAllBeepsInMiliSec = 0;
-                            _beepState = BeepState.TimeForResumeMusicsVolume;
-                        }
-                        /*
-                        //if (_timeForAllBeepsInMiliSec > 0)
-                        _timerForAllBeepsInMiliSec -= timeToDecrement;
-                        //else
-                        if (_timerForAllBeepsInMiliSec <= 0)
-                        {
-                            _timerForResumeMusicsInMiliSec += _timerForAllBeepsInMiliSec;
-
-                            _timerForAllBeepsInMiliSec = 0;
-                            _beepState = BeepState.TimeForResumeMusicsVolume;
-                            //PlayBeep(HighBeepPath);
-                        }
-
-                        //if (_timeForEachBeepInMiliSec > 0)
-                        {
-                            _timerForEachBeepInMiliSec -= timeToDecrement;
-                        }
-                        //else
-                        if (_timerForEachBeepInMiliSec <= 0)
-                        {
-                            _timerForEachBeepInMiliSec += (int)(TimeForEachBeep * 1000);
-
                             PlayBeep((_timerForAllBeepsInMiliSec > timeToDecrement) ? LowBeepPath : HighBeepPath);
-                        }*/
-                        
-                        /*if (_countdownAmountOfBeeps > 0)
-                        {
-                            if (_timeForEachBeepInMiliSec > 0)
-                            {
-                                _timeForEachBeepInMiliSec -= timeToDecrement;
-                                _timeForAllBeepsInMiliSec -= timeToDecrement;
-                            }
-
-                            if (_timeForEachBeepInMiliSec <= 0)
-                            {
-                                _countdownAmountOfBeeps--;
-
-                                if (_countdownAmountOfBeeps > 0)
-                                {
-                                    _timeForEachBeepInMiliSec = (int)(TimeForEachBeep * 1000) + _timeForEachBeepInMiliSec;
-                                    PlayBeep(LowBeepPath);
-                                }
-                                else
-                                {
-                                    _timeForResumeMusicsInMiliSec += _timeForEachBeepInMiliSec;
-                                    _timeForEachBeepInMiliSec = 0;
-                                    _timeForAllBeepsInMiliSec = 0;
-                                    _beepState = BeepState.TimeForResumeMusicsVolume;
-                                    PlayBeep(HighBeepPath);
-                                }
-                            }
-                        }*/
-                        break;
+                        }
                     }
 
-                    keepPerforming = false;
-                    _beepState = BeepState.WaitToRunBeeps;
+                    // All beeps countdown
+                    if (PerformCountdown(ref _timerForAllBeepsInMiliSec, ref _timerForResumeMusicsInMiliSec,
+                        in _timerForAllBeepsInMiliSec, timeToDecrement, eachBeepCountdown))
+                    {
+                        _timerForAllBeepsInMiliSec = 0;
+                        _beepState = BeepState.TimeForResumeMusicsVolume;
+                    }
                     break;
 
                 case BeepState.TimeForResumeMusicsVolume:
-                    keepPerforming = true;
-
-                    if (canPerform)
+                    if (PerformCountdown(ref _timerForResumeMusicsInMiliSec, ref _timerForResumeMusicsInMiliSec,
+                        in _timerForResumeMusicsInMiliSec, timeToDecrement))
                     {
-                        if (PerformCountdown(ref _timerForResumeMusicsInMiliSec, ref _timerForResumeMusicsInMiliSec,
-                            in _timerForResumeMusicsInMiliSec, timeToDecrement))
-                        {
-                            _timerForResumeMusicsInMiliSec = 0;
-                            keepPerforming = false;
-                            _beepState = BeepState.WaitToRunBeeps;
-                        }
-                        /*if (_timeBeforePlayBeepsInMiliSec > 0)
-                            _timeBeforePlayBeepsInMiliSec -= timeToDecrement;
-
-                        if (_timeBeforePlayBeepsInMiliSec <= 0)
-                        {
-                            _timeForEachBeepInMiliSec += _timeBeforePlayBeepsInMiliSec;
-                            _timeBeforePlayBeepsInMiliSec = 0;
-                            _beepState = BeepState.PerformBeeps;
-                            PlayBeep(LowBeepPath);
-                        }
-
-                        if (_timeForResumeMusicsInMiliSec > 0)
-                            _timeForResumeMusicsInMiliSec -= timeToDecrement;
-
-                        if (_timeForResumeMusicsInMiliSec <= 0)
-                        {
-                            _timeForResumeMusicsInMiliSec = 0;
-                            keepPerforming = false;
-                            _beepState = BeepState.WaitToRunBeeps;
-                        }*/
-                        break;
+                        _timerForResumeMusicsInMiliSec = 0;
+                        keepPerforming = false;
+                        _beepState = BeepState.WaitToRunBeeps;
                     }
-
-                    keepPerforming = false;
-                    _beepState = BeepState.WaitToRunBeeps;
                     break;
 
                 default:

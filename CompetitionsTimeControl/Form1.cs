@@ -1,6 +1,7 @@
-using AxWMPLib;
+Ôªøusing AxWMPLib;
 using System.Numerics;
 using System.Security.Policy;
+using System.Text;
 using System.Timers;
 using WMPLib;
 using Timer = System.Timers.Timer;
@@ -11,15 +12,21 @@ namespace CompetitionsTimeControl
     {
         public const string SupportedExtensions = "*.mp3; *.wma; *.wav";
 
+        private const int MusicNameColumnWidth = 300;
+        private const int MusicFormatColumnWidth = 75;
+        private const int MusicDurationColumnWidth = 55;
+        private const int MusicPathColumnWidth = 400;
+
         private bool _canPerformBeeps;
         private bool _lastMediaEnded;
         private BeepsController _beepsController = null!;
+        private List<int> _checkedMusicToDelete;
         private Timer _timer;
         private int _lastMillisecond;
-        bool test;
 
         public MainForm()
         {
+            _checkedMusicToDelete = [];
             _timer = new Timer(10);
             _timer.Elapsed += Timer_Tick;
             _timer.AutoReset = true;
@@ -32,6 +39,46 @@ namespace CompetitionsTimeControl
             _lastMediaEnded = false;
             ConfigureBeepMediaPlayer();
             ConfigureMusicMediaPlayer();
+            GenerateList();
+            FillList();
+        }
+
+        private void GenerateList()
+        {
+            ListViewMusics.Columns.Add("M√öSICA", MusicNameColumnWidth, HorizontalAlignment.Left);
+            ListViewMusics.Columns.Add("FORMATO", MusicFormatColumnWidth, HorizontalAlignment.Center);
+            ListViewMusics.Columns.Add("TEMPO", MusicDurationColumnWidth, HorizontalAlignment.Center);
+            ListViewMusics.Columns.Add("LOCAL", MusicPathColumnWidth, HorizontalAlignment.Left);
+            ListViewMusics.View = View.Details;
+            ListViewMusics.FullRowSelect = true;
+            ListViewMusics.MultiSelect = false;
+        }
+
+        private void FillList()
+        {
+            ListViewMusics.GridLines = true;
+
+            ListViewItem listViewItem = new(["5_Nina-TheReasonIsYou", "wma", "03:58", @"D:\Users\ademi\Music\Pop-Dance antigas"])
+            {
+                BackColor = Color.Beige
+            };
+
+            ListViewMusics.Items.Add(listViewItem);
+
+            listViewItem = new ListViewItem(["a_Corona-IDon_tWannaBeAStar", "mp3", "03:58", @"D:\Users\ademi\Music\Pop-Dance antigas"]);
+            listViewItem.BackColor = Color.Azure;
+
+            ListViewMusics.Items.Add(listViewItem);
+
+            listViewItem = new ListViewItem(["All That She Wants", "mp3", "03:30", @"D:\Users\ademi\Music\Pop-Dance antigas"]);
+            listViewItem.BackColor = Color.Beige;
+
+            ListViewMusics.Items.Add(listViewItem);
+
+            listViewItem = new ListViewItem(["b_Co.Ro feat. Taleesa - Because the night", "mp3", "04:03", @"D:\Users\ademi\Music\Pop-Dance antigas"]);
+            listViewItem.BackColor = Color.Azure;
+
+            ListViewMusics.Items.Add(listViewItem);
         }
 
         private void ConfigureBeepMediaPlayer()
@@ -51,14 +98,14 @@ namespace CompetitionsTimeControl
 
         private void ConfigureTooltip()
         {
-            //BtnConfigTest // Configurar tip din‚mico para obter valores dos tempos.
+            //BtnConfigTest // Configurar tip din√¢mico para obter valores dos tempos.
             //ToolTip.SetToolTip(LblBeepPair, "Define o par dos beeps (tonalidade) a tocar.");
-            //ToolTip.SetToolTip(LblTimeBeforePlayBeeps, "Tempo antes dos beeps e apÛs volume baixo das m˙sicas.");
-            //ToolTip.SetToolTip(LblAmountOfBeeps, "Quantidade de beeps (incluindo o ˙ltimo beep de inÌcio da prova).");
+            //ToolTip.SetToolTip(LblTimeBeforePlayBeeps, "Tempo antes dos beeps e ap√≥s volume baixo das m√∫sicas.");
+            //ToolTip.SetToolTip(LblAmountOfBeeps, "Quantidade de beeps (incluindo o √∫ltimo beep de in√≠cio da prova).");
             //ToolTip.SetToolTip(LblTimeForEachBeep, "Tempo em segundos para tocar outro beep de contagem.");
-            //ToolTip.SetToolTip(LblTimeForResumeMusics, "Tempo apÛs ˙ltimo beep para comeÁar a retomar volume alto das m˙sicas.");
+            //ToolTip.SetToolTip(LblTimeForResumeMusics, "Tempo ap√≥s √∫ltimo beep para come√ßar a retomar volume alto das m√∫sicas.");
 
-            //ToolTip.SetToolTip(LblMusicVolMax, "Define o volume enquanto n„o h· beeps e apenas as m˙sicas est„o tocando.");
+            //ToolTip.SetToolTip(LblMusicVolMax, "Define o volume enquanto n√£o h√° beeps e apenas as m√∫sicas est√£o tocando.");
         }
 
         /*private void MusicMediaPlayer_PlayStateChange(object sender, _WMPOCXEvents_PlayStateChangeEvent e)
@@ -122,7 +169,7 @@ namespace CompetitionsTimeControl
             PlayListToRun.appendItem(media);
             media = MusicMediaPlayer.newMedia(@"D:\Users\ademi\Music\Pop-Dance antigas\5_Nina-TheReasonIsYou.wma");
             PlayListToRun.appendItem(media);
-            media = MusicMediaPlayer.newMedia(@"D:\Users\ademi\Music\Pop-Dance antigas\Dr. Alban - It¥s My Life.mp3");
+            media = MusicMediaPlayer.newMedia(@"D:\Users\ademi\Music\Pop-Dance antigas\Dr. Alban - It¬¥s My Life.mp3");
             PlayListToRun.appendItem(media);
             //MusicMediaPlayer.currentPlaylist = PlayListToRun;
 
@@ -132,7 +179,6 @@ namespace CompetitionsTimeControl
 
         private void BtnStopTest_Click(object sender, EventArgs e)
         {
-            test = false;
             MusicMediaPlayer.Ctlcontrols.stop();
             //MusicMediaPlayer.Ctlcontrols.next();
         }
@@ -154,11 +200,6 @@ namespace CompetitionsTimeControl
             MusicMediaPlayer.settings.volume = TBMusicCurrentVol.Value * -1;
 
             _beepsController?.TryPerformBeeps(_canPerformBeeps, elapsedTime, out keepPerformingBeeps);
-
-            if (!test)
-            {
-                LblTempStatus.Text = elapsedTime.ToString();
-            }
 
             if (_canPerformBeeps && !keepPerformingBeeps)
             {
@@ -191,16 +232,6 @@ namespace CompetitionsTimeControl
         {
             _canPerformBeeps = true;
             PrepareBeepTest(true);
-            /*if (_beepCount > 0)
-            {
-                _beepCount--;
-                BeepMediaPlayer.URL = _beepsController?.LowBeepPath;
-            }
-            else
-            {
-                _beepCount = 4;
-                BeepMediaPlayer.URL = _beepsController?.HighBeepPath;
-            }*/
         }
 
         private void PrepareBeepTest(bool startTest)
@@ -237,11 +268,11 @@ namespace CompetitionsTimeControl
 
         private void TBMusicVolumeMin_ValueChanged(object sender, EventArgs e)
         {
-            // Se volume mÌnimo (barra È negativa) passar do volume m·ximo, atualiza volume m·ximo.
+            // Se volume m√≠nimo (barra √© negativa) passar do volume m√°ximo, atualiza volume m√°ximo.
             if (TBMusicVolumeMax.Value > TBMusicVolumeMin.Value)
                 TBMusicVolumeMax.Value = TBMusicVolumeMin.Value;
 
-            // Se volume mÌnimo (barra È negativa) passar do volume atual, atualiza volume atual.
+            // Se volume m√≠nimo (barra √© negativa) passar do volume atual, atualiza volume atual.
             if (TBMusicCurrentVol.Value > TBMusicVolumeMin.Value)
                 TBMusicCurrentVol.Value = TBMusicVolumeMin.Value;
 
@@ -250,11 +281,11 @@ namespace CompetitionsTimeControl
 
         private void TBMusicVolumeMax_ValueChanged(object sender, EventArgs e)
         {
-            // Se volume m·ximo (barra È negativa) passar do volume atual, atualiza volume atual.
+            // Se volume m√°ximo (barra √© negativa) passar do volume atual, atualiza volume atual.
             if (TBMusicCurrentVol.Value < TBMusicVolumeMax.Value)
                 TBMusicCurrentVol.Value = TBMusicVolumeMax.Value;
 
-            // Se volume m·ximo (barra È negativa) passar do volume mÌnimo, atualiza volume mÌnimo.
+            // Se volume m√°ximo (barra √© negativa) passar do volume m√≠nimo, atualiza volume m√≠nimo.
             if (TBMusicVolumeMin.Value < TBMusicVolumeMax.Value)
                 TBMusicVolumeMin.Value = TBMusicVolumeMax.Value;
 
@@ -263,11 +294,11 @@ namespace CompetitionsTimeControl
 
         private void TBMusicCurrentVol_ValueChanged(object sender, EventArgs e)
         {
-            // Se volume atual (barra È negativa) passar do volume mÌnimo, atualiza volume mÌnimo.
+            // Se volume atual (barra √© negativa) passar do volume m√≠nimo, atualiza volume m√≠nimo.
             if (TBMusicVolumeMin.Value < TBMusicCurrentVol.Value)
                 TBMusicVolumeMin.Value = TBMusicCurrentVol.Value;
 
-            // Se volume atual (barra È negativa) passar do volume m·ximo, atualiza volume m·ximo.
+            // Se volume atual (barra √© negativa) passar do volume m√°ximo, atualiza volume m√°ximo.
             if (TBMusicVolumeMax.Value > TBMusicCurrentVol.Value)
                 TBMusicVolumeMax.Value = TBMusicCurrentVol.Value;
 
@@ -305,9 +336,124 @@ namespace CompetitionsTimeControl
 
         private void BtnConfigTest_MouseHover(object sender, EventArgs e)
         {
-            ToolTip.SetToolTip(BtnConfigTest, "Config.");
-            test = true;
-            LblTempStatus.Text = "Hover";
+            // Seta ToolTip din√¢mico do bot√£o "BtnConfigTest".
+            string headerMessage = "\nRESULTADO ESPERADO DO TESTE:\n";
+
+            int beforeBeeps = (int)NumUDTimeBeforePlayBeeps.Value;
+            int beepsAmount = (int)NumUDAmountOfBeeps.Value - 1;
+            float sEachBeep = (float)NumUDTimeForEachBeep.Value;
+            float sCountingBeeps = (float)(beepsAmount * sEachBeep);
+            int sHighBeepDuration = _beepsController.HighBeepDuration;
+            int sResumeMusics = (int)NumUDTimeForResumeMusics.Value;
+            int sTotalResumeMusics = sHighBeepDuration + sResumeMusics;
+
+            bool isBeepsAmountPlural = beepsAmount > 1;
+            string beepsAmountPlural = isBeepsAmountPlural ? "s" : "";
+            char beepsAmountEorO = isBeepsAmountPlural ? 'e' : 'o';
+
+            string secondMessage = string.Format("{0} segundo{1} d{2} beep{3} de contagem ({4} beep{5} de {6} segundo{7});",
+                sCountingBeeps, sCountingBeeps > 1 ? "s" : "", beepsAmountEorO, beepsAmountPlural, beepsAmount, beepsAmountPlural, sEachBeep, sEachBeep > 1 ? "s" : "");
+
+            string thirdMessage = string.Format("{0} segundo{1} de espera final. Sendo:\n     ({2} segundo{3} de dura√ß√£o do beep de in√≠cio + {4} segundo{5} de \"Tempo para retomar m√∫sicas\")",
+                sTotalResumeMusics, sTotalResumeMusics > 1 ? "s" : "", sHighBeepDuration, sHighBeepDuration > 1 ? "s" : "", sResumeMusics, sResumeMusics == 1 ? "" : "s");
+
+            if (beforeBeeps > 0)
+                headerMessage = $"{headerMessage}\n - {beforeBeeps} segundo{(beforeBeeps > 1 ? "s" : "")} de espera do \"Tempo extra antes dos beeps\";";
+
+            headerMessage = $"{headerMessage}\n - {secondMessage}\n - {thirdMessage}";
+
+            ToolTip.SetToolTip(BtnConfigTest, headerMessage);
+        }
+
+        private void ListViewMusics_ColumnWidthChanging(object sender, ColumnWidthChangingEventArgs e)
+        {
+            e.Cancel = true;
+            e.NewWidth = ListViewMusics.Columns[e.ColumnIndex].Width;
+        }
+
+        private void ListViewMusics_ItemChecked(object sender, ItemCheckedEventArgs e)
+        {
+            if (e.Item.Checked)
+                _checkedMusicToDelete.Add(e.Item.Index);
+            else if (_checkedMusicToDelete.Contains(e.Item.Index))
+                _ = _checkedMusicToDelete.Remove(e.Item.Index);
+
+            if (ToggleMarkAndExclude.Checked)
+            {
+                ToggleMarkAndExclude.Text = _checkedMusicToDelete.Count > 0 ? "Excluir marcadas" : "Selecione m√∫sicas";
+            }
+        }
+
+        private void BtnAddMusics_Click(object sender, EventArgs e) // Simulando delete
+        {
+        }
+
+        private void BtnClearMusicsList_Click(object sender, EventArgs e)
+        {
+            ListViewMusics.GridLines = false;
+            ListViewMusics.Items.Clear();
+        }
+
+        private void ToggleMarkAndExclude_CheckedChanged(object sender, EventArgs e)
+        {
+            if (!ToggleMarkAndExclude.Checked && _checkedMusicToDelete.Count > 0)
+            {
+                StringBuilder sb = new("As seguintes m√∫sicas ser√£o exclu√≠das da lista:\n\n");
+                _checkedMusicToDelete.Sort();
+
+                for (int i = 0; i < _checkedMusicToDelete.Count; i++)
+                {
+                    sb.AppendLine($"  ‚û§  {ListViewMusics.Items[_checkedMusicToDelete[i]].Text}");
+                }
+                sb.AppendLine("\nDeseja continuar com a opera√ß√£o?");
+
+                if (MessageBox.Show(sb.ToString(), "ATEN√á√ÉO", MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) == DialogResult.Yes)
+                {
+                    for (int i = _checkedMusicToDelete.Count - 1; i >= 0; i--)
+                    {
+                        ListViewMusics.Items.RemoveAt(_checkedMusicToDelete[i]);
+                        _checkedMusicToDelete.RemoveAt(i);
+                    }
+
+                    //repintar as linhas aqui depois das dele√ß√µes
+                }
+                else
+                {
+                    int[] musicToUncheck = _checkedMusicToDelete.ToArray();
+
+                    for (int i = musicToUncheck.Length - 1; i >= 0; i--)
+                    {
+                        ListViewMusics.Items[musicToUncheck[i]].Checked = false;
+                    }
+                }
+            }
+
+            ListViewMusics.CheckBoxes = ToggleMarkAndExclude.Checked;
+            ToggleMarkAndExclude.Text = ToggleMarkAndExclude.Checked ? "Selecione m√∫sicas" : "Marque e exclua";
+
+            ToggleMarkAndExclude.Enabled = ListViewMusics.Items.Count > 0;
+        }
+
+        private void ToggleSeeDetails_CheckedChanged(object sender, EventArgs e)
+        {
+            if (ToggleSeeDetails.Checked)
+            {
+                ListViewMusics.Columns[0].Width = MusicNameColumnWidth;
+                ListViewMusics.Columns[1].Width = MusicFormatColumnWidth;
+                ListViewMusics.Columns[2].Width = MusicDurationColumnWidth;
+                ListViewMusics.Columns[3].Width = MusicPathColumnWidth;
+                ToggleSeeDetails.Text = "Ver simplificada";
+            }
+            else
+            {
+                ListViewMusics.Columns[0].Width = MusicNameColumnWidth + MusicFormatColumnWidth + MusicFormatColumnWidth;
+                ListViewMusics.Columns[0].Width -= 20;
+                ListViewMusics.Columns[1].Width = 0;
+                ListViewMusics.Columns[2].Width = 0;
+                ListViewMusics.Columns[3].Width = 0;
+                ToggleSeeDetails.Text = "Ver detalhada";
+            }
         }
     }
 }
