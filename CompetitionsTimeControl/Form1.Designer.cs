@@ -37,7 +37,6 @@
             GroupBoxMusicCtrls = new GroupBox();
             ToggleSeeDetails = new CheckBox();
             ToggleMarkAndExclude = new CheckBox();
-            button3 = new Button();
             button2 = new Button();
             BtnClearMusicsList = new Button();
             BtnAddMusics = new Button();
@@ -52,6 +51,7 @@
             LblMusicVolMax = new Label();
             TBMusicVolumeMax = new TrackBar();
             LblMusicVolMin = new Label();
+            TogglePlaylistMode = new CheckBox();
             NumUDTimeToVolMin = new NumericUpDown();
             LblTimeToChangeVolume = new Label();
             LblTempStatus = new Label();
@@ -174,7 +174,6 @@
             // 
             GroupBoxMusicCtrls.Controls.Add(ToggleSeeDetails);
             GroupBoxMusicCtrls.Controls.Add(ToggleMarkAndExclude);
-            GroupBoxMusicCtrls.Controls.Add(button3);
             GroupBoxMusicCtrls.Controls.Add(button2);
             GroupBoxMusicCtrls.Controls.Add(BtnClearMusicsList);
             GroupBoxMusicCtrls.Controls.Add(BtnAddMusics);
@@ -182,6 +181,7 @@
             GroupBoxMusicCtrls.Controls.Add(GroupBoxMusicVolume);
             GroupBoxMusicCtrls.Controls.Add(GroupBoxMusicVols);
             GroupBoxMusicCtrls.Controls.Add(MusicMediaPlayer);
+            GroupBoxMusicCtrls.Controls.Add(TogglePlaylistMode);
             GroupBoxMusicCtrls.FlatStyle = FlatStyle.System;
             GroupBoxMusicCtrls.Font = new Font("Segoe UI", 10F);
             GroupBoxMusicCtrls.Location = new Point(15, 225);
@@ -215,20 +215,9 @@
             ToggleMarkAndExclude.TabIndex = 26;
             ToggleMarkAndExclude.Text = "Marque e exclua";
             ToggleMarkAndExclude.TextAlign = ContentAlignment.MiddleCenter;
-            ToolTip.SetToolTip(ToggleMarkAndExclude, "Ativa o checkbox.");
+            ToolTip.SetToolTip(ToggleMarkAndExclude, "Clique para ativar a função de exclusão das músicas na lista.");
             ToggleMarkAndExclude.UseVisualStyleBackColor = true;
             ToggleMarkAndExclude.CheckedChanged += ToggleMarkAndExclude_CheckedChanged;
-            // 
-            // button3
-            // 
-            button3.Font = new Font("Segoe UI", 10F);
-            button3.Location = new Point(170, 257);
-            button3.Name = "button3";
-            button3.Size = new Size(130, 30);
-            button3.TabIndex = 25;
-            button3.Text = "Lista sequencial";
-            ToolTip.SetToolTip(button3, "Playlist vai tocar sequencialmente.");
-            button3.UseVisualStyleBackColor = true;
             // 
             // button2
             // 
@@ -267,14 +256,15 @@
             // 
             // ListViewMusics
             // 
+            ListViewMusics.Activation = ItemActivation.OneClick;
             ListViewMusics.HeaderStyle = ColumnHeaderStyle.Nonclickable;
             ListViewMusics.Location = new Point(15, 61);
             ListViewMusics.Name = "ListViewMusics";
             ListViewMusics.Size = new Size(440, 190);
             ListViewMusics.TabIndex = 7;
             ListViewMusics.UseCompatibleStateImageBehavior = false;
-            ListViewMusics.ColumnWidthChanging += ListViewMusics_ColumnWidthChanging;
             ListViewMusics.ItemChecked += ListViewMusics_ItemChecked;
+            ListViewMusics.ItemSelectionChanged += ListViewMusics_ItemSelectionChanged;
             // 
             // GroupBoxMusicVolume
             // 
@@ -404,6 +394,19 @@
             LblMusicVolMin.TabIndex = 2;
             LblMusicVolMin.Text = "Mínimo";
             ToolTip.SetToolTip(LblMusicVolMin, "Define o volume mínimo para as músicas enquanto os beeps tocam.");
+            // 
+            // TogglePlaylistMode
+            // 
+            TogglePlaylistMode.Appearance = Appearance.Button;
+            TogglePlaylistMode.Location = new Point(170, 257);
+            TogglePlaylistMode.Name = "TogglePlaylistMode";
+            TogglePlaylistMode.Size = new Size(130, 30);
+            TogglePlaylistMode.TabIndex = 28;
+            TogglePlaylistMode.Text = "Lista sequencial";
+            TogglePlaylistMode.TextAlign = ContentAlignment.MiddleCenter;
+            ToolTip.SetToolTip(TogglePlaylistMode, "Playlist vai tocar sequencialmente.");
+            TogglePlaylistMode.UseVisualStyleBackColor = true;
+            TogglePlaylistMode.CheckedChanged += TogglePlaylistMode_CheckedChanged;
             // 
             // NumUDTimeToVolMin
             // 
@@ -1043,5 +1046,6 @@
         private CheckBox ToggleSeeDetails;
         private Label LblEndPlaylist;
         private ComboBox ComboBoxEndPlaylist;
+        private CheckBox TogglePlaylistMode;
     }
 }

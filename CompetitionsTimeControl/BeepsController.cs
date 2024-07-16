@@ -44,6 +44,7 @@ namespace CompetitionsTimeControl
         private int _timerForEachBeepInMiliSec;
         private int _rechargeForEachBeepInMiliSec;
         private int _timerForResumeMusicsInMiliSec;
+        private float _justTimeForResumeMusics;
 
         private BeepState _beepState;
         private BeepPair? _currentBeepPair;
@@ -91,8 +92,9 @@ namespace CompetitionsTimeControl
         {
             IWMPMedia media = _refBeepMediaPlayer.newMedia(HighBeepPath);
             HighBeepDuration = (int)media.duration;
+            _justTimeForResumeMusics = value;
 
-            TimeForResumeMusics = value + HighBeepDuration;
+            TimeForResumeMusics = _justTimeForResumeMusics + HighBeepDuration;
         }
 
         public bool ChangeBeepPairSelection(int selectedIndex)
@@ -105,11 +107,34 @@ namespace CompetitionsTimeControl
             return _currentBeepPair != null;
         }
 
-        private void PlayBeep(string beepPath)
+        public string GetBtnConfigTestToolTipMsg()
         {
-            _refBeepMediaPlayer.Ctlcontrols.stop();
-            _refBeepMediaPlayer.URL = beepPath;
-            //_refBeepMediaPlayer.Ctlcontrols.play();
+            string headerMessage = "\nRESULTADO ESPERADO DO TESTE:\n";
+
+            int beforeBeeps = (int)TimeBeforePlayBeeps;
+            int beepsAmount = AmountOfBeeps - 1;
+            float sEachBeep = TimeForEachBeep;
+            float sCountingBeeps = (float)(beepsAmount * sEachBeep);
+            int sHighBeepDuration = HighBeepDuration;
+            int sResumeMusics = (int)_justTimeForResumeMusics;
+            int sTotalResumeMusics = sHighBeepDuration + sResumeMusics;
+
+            bool isBeepsAmountPlural = beepsAmount > 1;
+            string beepsAmountPlural = isBeepsAmountPlural ? "s" : "";
+            char beepsAmountEorO = isBeepsAmountPlural ? 'e' : 'o';
+
+            string secondMessage = string.Format("{0} segundo{1} d{2} beep{3} de contagem ({4} beep{5} de {6} segundo{7});",
+                sCountingBeeps, sCountingBeeps > 1 ? "s" : "", beepsAmountEorO, beepsAmountPlural, beepsAmount, beepsAmountPlural, sEachBeep, sEachBeep > 1 ? "s" : "");
+
+            string thirdMessage = string.Format("{0} segundo{1} de espera final. Sendo:\n     ({2} segundo{3} de duração do beep de início + {4} segundo{5} de \"Tempo para retomar músicas\")",
+                sTotalResumeMusics, sTotalResumeMusics > 1 ? "s" : "", sHighBeepDuration, sHighBeepDuration > 1 ? "s" : "", sResumeMusics, sResumeMusics == 1 ? "" : "s");
+
+            if (beforeBeeps > 0)
+                headerMessage = $"{headerMessage}\n - {beforeBeeps} segundo{(beforeBeeps > 1 ? "s" : "")} de espera do \"Tempo extra antes dos beeps\";";
+
+            headerMessage = $"{headerMessage}\n - {secondMessage}\n - {thirdMessage}";
+
+            return headerMessage;
         }
 
         public void TryPerformBeeps(bool canPerform, int timeToDecrement, out bool keepPerforming)
@@ -131,7 +156,7 @@ namespace CompetitionsTimeControl
                     _rechargeForEachBeepInMiliSec = _timerForEachBeepInMiliSec;
                     _timerForAllBeepsInMiliSec = _timerForEachBeepInMiliSec * (AmountOfBeeps - 1);
                     _timerForResumeMusicsInMiliSec = (int)(TimeForResumeMusics * 1000);
-                    _refBeepMediaPlayer.settings.autoStart = true;
+                    //_refBeepMediaPlayer.settings.autoStart = true;
                     break;
 
                 case BeepState.WaitTimeBeforeBeeps:
@@ -150,7 +175,7 @@ namespace CompetitionsTimeControl
                         if (PerformCountdown(ref _timerForEachBeepInMiliSec, ref _timerForEachBeepInMiliSec,
                             in _rechargeForEachBeepInMiliSec, timeToDecrement))
                         {
-                            PlayBeep((_timerForAllBeepsInMiliSec > timeToDecrement) ? LowBeepPath : HighBeepPath);
+                            PlayBeep((_timerForAllBeepsInMiliSec > timeToDecrement - 1) ? LowBeepPath : HighBeepPath);
                         }
                     }
 
@@ -179,8 +204,8 @@ namespace CompetitionsTimeControl
                     break;
             }
 
-            if (!keepPerforming)
-                _refBeepMediaPlayer.settings.autoStart = false;
+            /*if (!keepPerforming)
+                _refBeepMediaPlayer.settings.autoStart = false;*/
 
             _lblTestMessages.Text = string.Concat(
                 $"Antes dos beeps {GetTimeSpanFormat(_timerBeforePlayBeepsInMiliSec)} | ",
@@ -203,6 +228,12 @@ namespace CompetitionsTimeControl
             extraFunctionCallback?.Invoke();
 
             return ret;
+        }
+
+        public void PlayBeep(string beepPath)
+        {
+            _refBeepMediaPlayer.Ctlcontrols.stop();
+            _refBeepMediaPlayer.URL = beepPath;
         }
 
         private string GetTimeSpanFormat(double value) => TimeSpan.FromMilliseconds(value).ToString(@"ss\.fff");

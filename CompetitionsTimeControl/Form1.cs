@@ -4,6 +4,7 @@ using System.Security.Policy;
 using System.Text;
 using System.Timers;
 using WMPLib;
+using static System.Net.Mime.MediaTypeNames;
 using Timer = System.Timers.Timer;
 
 namespace CompetitionsTimeControl
@@ -83,7 +84,7 @@ namespace CompetitionsTimeControl
 
         private void ConfigureBeepMediaPlayer()
         {
-            BeepMediaPlayer.settings.autoStart = false;
+            BeepMediaPlayer.settings.autoStart = true;
             BeepMediaPlayer.uiMode = "none";
             BeepMediaPlayer.enableContextMenu = false;
         }
@@ -91,7 +92,6 @@ namespace CompetitionsTimeControl
         private void ConfigureMusicMediaPlayer()
         {
             MusicMediaPlayer.settings.autoStart = false;
-            //MusicMediaPlayer.settings.setMode("shuffle", true); // Random playlist
             MusicMediaPlayer.uiMode = "full";
             MusicMediaPlayer.enableContextMenu = false;
         }
@@ -197,9 +197,9 @@ namespace CompetitionsTimeControl
 
             bool keepPerformingBeeps = false;
 
-            MusicMediaPlayer.settings.volume = TBMusicCurrentVol.Value * -1;
-
             _beepsController?.TryPerformBeeps(_canPerformBeeps, elapsedTime, out keepPerformingBeeps);
+
+            MusicMediaPlayer.settings.volume = TBMusicCurrentVol.Value * -1;
 
             if (_canPerformBeeps && !keepPerformingBeeps)
             {
@@ -254,16 +254,12 @@ namespace CompetitionsTimeControl
 
         private void BtnCountdownBeepTest_Click(object sender, EventArgs e)
         {
-            BeepMediaPlayer.Ctlcontrols.stop();
-            BeepMediaPlayer.URL = _beepsController?.LowBeepPath;
-            BeepMediaPlayer.Ctlcontrols.play();
+            _beepsController?.PlayBeep(_beepsController.LowBeepPath);
         }
 
         private void BtnStartBeepTest_Click(object sender, EventArgs e)
         {
-            BeepMediaPlayer.Ctlcontrols.stop();
-            BeepMediaPlayer.URL = _beepsController?.HighBeepPath;
-            BeepMediaPlayer.Ctlcontrols.play();
+            _beepsController?.PlayBeep(_beepsController.HighBeepPath);
         }
 
         private void TBMusicVolumeMin_ValueChanged(object sender, EventArgs e)
@@ -332,43 +328,17 @@ namespace CompetitionsTimeControl
         {
             _timer.Stop();
             _timer.Dispose();
+            BeepMediaPlayer.Ctlcontrols.stop();
+            MusicMediaPlayer.Ctlcontrols.stop();
+            BeepMediaPlayer.Dispose();
+            MusicMediaPlayer.Dispose();
         }
 
         private void BtnConfigTest_MouseHover(object sender, EventArgs e)
         {
-            // Seta ToolTip dinâmico do botão "BtnConfigTest".
-            string headerMessage = "\nRESULTADO ESPERADO DO TESTE:\n";
+            string toolTipMessage = _beepsController?.GetBtnConfigTestToolTipMsg() ?? string.Empty;
 
-            int beforeBeeps = (int)NumUDTimeBeforePlayBeeps.Value;
-            int beepsAmount = (int)NumUDAmountOfBeeps.Value - 1;
-            float sEachBeep = (float)NumUDTimeForEachBeep.Value;
-            float sCountingBeeps = (float)(beepsAmount * sEachBeep);
-            int sHighBeepDuration = _beepsController.HighBeepDuration;
-            int sResumeMusics = (int)NumUDTimeForResumeMusics.Value;
-            int sTotalResumeMusics = sHighBeepDuration + sResumeMusics;
-
-            bool isBeepsAmountPlural = beepsAmount > 1;
-            string beepsAmountPlural = isBeepsAmountPlural ? "s" : "";
-            char beepsAmountEorO = isBeepsAmountPlural ? 'e' : 'o';
-
-            string secondMessage = string.Format("{0} segundo{1} d{2} beep{3} de contagem ({4} beep{5} de {6} segundo{7});",
-                sCountingBeeps, sCountingBeeps > 1 ? "s" : "", beepsAmountEorO, beepsAmountPlural, beepsAmount, beepsAmountPlural, sEachBeep, sEachBeep > 1 ? "s" : "");
-
-            string thirdMessage = string.Format("{0} segundo{1} de espera final. Sendo:\n     ({2} segundo{3} de duração do beep de início + {4} segundo{5} de \"Tempo para retomar músicas\")",
-                sTotalResumeMusics, sTotalResumeMusics > 1 ? "s" : "", sHighBeepDuration, sHighBeepDuration > 1 ? "s" : "", sResumeMusics, sResumeMusics == 1 ? "" : "s");
-
-            if (beforeBeeps > 0)
-                headerMessage = $"{headerMessage}\n - {beforeBeeps} segundo{(beforeBeeps > 1 ? "s" : "")} de espera do \"Tempo extra antes dos beeps\";";
-
-            headerMessage = $"{headerMessage}\n - {secondMessage}\n - {thirdMessage}";
-
-            ToolTip.SetToolTip(BtnConfigTest, headerMessage);
-        }
-
-        private void ListViewMusics_ColumnWidthChanging(object sender, ColumnWidthChangingEventArgs e)
-        {
-            e.Cancel = true;
-            e.NewWidth = ListViewMusics.Columns[e.ColumnIndex].Width;
+            ToolTip.SetToolTip(BtnConfigTest, toolTipMessage);
         }
 
         private void ListViewMusics_ItemChecked(object sender, ItemCheckedEventArgs e)
@@ -378,10 +348,7 @@ namespace CompetitionsTimeControl
             else if (_checkedMusicToDelete.Contains(e.Item.Index))
                 _ = _checkedMusicToDelete.Remove(e.Item.Index);
 
-            if (ToggleMarkAndExclude.Checked)
-            {
-                ToggleMarkAndExclude.Text = _checkedMusicToDelete.Count > 0 ? "Excluir marcadas" : "Selecione músicas";
-            }
+            SetMarkAndExcludeTextAndToolTip();
         }
 
         private void BtnAddMusics_Click(object sender, EventArgs e) // Simulando delete
@@ -390,6 +357,9 @@ namespace CompetitionsTimeControl
 
         private void BtnClearMusicsList_Click(object sender, EventArgs e)
         {
+            ToggleMarkAndExclude.Checked = false;
+            ToggleMarkAndExclude.Enabled = false;
+            ListViewMusics.CheckBoxes = false;
             ListViewMusics.GridLines = false;
             ListViewMusics.Items.Clear();
         }
@@ -416,7 +386,7 @@ namespace CompetitionsTimeControl
                         _checkedMusicToDelete.RemoveAt(i);
                     }
 
-                    //repintar as linhas aqui depois das deleções
+                    RepaintListViewGrid();
                 }
                 else
                 {
@@ -430,9 +400,76 @@ namespace CompetitionsTimeControl
             }
 
             ListViewMusics.CheckBoxes = ToggleMarkAndExclude.Checked;
-            ToggleMarkAndExclude.Text = ToggleMarkAndExclude.Checked ? "Selecione músicas" : "Marque e exclua";
+            SetMarkAndExcludeTextAndToolTip();
 
             ToggleMarkAndExclude.Enabled = ListViewMusics.Items.Count > 0;
+            ListViewMusics.GridLines = ListViewMusics.Items.Count > 0;
+        }
+
+        private void RepaintListViewGrid()
+        {
+            var items = ListViewMusics.Items;
+
+            foreach (ListViewItem item in items)
+                item.BackColor = (item.Index & 1) > 0 ? Color.Azure : Color.Beige;
+        }
+
+        private void SetMarkAndExcludeTextAndToolTip()
+        {
+            if (ToggleMarkAndExclude.Checked)
+            {
+                if (_checkedMusicToDelete.Count > 0)
+                {
+                    ToggleMarkAndExclude.Text = "Excluir marcadas";
+
+                    ToolTip.SetToolTip(ToggleMarkAndExclude, string.Concat(
+                        "- Ao clicar novamente, as músicas com checkbox marcado serão excluídas da lista.\n",
+                        "- Desmarque todas as músicas que não queira excluir da lista."));
+                }
+                else
+                {
+                    ToggleMarkAndExclude.Text = "Selecione músicas";
+
+                    ToolTip.SetToolTip(ToggleMarkAndExclude, string.Concat(
+                        "- Ao clicar novamente, a função de exclusão individual será cancelada.\n",
+                        "- Marque o checkbox das músicas que deseja excluir da lista."));
+                }
+            }
+            else
+            {
+                ToggleMarkAndExclude.Text = "Marque e exclua";
+                ToolTip.SetToolTip(ToggleMarkAndExclude, "Clique para ativar a função de exclusão das músicas na lista.");
+            }
+        }
+        string test;
+        private void ListViewMusics_ItemSelectionChanged(object sender, ListViewItemSelectionChangedEventArgs e)
+        {
+            ListViewItem? lvi = e.Item;
+            ListViewItem.ListViewSubItemCollection? si = lvi?.SubItems;
+            //si.
+
+            if (true && lvi != null)
+            {
+                MessageBox.Show(lvi.Text);
+
+                MessageBox.Show(lvi.SubItems[0].Text);
+            }
+        }
+
+        private void TogglePlaylistMode_CheckedChanged(object sender, EventArgs e)
+        {
+            MusicMediaPlayer.settings.setMode("shuffle", TogglePlaylistMode.Checked);
+
+            if (TogglePlaylistMode.Checked)
+            {
+                TogglePlaylistMode.Text = "Lista aleatória";
+                ToolTip.SetToolTip(TogglePlaylistMode, "Playlist vai tocar em ordem aleatória.");
+            }
+            else
+            {
+                TogglePlaylistMode.Text = "Lista sequencial";
+                ToolTip.SetToolTip(TogglePlaylistMode, "Playlist vai tocar sequencialmente.");
+            }
         }
 
         private void ToggleSeeDetails_CheckedChanged(object sender, EventArgs e)
