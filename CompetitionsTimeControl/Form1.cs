@@ -1,10 +1,6 @@
-﻿using AxWMPLib;
-using System.Numerics;
-using System.Security.Policy;
+﻿using CompetitionsTimeControl.Controllers;
 using System.Text;
 using System.Timers;
-using WMPLib;
-using static System.Net.Mime.MediaTypeNames;
 using Timer = System.Timers.Timer;
 
 namespace CompetitionsTimeControl
@@ -21,6 +17,7 @@ namespace CompetitionsTimeControl
         private bool _canPerformBeeps;
         private bool _lastMediaEnded;
         private BeepsController _beepsController = null!;
+        private MusicsController _musicsController = null!;
         private List<int> _checkedMusicToDelete;
         private Timer _timer;
         private int _lastMillisecond;
@@ -36,50 +33,9 @@ namespace CompetitionsTimeControl
 
             _canPerformBeeps = false;
             InitializeComponent();
-            ConfigureTooltip();
             _lastMediaEnded = false;
             ConfigureBeepMediaPlayer();
             ConfigureMusicMediaPlayer();
-            GenerateList();
-            FillList();
-        }
-
-        private void GenerateList()
-        {
-            ListViewMusics.Columns.Add("MÚSICA", MusicNameColumnWidth, HorizontalAlignment.Left);
-            ListViewMusics.Columns.Add("FORMATO", MusicFormatColumnWidth, HorizontalAlignment.Center);
-            ListViewMusics.Columns.Add("TEMPO", MusicDurationColumnWidth, HorizontalAlignment.Center);
-            ListViewMusics.Columns.Add("LOCAL", MusicPathColumnWidth, HorizontalAlignment.Left);
-            ListViewMusics.View = View.Details;
-            ListViewMusics.FullRowSelect = true;
-            ListViewMusics.MultiSelect = false;
-        }
-
-        private void FillList()
-        {
-            ListViewMusics.GridLines = true;
-
-            ListViewItem listViewItem = new(["5_Nina-TheReasonIsYou", "wma", "03:58", @"D:\Users\ademi\Music\Pop-Dance antigas"])
-            {
-                BackColor = Color.Beige
-            };
-
-            ListViewMusics.Items.Add(listViewItem);
-
-            listViewItem = new ListViewItem(["a_Corona-IDon_tWannaBeAStar", "mp3", "03:58", @"D:\Users\ademi\Music\Pop-Dance antigas"]);
-            listViewItem.BackColor = Color.Azure;
-
-            ListViewMusics.Items.Add(listViewItem);
-
-            listViewItem = new ListViewItem(["All That She Wants", "mp3", "03:30", @"D:\Users\ademi\Music\Pop-Dance antigas"]);
-            listViewItem.BackColor = Color.Beige;
-
-            ListViewMusics.Items.Add(listViewItem);
-
-            listViewItem = new ListViewItem(["b_Co.Ro feat. Taleesa - Because the night", "mp3", "04:03", @"D:\Users\ademi\Music\Pop-Dance antigas"]);
-            listViewItem.BackColor = Color.Azure;
-
-            ListViewMusics.Items.Add(listViewItem);
         }
 
         private void ConfigureBeepMediaPlayer()
@@ -87,6 +43,7 @@ namespace CompetitionsTimeControl
             BeepMediaPlayer.settings.autoStart = true;
             BeepMediaPlayer.uiMode = "none";
             BeepMediaPlayer.enableContextMenu = false;
+            BeepMediaPlayer.Ctlenabled = false;
         }
 
         private void ConfigureMusicMediaPlayer()
@@ -94,18 +51,7 @@ namespace CompetitionsTimeControl
             MusicMediaPlayer.settings.autoStart = false;
             MusicMediaPlayer.uiMode = "full";
             MusicMediaPlayer.enableContextMenu = false;
-        }
-
-        private void ConfigureTooltip()
-        {
-            //BtnConfigTest // Configurar tip dinâmico para obter valores dos tempos.
-            //ToolTip.SetToolTip(LblBeepPair, "Define o par dos beeps (tonalidade) a tocar.");
-            //ToolTip.SetToolTip(LblTimeBeforePlayBeeps, "Tempo antes dos beeps e após volume baixo das músicas.");
-            //ToolTip.SetToolTip(LblAmountOfBeeps, "Quantidade de beeps (incluindo o último beep de início da prova).");
-            //ToolTip.SetToolTip(LblTimeForEachBeep, "Tempo em segundos para tocar outro beep de contagem.");
-            //ToolTip.SetToolTip(LblTimeForResumeMusics, "Tempo após último beep para começar a retomar volume alto das músicas.");
-
-            //ToolTip.SetToolTip(LblMusicVolMax, "Define o volume enquanto não há beeps e apenas as músicas estão tocando.");
+            MusicMediaPlayer.Ctlenabled = false;
         }
 
         /*private void MusicMediaPlayer_PlayStateChange(object sender, _WMPOCXEvents_PlayStateChangeEvent e)
@@ -154,27 +100,39 @@ namespace CompetitionsTimeControl
                     _beepsController.TimeBeforePlayBeeps = (float)NumUDTimeBeforePlayBeeps.Value;
                     _beepsController.AmountOfBeeps = (int)NumUDAmountOfBeeps.Value;
                     _beepsController.TimeForEachBeep = (float)NumUDTimeForEachBeep.Value;
-                    _beepsController.SetTimeForResumeMusics((float)NumUDTimeForResumeMusics.Value);
+                    _beepsController.SetTimeForResumeMusics(BeepMediaPlayer, (float)NumUDTimeForResumeMusics.Value);
+                }
+            }
+
+            if (_musicsController == null)
+            {
+                _musicsController = new(ListViewMusics);
+
+                if (_musicsController != null)
+                {
+                    _musicsController.GenerateListHeaders();
                 }
             }
         }
 
         private void BtnPlayTest_Click(object sender, EventArgs e)
         {
-            IWMPMedia media;
+            // Toca uma música da playlist do media player pelo indice
+            /*IWMPMedia media = MusicMediaPlayer.currentPlaylist.Item[2];
+            MusicMediaPlayer.Ctlcontrols.playItem(media);
+            MessageBox.Show(media.sourceURL);*/
 
-            var PlayListToRun = MusicMediaPlayer.currentPlaylist;
+            // Seleciona item na lista
+            //ListViewMusics.Items[2].Selected = true;
+            ListViewItem? lvi = ListViewMusics.FindItemWithText(
+                Path.GetFileNameWithoutExtension(MusicMediaPlayer.currentMedia.sourceURL));
 
-            media = MusicMediaPlayer.newMedia(@"D:\Users\ademi\Music\Pop-Dance antigas\All That She Wants.mp3");
-            PlayListToRun.appendItem(media);
-            media = MusicMediaPlayer.newMedia(@"D:\Users\ademi\Music\Pop-Dance antigas\5_Nina-TheReasonIsYou.wma");
-            PlayListToRun.appendItem(media);
-            media = MusicMediaPlayer.newMedia(@"D:\Users\ademi\Music\Pop-Dance antigas\Dr. Alban - It´s My Life.mp3");
-            PlayListToRun.appendItem(media);
-            //MusicMediaPlayer.currentPlaylist = PlayListToRun;
+            if (lvi == null)
+                return;
 
-            //MusicMediaPlayer.Ctlcontrols.play();
-            //MusicMediaPlayer.URL = @"D:\Users\ademi\Music\Pop-Dance antigas\5_Nina-TheReasonIsYou.wma";
+            lvi.Selected = true;
+            lvi.EnsureVisible();
+            ListViewMusics.Select();
         }
 
         private void BtnStopTest_Click(object sender, EventArgs e)
@@ -197,7 +155,8 @@ namespace CompetitionsTimeControl
 
             bool keepPerformingBeeps = false;
 
-            _beepsController?.TryPerformBeeps(_canPerformBeeps, elapsedTime, out keepPerformingBeeps);
+            _beepsController?.TryPerformBeeps(BeepMediaPlayer, _canPerformBeeps, elapsedTime, out keepPerformingBeeps,
+                LblTestMessages);
 
             MusicMediaPlayer.settings.volume = TBMusicCurrentVol.Value * -1;
 
@@ -214,10 +173,7 @@ namespace CompetitionsTimeControl
             bool enableButtons = _beepsController?.ChangeBeepPairSelection(ComboBoxBeepPair.SelectedIndex) ?? false;
 
             NumUDTimeForResumeMusics_ValueChanged(sender, e);
-
-            BtnConfigTest.Enabled = enableButtons;
-            BtnCountdownBeepTest.Enabled = enableButtons;
-            BtnStartBeepTest.Enabled = enableButtons;
+            SetEnableBeepsControls(enableButtons);
         }
 
         private void TBBeepVolume_ValueChanged(object sender, EventArgs e)
@@ -250,16 +206,19 @@ namespace CompetitionsTimeControl
             NumUDAmountOfBeeps.Enabled = enable;
             NumUDTimeForEachBeep.Enabled = enable;
             NumUDTimeForResumeMusics.Enabled = enable;
+            BtnConfigTest.Enabled = enable;
+            BtnCountdownBeepTest.Enabled = enable;
+            BtnStartBeepTest.Enabled = enable;
         }
 
         private void BtnCountdownBeepTest_Click(object sender, EventArgs e)
         {
-            _beepsController?.PlayBeep(_beepsController.LowBeepPath);
+            _beepsController?.PlayBeep(BeepMediaPlayer, _beepsController.LowBeepPath);
         }
 
         private void BtnStartBeepTest_Click(object sender, EventArgs e)
         {
-            _beepsController?.PlayBeep(_beepsController.HighBeepPath);
+            _beepsController?.PlayBeep(BeepMediaPlayer, _beepsController.HighBeepPath);
         }
 
         private void TBMusicVolumeMin_ValueChanged(object sender, EventArgs e)
@@ -321,15 +280,15 @@ namespace CompetitionsTimeControl
 
         private void NumUDTimeForResumeMusics_ValueChanged(object sender, EventArgs e)
         {
-            _beepsController?.SetTimeForResumeMusics((float)NumUDTimeForResumeMusics.Value);
+            _beepsController?.SetTimeForResumeMusics(BeepMediaPlayer, (float)NumUDTimeForResumeMusics.Value);
         }
 
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
             _timer.Stop();
             _timer.Dispose();
-            BeepMediaPlayer.Ctlcontrols.stop();
-            MusicMediaPlayer.Ctlcontrols.stop();
+            BeepMediaPlayer.close();
+            MusicMediaPlayer.close();
             BeepMediaPlayer.Dispose();
             MusicMediaPlayer.Dispose();
         }
@@ -341,27 +300,39 @@ namespace CompetitionsTimeControl
             ToolTip.SetToolTip(BtnConfigTest, toolTipMessage);
         }
 
-        private void ListViewMusics_ItemChecked(object sender, ItemCheckedEventArgs e)
+        private void BtnAddMusics_Click(object sender, EventArgs e)
         {
-            if (e.Item.Checked)
-                _checkedMusicToDelete.Add(e.Item.Index);
-            else if (_checkedMusicToDelete.Contains(e.Item.Index))
-                _ = _checkedMusicToDelete.Remove(e.Item.Index);
-
-            SetMarkAndExcludeTextAndToolTip();
-        }
-
-        private void BtnAddMusics_Click(object sender, EventArgs e) // Simulando delete
-        {
+            if (_musicsController.AddMusicsToList(MusicMediaPlayer))
+                EnableControlsHavingItems(ListViewMusics.Items.Count > 0);
         }
 
         private void BtnClearMusicsList_Click(object sender, EventArgs e)
         {
-            ToggleMarkAndExclude.Checked = false;
-            ToggleMarkAndExclude.Enabled = false;
-            ListViewMusics.CheckBoxes = false;
-            ListViewMusics.GridLines = false;
-            ListViewMusics.Items.Clear();
+            StringBuilder sb = new("Todas músicas serão excluídas da lista!\n\n");
+            sb.Append("Deseja continuar com a operação?");
+
+            if (MessageBox.Show(sb.ToString(), "ATENÇÃO", MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) == DialogResult.No)
+                return;
+
+            EnableControlsHavingItems(false);
+        }
+
+        private void EnableControlsHavingItems(bool set)
+        {
+            if (!set)
+            {
+                _checkedMusicToDelete.Clear();
+                ListViewMusics.Items.Clear();
+                ListViewMusics.CheckBoxes = false;
+                ToggleMarkAndExclude.Checked = false;
+            }
+
+            BtnClearMusicsList.Enabled = set;
+            ToggleMarkAndExclude.Enabled = set;
+            TogglePlayMusicBySelection.Enabled = set;
+            TogglePlayMusicBySelection.Checked = false;
+            ListViewMusics.GridLines = set;
         }
 
         private void ToggleMarkAndExclude_CheckedChanged(object sender, EventArgs e)
@@ -375,7 +346,7 @@ namespace CompetitionsTimeControl
                 {
                     sb.AppendLine($"  ➤  {ListViewMusics.Items[_checkedMusicToDelete[i]].Text}");
                 }
-                sb.AppendLine("\nDeseja continuar com a operação?");
+                sb.Append("\nDeseja continuar com a operação?");
 
                 if (MessageBox.Show(sb.ToString(), "ATENÇÃO", MessageBoxButtons.YesNo,
                     MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) == DialogResult.Yes)
@@ -390,7 +361,7 @@ namespace CompetitionsTimeControl
                 }
                 else
                 {
-                    int[] musicToUncheck = _checkedMusicToDelete.ToArray();
+                    int[] musicToUncheck = [.. _checkedMusicToDelete]; //_checkedMusicToDelete.ToArray();
 
                     for (int i = musicToUncheck.Length - 1; i >= 0; i--)
                     {
@@ -399,11 +370,10 @@ namespace CompetitionsTimeControl
                 }
             }
 
+            EnableControlsHavingItems(ListViewMusics.Items.Count > 0);
+            TogglePlayMusicBySelection.Enabled = !ToggleMarkAndExclude.Checked && ListViewMusics.Items.Count > 0;
             ListViewMusics.CheckBoxes = ToggleMarkAndExclude.Checked;
             SetMarkAndExcludeTextAndToolTip();
-
-            ToggleMarkAndExclude.Enabled = ListViewMusics.Items.Count > 0;
-            ListViewMusics.GridLines = ListViewMusics.Items.Count > 0;
         }
 
         private void RepaintListViewGrid()
@@ -441,24 +411,87 @@ namespace CompetitionsTimeControl
                 ToolTip.SetToolTip(ToggleMarkAndExclude, "Clique para ativar a função de exclusão das músicas na lista.");
             }
         }
-        string test;
+
+        private void ListViewMusics_ItemChecked(object sender, ItemCheckedEventArgs e)
+        {
+            _musicsController?.ListViewMusicsItemChecked(e.Item);
+            /*if (e.Item.Checked)
+                _checkedMusicToDelete.Add(e.Item.Index);
+            else if (_checkedMusicToDelete.Contains(e.Item.Index))
+                _ = _checkedMusicToDelete.Remove(e.Item.Index);*/
+
+            SetMarkAndExcludeTextAndToolTip();
+        }
+
         private void ListViewMusics_ItemSelectionChanged(object sender, ListViewItemSelectionChangedEventArgs e)
         {
             ListViewItem? lvi = e.Item;
-            ListViewItem.ListViewSubItemCollection? si = lvi?.SubItems;
-            //si.
 
-            if (true && lvi != null)
+            if (TogglePlayMusicBySelection.Checked && ListViewMusics.SelectedItems.Count > 0 && lvi != null)
             {
-                MessageBox.Show(lvi.Text);
+                ListViewItem.ListViewSubItemCollection? listviewSubItemColl = lvi.SubItems;
 
-                MessageBox.Show(lvi.SubItems[0].Text);
+                TryPlayMusicBySelectionAndEnable(listviewSubItemColl);
+            }
+            else
+            {
+                PauseMusicBySelectionAndDisable();
+            }
+        }
+
+        private void TryPlayMusicBySelectionAndEnable(ListViewItem.ListViewSubItemCollection? listviewSubItemColl)
+        {
+            if (listviewSubItemColl == null)
+                return;
+
+            string music = listviewSubItemColl[0].Text;
+            string format = listviewSubItemColl[1].Text;
+            string path = listviewSubItemColl[3].Text;
+
+            if (!string.Equals(MusicMediaPlayer.URL, $@"{path}\{music}.{format}"))
+                MusicMediaPlayer.URL = $@"{path}\{music}.{format}";
+
+            MusicMediaPlayer.Ctlcontrols.play();
+            MusicMediaPlayer.Ctlenabled = true;
+        }
+
+        private void PauseMusicBySelectionAndDisable()
+        {
+            MusicMediaPlayer.Ctlcontrols.pause();
+            MusicMediaPlayer.Ctlenabled = false;
+        }
+
+        private void CreatePlaylist(string url)
+        {
+            MusicMediaPlayer.currentPlaylist.
+                appendItem(MusicMediaPlayer.newMedia(url));
+        }
+
+        private void TogglePlayMusicBySelection_CheckedChanged(object sender, EventArgs e)
+        {
+            if (TogglePlayMusicBySelection.Checked)
+            {
+                if (ListViewMusics.SelectedItems.Count > 0)
+                {
+                    TryPlayMusicBySelectionAndEnable(ListViewMusics.SelectedItems[0].SubItems);
+                }
+
+                TogglePlayMusicBySelection.Text = "Cancelar";
+                ToolTip.SetToolTip(TogglePlayMusicBySelection, "Desabilita tocar a música ao selecioná-la na lista.");
+            }
+            else
+            {
+                MusicMediaPlayer.Ctlenabled = false;
+                MusicMediaPlayer.currentPlaylist.clear();
+                TogglePlayMusicBySelection.Text = "Selecionar e ouvir";
+                ToolTip.SetToolTip(TogglePlayMusicBySelection, "Habilita tocar a música ao selecioná-la na lista.");
             }
         }
 
         private void TogglePlaylistMode_CheckedChanged(object sender, EventArgs e)
         {
             MusicMediaPlayer.settings.setMode("shuffle", TogglePlaylistMode.Checked);
+            //MusicMediaPlayer.settings.setMode("loop", TogglePlaylistMode.Checked); // Ver se é loop na playlist
 
             if (TogglePlaylistMode.Checked)
             {

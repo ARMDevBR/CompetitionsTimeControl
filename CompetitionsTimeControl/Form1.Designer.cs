@@ -37,7 +37,6 @@
             GroupBoxMusicCtrls = new GroupBox();
             ToggleSeeDetails = new CheckBox();
             ToggleMarkAndExclude = new CheckBox();
-            button2 = new Button();
             BtnClearMusicsList = new Button();
             BtnAddMusics = new Button();
             ListViewMusics = new ListView();
@@ -52,9 +51,9 @@
             TBMusicVolumeMax = new TrackBar();
             LblMusicVolMin = new Label();
             TogglePlaylistMode = new CheckBox();
+            TogglePlayMusicBySelection = new CheckBox();
             NumUDTimeToVolMin = new NumericUpDown();
             LblTimeToChangeVolume = new Label();
-            LblTempStatus = new Label();
             ToolTip = new ToolTip(components);
             LblBeepPair = new Label();
             LblTimeBeforePlayBeeps = new Label();
@@ -174,7 +173,6 @@
             // 
             GroupBoxMusicCtrls.Controls.Add(ToggleSeeDetails);
             GroupBoxMusicCtrls.Controls.Add(ToggleMarkAndExclude);
-            GroupBoxMusicCtrls.Controls.Add(button2);
             GroupBoxMusicCtrls.Controls.Add(BtnClearMusicsList);
             GroupBoxMusicCtrls.Controls.Add(BtnAddMusics);
             GroupBoxMusicCtrls.Controls.Add(ListViewMusics);
@@ -182,6 +180,7 @@
             GroupBoxMusicCtrls.Controls.Add(GroupBoxMusicVols);
             GroupBoxMusicCtrls.Controls.Add(MusicMediaPlayer);
             GroupBoxMusicCtrls.Controls.Add(TogglePlaylistMode);
+            GroupBoxMusicCtrls.Controls.Add(TogglePlayMusicBySelection);
             GroupBoxMusicCtrls.FlatStyle = FlatStyle.System;
             GroupBoxMusicCtrls.Font = new Font("Segoe UI", 10F);
             GroupBoxMusicCtrls.Location = new Point(15, 225);
@@ -209,6 +208,7 @@
             // ToggleMarkAndExclude
             // 
             ToggleMarkAndExclude.Appearance = Appearance.Button;
+            ToggleMarkAndExclude.Enabled = false;
             ToggleMarkAndExclude.Location = new Point(325, 25);
             ToggleMarkAndExclude.Name = "ToggleMarkAndExclude";
             ToggleMarkAndExclude.Size = new Size(130, 30);
@@ -219,19 +219,9 @@
             ToggleMarkAndExclude.UseVisualStyleBackColor = true;
             ToggleMarkAndExclude.CheckedChanged += ToggleMarkAndExclude_CheckedChanged;
             // 
-            // button2
-            // 
-            button2.Font = new Font("Segoe UI", 10F);
-            button2.Location = new Point(15, 257);
-            button2.Name = "button2";
-            button2.Size = new Size(130, 30);
-            button2.TabIndex = 24;
-            button2.Text = "Tocar ao clicar";
-            ToolTip.SetToolTip(button2, "Habilita tocar a música ao selecioná-la na lista.");
-            button2.UseVisualStyleBackColor = true;
-            // 
             // BtnClearMusicsList
             // 
+            BtnClearMusicsList.Enabled = false;
             BtnClearMusicsList.Font = new Font("Segoe UI", 10F);
             BtnClearMusicsList.Location = new Point(170, 25);
             BtnClearMusicsList.Name = "BtnClearMusicsList";
@@ -256,7 +246,6 @@
             // 
             // ListViewMusics
             // 
-            ListViewMusics.Activation = ItemActivation.OneClick;
             ListViewMusics.HeaderStyle = ColumnHeaderStyle.Nonclickable;
             ListViewMusics.Location = new Point(15, 61);
             ListViewMusics.Name = "ListViewMusics";
@@ -408,6 +397,20 @@
             TogglePlaylistMode.UseVisualStyleBackColor = true;
             TogglePlaylistMode.CheckedChanged += TogglePlaylistMode_CheckedChanged;
             // 
+            // TogglePlayMusicBySelection
+            // 
+            TogglePlayMusicBySelection.Appearance = Appearance.Button;
+            TogglePlayMusicBySelection.Enabled = false;
+            TogglePlayMusicBySelection.Location = new Point(15, 257);
+            TogglePlayMusicBySelection.Name = "TogglePlayMusicBySelection";
+            TogglePlayMusicBySelection.Size = new Size(130, 30);
+            TogglePlayMusicBySelection.TabIndex = 29;
+            TogglePlayMusicBySelection.Text = "Selecionar e ouvir";
+            TogglePlayMusicBySelection.TextAlign = ContentAlignment.MiddleCenter;
+            ToolTip.SetToolTip(TogglePlayMusicBySelection, "Habilita tocar a música ao selecioná-la na lista.");
+            TogglePlayMusicBySelection.UseVisualStyleBackColor = true;
+            TogglePlayMusicBySelection.CheckedChanged += TogglePlayMusicBySelection_CheckedChanged;
+            // 
             // NumUDTimeToVolMin
             // 
             NumUDTimeToVolMin.Location = new Point(410, 22);
@@ -429,22 +432,13 @@
             LblTimeToChangeVolume.Text = "Tempo troca de volumes";
             ToolTip.SetToolTip(LblTimeToChangeVolume, "Tempo em segundos necessário para alternar volumes antes ou após evento dos beeps.");
             // 
-            // LblTempStatus
-            // 
-            LblTempStatus.AutoSize = true;
-            LblTempStatus.Location = new Point(280, 120);
-            LblTempStatus.Name = "LblTempStatus";
-            LblTempStatus.Size = new Size(47, 19);
-            LblTempStatus.TabIndex = 5;
-            LblTempStatus.Text = "Status";
-            // 
             // ToolTip
             // 
             ToolTip.AutomaticDelay = 1000;
             ToolTip.AutoPopDelay = 6000;
             ToolTip.InitialDelay = 1000;
             ToolTip.IsBalloon = true;
-            ToolTip.ReshowDelay = 800;
+            ToolTip.ReshowDelay = 1000;
             ToolTip.ToolTipIcon = ToolTipIcon.Info;
             ToolTip.ToolTipTitle = "Informação";
             // 
@@ -580,7 +574,7 @@
             label1.TabIndex = 35;
             label1.Text = "100/100";
             label1.TextAlign = ContentAlignment.MiddleCenter;
-            ToolTip.SetToolTip(label1, "Mostra a quantidade de tiros executados do total.");
+            ToolTip.SetToolTip(label1, "Quantidade de tiros já executados do total.");
             // 
             // progressBar2
             // 
@@ -676,7 +670,6 @@
             GroupBoxBeepsCtrls.Controls.Add(NumUDTimeBeforePlayBeeps);
             GroupBoxBeepsCtrls.Controls.Add(LblTimeBeforePlayBeeps);
             GroupBoxBeepsCtrls.Controls.Add(NumUDTimeForResumeMusics);
-            GroupBoxBeepsCtrls.Controls.Add(LblTempStatus);
             GroupBoxBeepsCtrls.Controls.Add(LblTimeForResumeMusics);
             GroupBoxBeepsCtrls.Controls.Add(LblAmountOfBeeps);
             GroupBoxBeepsCtrls.Controls.Add(NumUDAmountOfBeeps);
@@ -778,6 +771,7 @@
             // 
             // NumUDTimeBeforePlayBeeps
             // 
+            NumUDTimeBeforePlayBeeps.Enabled = false;
             NumUDTimeBeforePlayBeeps.Location = new Point(410, 52);
             NumUDTimeBeforePlayBeeps.Maximum = new decimal(new int[] { 5, 0, 0, 0 });
             NumUDTimeBeforePlayBeeps.Name = "NumUDTimeBeforePlayBeeps";
@@ -788,6 +782,7 @@
             // 
             // NumUDTimeForResumeMusics
             // 
+            NumUDTimeForResumeMusics.Enabled = false;
             NumUDTimeForResumeMusics.Location = new Point(410, 145);
             NumUDTimeForResumeMusics.Maximum = new decimal(new int[] { 5, 0, 0, 0 });
             NumUDTimeForResumeMusics.Name = "NumUDTimeForResumeMusics";
@@ -799,6 +794,7 @@
             // 
             // NumUDAmountOfBeeps
             // 
+            NumUDAmountOfBeeps.Enabled = false;
             NumUDAmountOfBeeps.Location = new Point(410, 83);
             NumUDAmountOfBeeps.Maximum = new decimal(new int[] { 10, 0, 0, 0 });
             NumUDAmountOfBeeps.Minimum = new decimal(new int[] { 2, 0, 0, 0 });
@@ -812,6 +808,7 @@
             // NumUDTimeForEachBeep
             // 
             NumUDTimeForEachBeep.DecimalPlaces = 2;
+            NumUDTimeForEachBeep.Enabled = false;
             NumUDTimeForEachBeep.Increment = new decimal(new int[] { 25, 0, 0, 131072 });
             NumUDTimeForEachBeep.Location = new Point(410, 114);
             NumUDTimeForEachBeep.Maximum = new decimal(new int[] { 3, 0, 0, 0 });
@@ -1017,15 +1014,12 @@
         private Label LblMusicCurrentVolPercent;
         private Label LblMusicCurrentVol;
         private TrackBar TBMusicCurrentVol;
-        private ListView ListViewMusics;
         private Label LblTestMessages;
         private Button BtnAddMusics;
         private Button BtnClearMusicsList;
-        public Label LblTempStatus;
         private NumericUpDown NumUDTimeToVolMin;
         private Label LblTimeToChangeVolume;
         private Button button3;
-        private Button button2;
         private GroupBox GroupBoxProgram;
         private ComboBox ComboBoxProgramming;
         private Label LblProgramming;
@@ -1047,5 +1041,7 @@
         private Label LblEndPlaylist;
         private ComboBox ComboBoxEndPlaylist;
         private CheckBox TogglePlaylistMode;
+        private CheckBox TogglePlayMusicBySelection;
+        private ListView ListViewMusics;
     }
 }

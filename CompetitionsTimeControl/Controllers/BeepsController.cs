@@ -1,13 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics.Metrics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using WMPLib;
-using static System.Runtime.InteropServices.JavaScript.JSType;
+﻿using WMPLib;
 
-namespace CompetitionsTimeControl
+namespace CompetitionsTimeControl.Controllers
 {
     internal class BeepPair(string highBeepPath, string lowBeepPath)
     {
@@ -20,7 +13,7 @@ namespace CompetitionsTimeControl
         private const int AmountOfBeepsPerFolder = 2;
         private const string DefaultBeepsFolderPath = "BeepSounds";
 
-        private enum BeepState{ WaitToRunBeeps, WaitTimeBeforeBeeps, PerformBeeps, TimeForResumeMusicsVolume }
+        private enum BeepState { WaitToRunBeeps, WaitTimeBeforeBeeps, PerformBeeps, TimeForResumeMusicsVolume }
 
         public string HighBeepPath => _currentBeepPair?.HighBeepPath ?? "";
         public string LowBeepPath => _currentBeepPair?.LowBeepPath ?? "";
@@ -35,15 +28,14 @@ namespace CompetitionsTimeControl
 
         public int HighBeepDuration { get; private set; }
 
-        private readonly AxWMPLib.AxWindowsMediaPlayer _refBeepMediaPlayer;
         private readonly string _beepsPath;
-        private readonly Label _lblTestMessages;
 
         private int _timerBeforePlayBeepsInMiliSec;
         private int _timerForAllBeepsInMiliSec;
         private int _timerForEachBeepInMiliSec;
         private int _rechargeForEachBeepInMiliSec;
         private int _timerForResumeMusicsInMiliSec;
+        private int _beepCounter;
         private float _justTimeForResumeMusics;
 
         private BeepState _beepState;
@@ -55,14 +47,33 @@ namespace CompetitionsTimeControl
         {
             _beepState = BeepState.WaitToRunBeeps;
             _beepsPath = string.Concat(AppDomain.CurrentDomain.BaseDirectory, DefaultBeepsFolderPath);
-            _lblTestMessages = lblTestMessages;
-            _refBeepMediaPlayer = beepMediaPlayer;
             GetBeepsSounds(comboBoxBeepPair);
         }
 
         private void GetBeepsSounds(ComboBox comboBoxBeepPair)
         {
+            if (!Directory.Exists(_beepsPath))
+            {
+                MessageBox.Show(string.Concat("Não foi encontrado a pasta raiz com as patas dos pares de beeps.\n",
+                    $"\nVerifique a pasta '{AppDomain.CurrentDomain.BaseDirectory}'.",
+                    $"\nA pasta '{DefaultBeepsFolderPath}' deve existir neste local."),
+                    "ATENÇÃO",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+
+                return;
+            }
+
             string[] beepsPathsArray = Directory.GetDirectories(_beepsPath);
+
+            if (beepsPathsArray.Length <= 0)
+            {
+                MessageBox.Show(string.Concat("A pasta raiz não possui nenhuma pasta com os pares de beeps.\n",
+                    $"\nVerifique a pasta '{_beepsPath}'."),
+                    "ATENÇÃO",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+            }
 
             foreach (string beepPath in beepsPathsArray)
             {
@@ -79,8 +90,8 @@ namespace CompetitionsTimeControl
                 }
                 else
                 {
-                    MessageBox.Show("Não foi encontrado o par de arquivos de beeps ou há arquivos em excesso.\n" +
-                        $"\nVerifique a pasta '{beepPath}'",
+                    MessageBox.Show(string.Concat("Não foi encontrado o par de arquivos de beeps ou há arquivos em excesso.\n",
+                        $"\nVerifique a pasta '{beepPath}'"),
                         "ATENÇÃO",
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Warning);
@@ -88,9 +99,9 @@ namespace CompetitionsTimeControl
             }
         }
 
-        public void SetTimeForResumeMusics(float value)
+        public void SetTimeForResumeMusics(AxWMPLib.AxWindowsMediaPlayer beepMediaPlayer, float value)
         {
-            IWMPMedia media = _refBeepMediaPlayer.newMedia(HighBeepPath);
+            IWMPMedia media = beepMediaPlayer.newMedia(HighBeepPath);
             HighBeepDuration = (int)media.duration;
             _justTimeForResumeMusics = value;
 
@@ -101,7 +112,7 @@ namespace CompetitionsTimeControl
         {
             if (_beepPairsList == null || selectedIndex < 0 || selectedIndex > _beepPairsList.Count - 1)
                 return false;
-            
+
             _currentBeepPair = _beepPairsList[selectedIndex];
 
             return _currentBeepPair != null;
@@ -137,7 +148,8 @@ namespace CompetitionsTimeControl
             return headerMessage;
         }
 
-        public void TryPerformBeeps(bool canPerform, int timeToDecrement, out bool keepPerforming)
+        public void TryPerformBeeps(AxWMPLib.AxWindowsMediaPlayer beepMediaPlayer, bool canPerform, int timeToDecrement,
+            out bool keepPerforming, in Label? lblTestMessages)
         {
             if (!canPerform)
             {
@@ -156,7 +168,7 @@ namespace CompetitionsTimeControl
                     _rechargeForEachBeepInMiliSec = _timerForEachBeepInMiliSec;
                     _timerForAllBeepsInMiliSec = _timerForEachBeepInMiliSec * (AmountOfBeeps - 1);
                     _timerForResumeMusicsInMiliSec = (int)(TimeForResumeMusics * 1000);
-                    //_refBeepMediaPlayer.settings.autoStart = true;
+                    _beepCounter = 0;
                     break;
 
                 case BeepState.WaitTimeBeforeBeeps:
@@ -165,7 +177,7 @@ namespace CompetitionsTimeControl
                     {
                         _timerBeforePlayBeepsInMiliSec = 0;
                         _beepState = BeepState.PerformBeeps;
-                        PlayBeep(LowBeepPath);
+                        PlayBeep(beepMediaPlayer, LowBeepPath);
                     }
                     break;
 
@@ -175,7 +187,8 @@ namespace CompetitionsTimeControl
                         if (PerformCountdown(ref _timerForEachBeepInMiliSec, ref _timerForEachBeepInMiliSec,
                             in _rechargeForEachBeepInMiliSec, timeToDecrement))
                         {
-                            PlayBeep((_timerForAllBeepsInMiliSec > timeToDecrement - 1) ? LowBeepPath : HighBeepPath);
+                            _beepCounter++;
+                            PlayBeep(beepMediaPlayer, _beepCounter < AmountOfBeeps - 1 ? LowBeepPath : HighBeepPath);
                         }
                     }
 
@@ -204,13 +217,13 @@ namespace CompetitionsTimeControl
                     break;
             }
 
-            /*if (!keepPerforming)
-                _refBeepMediaPlayer.settings.autoStart = false;*/
-
-            _lblTestMessages.Text = string.Concat(
-                $"Antes dos beeps {GetTimeSpanFormat(_timerBeforePlayBeepsInMiliSec)} | ",
-                $"Até último beep {GetTimeSpanFormat(_timerForAllBeepsInMiliSec)} | ",
-                $"Após beeps {GetTimeSpanFormat(_timerForResumeMusicsInMiliSec)}");
+            if (lblTestMessages != null)
+            {
+                lblTestMessages.Text = string.Concat(
+                    $"Antes dos beeps {GetTimeSpanFormat(_timerBeforePlayBeepsInMiliSec)} | ",
+                    $"Até último beep {GetTimeSpanFormat(_timerForAllBeepsInMiliSec)} | ",
+                    $"Após beeps {GetTimeSpanFormat(_timerForResumeMusicsInMiliSec)}");
+            }
         }
 
         private bool PerformCountdown(ref int counterValue, ref int nextCounterValue, in int nextCounterRecharge,
@@ -219,7 +232,7 @@ namespace CompetitionsTimeControl
             bool ret = false;
 
             counterValue -= timeToDecrement;
-            
+
             if (counterValue <= 0)
             {
                 nextCounterValue += nextCounterRecharge;
@@ -230,10 +243,10 @@ namespace CompetitionsTimeControl
             return ret;
         }
 
-        public void PlayBeep(string beepPath)
+        public void PlayBeep(AxWMPLib.AxWindowsMediaPlayer beepMediaPlayer, string beepPath)
         {
-            _refBeepMediaPlayer.Ctlcontrols.stop();
-            _refBeepMediaPlayer.URL = beepPath;
+            beepMediaPlayer.Ctlcontrols.stop();
+            beepMediaPlayer.URL = beepPath;
         }
 
         private string GetTimeSpanFormat(double value) => TimeSpan.FromMilliseconds(value).ToString(@"ss\.fff");
