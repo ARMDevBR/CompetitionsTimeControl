@@ -10,14 +10,26 @@ namespace CompetitionsTimeControl.Controllers
         private const int MusicDurationColumnWidth = 55;
         private const int MusicPathColumnWidth = 400;
 
+        public enum ChangeVolume { ToMin, ToMax }
+
+        public byte? SecondsToChangeVolume { get; private set; }
+
         private readonly ListView _listViewMusics;
 
+        private bool _stepsHaveBeenConfigured;
+        private float _currentMusicVolume;
+        private int _timerChangeVolumeInMiliSec;
+        private float _stepsToChangeMusic;
+        private ChangeVolume _changeVolume;
         private List<int> _checkedMusicToDelete;
 
         public MusicsController(ListView listViewMusics)
         {
+            _stepsHaveBeenConfigured = false;
+            _stepsToChangeMusic = 0;
             _checkedMusicToDelete = [];
             _listViewMusics = listViewMusics;
+            SecondsToChangeVolume = null;
             GenerateListHeaders();
         }
 
@@ -301,6 +313,61 @@ namespace CompetitionsTimeControl.Controllers
             listViewItem.Selected = true;
             listViewItem.EnsureVisible();
             _listViewMusics.Select();
+        }
+
+        public void ChangeVolumeInSeconds(byte seconds, ChangeVolume changeVolume)
+        {
+            _changeVolume = changeVolume;
+            SecondsToChangeVolume = seconds;
+        }
+
+        public void TryChangeVolume(AxWindowsMediaPlayer musicMediaPlayer, TrackBar tbMusicCurrentVol,
+            TrackBar tbMusicVolumeMin, TrackBar tbMusicVolumeMax, int timeToDecrement)
+        {
+            if (SecondsToChangeVolume == null)
+                return;
+
+            if (!_stepsHaveBeenConfigured)
+            {
+                int volumeTarget = _changeVolume == ChangeVolume.ToMin
+                    ? tbMusicVolumeMin.Value : tbMusicVolumeMax.Value;
+                
+                if (SecondsToChangeVolume.Value == 0)
+                {
+                    // Instant Set.
+                    SecondsToChangeVolume = null;
+                    tbMusicCurrentVol.Value = volumeTarget;
+                    _currentMusicVolume = tbMusicCurrentVol.Value;
+                    return;
+                }
+
+                tbMusicCurrentVol.Enabled = false;
+                tbMusicVolumeMin.Enabled = false;
+                tbMusicVolumeMax.Enabled = false;
+
+                _timerChangeVolumeInMiliSec = TimerController.FromSecondsToMiliseconds(SecondsToChangeVolume.Value);
+                _stepsToChangeMusic = (float)(volumeTarget - tbMusicCurrentVol.Value) / _timerChangeVolumeInMiliSec;
+                _currentMusicVolume = tbMusicCurrentVol.Value;
+                _stepsHaveBeenConfigured = true;
+            }
+
+            if (!TimerController.PerformCountdown(ref _timerChangeVolumeInMiliSec, ref _timerChangeVolumeInMiliSec,
+                _timerChangeVolumeInMiliSec, timeToDecrement))
+            {
+                _currentMusicVolume += (_stepsToChangeMusic * timeToDecrement);
+                tbMusicCurrentVol.Value = (int)_currentMusicVolume;
+                return;
+            }
+
+            tbMusicCurrentVol.Value = _changeVolume == ChangeVolume.ToMin
+                ? tbMusicVolumeMin.Value : tbMusicVolumeMax.Value;
+            
+            SecondsToChangeVolume = null;
+            _currentMusicVolume = tbMusicCurrentVol.Value;
+            _stepsHaveBeenConfigured = false;
+            tbMusicCurrentVol.Enabled = true;
+            tbMusicVolumeMin.Enabled = true;
+            tbMusicVolumeMax.Enabled = true;
         }
     }
 }

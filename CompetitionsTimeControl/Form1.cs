@@ -1,4 +1,5 @@
 ﻿using CompetitionsTimeControl.Controllers;
+using System.Text;
 using System.Timers;
 using Timer = System.Timers.Timer;
 
@@ -13,7 +14,6 @@ namespace CompetitionsTimeControl
         private const int MusicDurationColumnWidth = 55;
         private const int MusicPathColumnWidth = 400;
 
-        private bool _canPerformBeeps;
         private bool _lastMediaEnded;
         private BeepsController _beepsController = null!;
         private CompetitionController _competitionController = null!;
@@ -29,7 +29,6 @@ namespace CompetitionsTimeControl
             _timer.SynchronizingObject = this;
             _lastMillisecond = 0;
 
-            _canPerformBeeps = false;
             InitializeComponent();
             _lastMediaEnded = false;
             ConfigureBeepMediaPlayer();
@@ -90,7 +89,7 @@ namespace CompetitionsTimeControl
         {
             if (_beepsController == null)
             {
-                _beepsController = new(ComboBoxBeepPair, LblTestMessages, BeepMediaPlayer);
+                _beepsController = new(ComboBoxBeepPair);
                 _timer.Enabled = true;
 
                 if (_beepsController != null)
@@ -102,15 +101,32 @@ namespace CompetitionsTimeControl
                 }
             }
 
-            if (_musicsController == null)
-            {
-                _musicsController = new(ListViewMusics);
-            }
+            _musicsController ??= new(ListViewMusics);
 
             if (_competitionController == null)
             {
-                _competitionController = new();
+                _competitionController = new(LblCompetitionTotalTime,
+                    ProgressBarCurrentIntervalElapsed, LblIntervalsElapsed);
+
+                if (_competitionController != null)
+                {
+                    _competitionController.TimeToChangeVolume = (byte)NumUDTimeToVolMin.Value;
+                    _competitionController.StartWithBeeps = CheckBoxStartWithBeeps.Checked;
+                    _competitionController.StopMusicsAtEnd = CheckBoxStopMusicsAtEnd.Checked;
+                    _competitionController.SetCompetitionAmountIntervals((byte)NumUDCompetitionAmountIntervals.Value);
+                    _competitionController.SetCompetitionIntervalSeconds((int)NumUDCompetitionIntervalSeconds.Value);
+                }
             }
+        }
+
+        private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            _timer.Stop();
+            _timer.Dispose();
+            BeepMediaPlayer.close();
+            MusicMediaPlayer.close();
+            BeepMediaPlayer.Dispose();
+            MusicMediaPlayer.Dispose();
         }
 
         private void Timer_Tick(object? source, ElapsedEventArgs e)
@@ -124,28 +140,42 @@ namespace CompetitionsTimeControl
 
             //elapsedTime = 16; // Teste de contador no debug.
 
-            bool keepPerformingBeeps = false;
-
-            _beepsController?.TryPerformBeeps(BeepMediaPlayer, _canPerformBeeps, elapsedTime, out keepPerformingBeeps,
-                LblTestMessages);
-
             MusicMediaPlayer.fullScreen = false;
             MusicMediaPlayer.settings.volume = TBMusicCurrentVol.Value * -1;
 
-            if (_canPerformBeeps && !keepPerformingBeeps)
+            if (_beepsController == null || _musicsController == null || _competitionController == null)
+                return;
+
+            if (_beepsController.CanPerformBeeps)
             {
-                PrepareBeepTest(false);
+                _beepsController.TryPerformBeeps(BeepMediaPlayer, elapsedTime, LblTestMessages);
+
+                if (!_competitionController.CanStartCompetition && !_beepsController.CanPerformBeeps)
+                {
+                    PrepareBeepTest(false);
+                }
             }
 
-            _canPerformBeeps = keepPerformingBeeps;
+            if (_competitionController.CanStartCompetition)
+            {
+                _competitionController.TryPerformCompetition(_beepsController, _musicsController, elapsedTime);
+
+                if (_musicsController.SecondsToChangeVolume != null)
+                {
+                    _musicsController.TryChangeVolume(MusicMediaPlayer, TBMusicCurrentVol, TBMusicVolumeMin,
+                        TBMusicVolumeMax, elapsedTime);
+                }
+            }
         }
 
+        #region BEEPS CONTROLLER
         private void ComboBoxBeepPair_SelectedIndexChanged(object sender, EventArgs e)
         {
             bool enableButtons = _beepsController?.ChangeBeepPairSelection(ComboBoxBeepPair.SelectedIndex) ?? false;
 
             NumUDTimeForResumeMusics_ValueChanged(sender, e);
             SetEnableBeepsControls(enableButtons);
+            ComboBoxProgramming.Enabled = enableButtons;
         }
 
         private void TBBeepVolume_ValueChanged(object sender, EventArgs e)
@@ -158,7 +188,7 @@ namespace CompetitionsTimeControl
 
         private void BtnConfigTest_Click(object sender, EventArgs e)
         {
-            _canPerformBeeps = true;
+            _beepsController.CanPerformBeeps = true;
             PrepareBeepTest(true);
         }
 
@@ -193,45 +223,6 @@ namespace CompetitionsTimeControl
             _beepsController?.PlayBeep(BeepMediaPlayer, _beepsController.HighBeepPath);
         }
 
-        private void TBMusicVolumeMin_ValueChanged(object sender, EventArgs e)
-        {
-            // Se volume mínimo (barra é negativa) passar do volume máximo, atualiza volume máximo.
-            if (TBMusicVolumeMax.Value > TBMusicVolumeMin.Value)
-                TBMusicVolumeMax.Value = TBMusicVolumeMin.Value;
-
-            // Se volume mínimo (barra é negativa) passar do volume atual, atualiza volume atual.
-            if (TBMusicCurrentVol.Value > TBMusicVolumeMin.Value)
-                TBMusicCurrentVol.Value = TBMusicVolumeMin.Value;
-
-            LblMusicVolMinPercent.Text = $"{TBMusicVolumeMin.Value * -1}%";
-        }
-
-        private void TBMusicVolumeMax_ValueChanged(object sender, EventArgs e)
-        {
-            // Se volume máximo (barra é negativa) passar do volume atual, atualiza volume atual.
-            if (TBMusicCurrentVol.Value < TBMusicVolumeMax.Value)
-                TBMusicCurrentVol.Value = TBMusicVolumeMax.Value;
-
-            // Se volume máximo (barra é negativa) passar do volume mínimo, atualiza volume mínimo.
-            if (TBMusicVolumeMin.Value < TBMusicVolumeMax.Value)
-                TBMusicVolumeMin.Value = TBMusicVolumeMax.Value;
-
-            LblMusicVolMaxPercent.Text = $"{TBMusicVolumeMax.Value * -1}%";
-        }
-
-        private void TBMusicCurrentVol_ValueChanged(object sender, EventArgs e)
-        {
-            // Se volume atual (barra é negativa) passar do volume mínimo, atualiza volume mínimo.
-            if (TBMusicVolumeMin.Value < TBMusicCurrentVol.Value)
-                TBMusicVolumeMin.Value = TBMusicCurrentVol.Value;
-
-            // Se volume atual (barra é negativa) passar do volume máximo, atualiza volume máximo.
-            if (TBMusicVolumeMax.Value > TBMusicCurrentVol.Value)
-                TBMusicVolumeMax.Value = TBMusicCurrentVol.Value;
-
-            LblMusicCurrentVolPercent.Text = $"{TBMusicCurrentVol.Value * -1}%";
-        }
-
         private void NumUDTimeBeforePlayBeeps_ValueChanged(object sender, EventArgs e)
         {
             if (_beepsController != null)
@@ -261,7 +252,9 @@ namespace CompetitionsTimeControl
 
             ToolTip.SetToolTip(BtnConfigTest, toolTipMessage);
         }
+        #endregion
 
+        #region MUSICS CONTROLLER
         private void BtnAddMusics_Click(object sender, EventArgs e)
         {
             if (_musicsController?.AddMusicsToList(MusicMediaPlayer) ?? false)
@@ -321,64 +314,130 @@ namespace CompetitionsTimeControl
             _musicsController?.ToggleSeeDetailsCheckedChanged(ToggleSeeDetails);
         }
 
-        private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
+        private void TBMusicVolumeMin_ValueChanged(object sender, EventArgs e)
         {
-            _timer.Stop();
-            _timer.Dispose();
-            BeepMediaPlayer.close();
-            MusicMediaPlayer.close();
-            BeepMediaPlayer.Dispose();
-            MusicMediaPlayer.Dispose();
+            // Se volume mínimo (barra é negativa) passar do volume máximo, atualiza volume máximo.
+            if (TBMusicVolumeMax.Value > TBMusicVolumeMin.Value)
+                TBMusicVolumeMax.Value = TBMusicVolumeMin.Value;
+
+            // Se volume mínimo (barra é negativa) passar do volume atual, atualiza volume atual.
+            if (TBMusicCurrentVol.Value > TBMusicVolumeMin.Value)
+                TBMusicCurrentVol.Value = TBMusicVolumeMin.Value;
+
+            LblMusicVolMinPercent.Text = $"{TBMusicVolumeMin.Value * -1}%";
         }
 
+        private void TBMusicVolumeMax_ValueChanged(object sender, EventArgs e)
+        {
+            // Se volume máximo (barra é negativa) passar do volume atual, atualiza volume atual.
+            if (TBMusicCurrentVol.Value < TBMusicVolumeMax.Value)
+                TBMusicCurrentVol.Value = TBMusicVolumeMax.Value;
+
+            // Se volume máximo (barra é negativa) passar do volume mínimo, atualiza volume mínimo.
+            if (TBMusicVolumeMin.Value < TBMusicVolumeMax.Value)
+                TBMusicVolumeMin.Value = TBMusicVolumeMax.Value;
+
+            LblMusicVolMaxPercent.Text = $"{TBMusicVolumeMax.Value * -1}%";
+        }
+
+        private void TBMusicCurrentVol_ValueChanged(object sender, EventArgs e)
+        {
+            // Se volume atual (barra é negativa) passar do volume mínimo, atualiza volume mínimo.
+            if (TBMusicVolumeMin.Value < TBMusicCurrentVol.Value)
+                TBMusicVolumeMin.Value = TBMusicCurrentVol.Value;
+
+            // Se volume atual (barra é negativa) passar do volume máximo, atualiza volume máximo.
+            if (TBMusicVolumeMax.Value > TBMusicCurrentVol.Value)
+                TBMusicVolumeMax.Value = TBMusicCurrentVol.Value;
+
+            LblMusicCurrentVolPercent.Text = $"{TBMusicCurrentVol.Value * -1}%";
+        }
+        #endregion
+
+        #region COMPETITION CONTROLLER
         private void ComboBoxProgramming_SelectedIndexChanged(object sender, EventArgs e)
         {
+            bool enableMoreControls = false;
 
+            if (_competitionController == null)
+                return;
+
+            _competitionController.ChangeCompetitionProgramSelection(ComboBoxProgramming.SelectedIndex);
+
+            if (_competitionController.CompetitionProgramSetup == CompetitionController.CompetitionProgram.MusicsAndBeeps)
+            {
+                enableMoreControls = ListViewMusics.Items.Count > 0;
+
+                if (!enableMoreControls)
+                {
+                    StringBuilder sb = new("Não há músicas válidas na lista de músicas.\n\n");
+                    sb.Append("Selecione músicas para tocar se deseja esta opção para a competição.");
+
+                    MessageBox.Show(sb.ToString(), "ATENÇÃO", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    ComboBoxProgramming.SelectedIndex = 0;
+                }
+            }
+
+            ComboBoxInitialization.Enabled = enableMoreControls;
+            ComboBoxRepeatPlaylist.Enabled = enableMoreControls;
+            NumUDTimeToVolMin.Enabled = enableMoreControls;
+            CheckBoxStopMusicsAtEnd.Enabled = enableMoreControls;
+
+            CheckBoxStartWithBeeps.Enabled = true;
+            NumUDCompetitionAmountIntervals.Enabled = true;
+            NumUDCompetitionIntervalSeconds.Enabled = true;
+            BtnStartCompetition.Enabled = true;
         }
 
         private void ComboBoxInitialization_SelectedIndexChanged(object sender, EventArgs e)
         {
-
+            _competitionController?.ChangeInitializationProgramSelection(ComboBoxInitialization.SelectedIndex);
         }
 
-        private void ComboBoxEndPlaylist_SelectedIndexChanged(object sender, EventArgs e)
+        private void ComboBoxRepeatPlaylist_SelectedIndexChanged(object sender, EventArgs e)
         {
-
+            _competitionController?.ChangePlaylistRestartSelection(ComboBoxRepeatPlaylist.SelectedIndex);
         }
 
         private void NumUDTimeToVolMin_ValueChanged(object sender, EventArgs e)
         {
-
+            if (_competitionController != null)
+                _competitionController.TimeToChangeVolume = (byte)NumUDTimeToVolMin.Value;
         }
 
         private void CheckBoxStartWithBeeps_CheckedChanged(object sender, EventArgs e)
         {
-
+            if (_competitionController != null)
+                _competitionController.StartWithBeeps = CheckBoxStartWithBeeps.Checked;
         }
 
-        private void CheckBoxContinueMusicsAtEnd_CheckedChanged(object sender, EventArgs e)
+        private void CheckBoxStopMusicsAtEnd_CheckedChanged(object sender, EventArgs e)
         {
-
+            if (_competitionController != null)
+                _competitionController.StopMusicsAtEnd = CheckBoxStopMusicsAtEnd.Checked;
         }
 
         private void NumUDCompetitionAmountIntervals_ValueChanged(object sender, EventArgs e)
         {
-
+            _competitionController?.SetCompetitionAmountIntervals((byte)NumUDCompetitionAmountIntervals.Value);
         }
 
         private void NumUDCompetitionIntervalSeconds_ValueChanged(object sender, EventArgs e)
         {
-
+            _competitionController?.SetCompetitionIntervalSeconds((int)NumUDCompetitionIntervalSeconds.Value);
         }
 
         private void BtnStartCompetition_Click(object sender, EventArgs e)
         {
-
+            if (_competitionController?.StartCompetition() ?? false)
+            {
+                SetEnableBeepsControls(false);
+            }
         }
 
         private void BtnStopCompetition_Click(object sender, EventArgs e)
         {
-
         }
+        #endregion
     }
 }
