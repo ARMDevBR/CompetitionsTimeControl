@@ -23,20 +23,29 @@ namespace CompetitionsTimeControl.Controllers
         public int AmountOfBeeps { get; set; }
         public float TimeForEachBeep { get; set; }
         public float TimeForResumeMusics { get; private set; }
+        public string CountingBeepsDescription { get; private set; }
+        public string LastBeepsDescription { get; private set; }
+        public bool TriggerCompetitionStartWithBeeps { get; set; }
 
         public int TotalTimeBeforeLastBeepInMs =>
-             (int)((TimeForEachBeep * (AmountOfBeeps - 1) + TimeBeforePlayBeeps) * 1000);
+            TimerController.FromSecondsToMilliseconds(TimeForEachBeep * (AmountOfBeeps - 1) + TimeBeforePlayBeeps);
+            //(int)((TimeForEachBeep * (AmountOfBeeps - 1) + TimeBeforePlayBeeps) * 1000);
+        
+        public int TotalTimeForAllBeepEventInMs =>
+            TimerController.FromSecondsToMilliseconds(TimeForEachBeep * (AmountOfBeeps - 1)
+                + TimeBeforePlayBeeps + TimeForResumeMusics);
+        //(int)(TimeForResumeMusics * 1000) + TotalTimeBeforeLastBeepInMs;
 
         public int HighBeepDuration { get; private set; }
-        public bool CanPerformBeeps { get; set; }
+        public bool CanPerformBeepsEvent { get; set; }
 
         private readonly string _beepsPath;
 
-        private int _timerBeforePlayBeepsInMiliSec;
-        private int _timerForAllBeepsInMiliSec;
-        private int _timerForEachBeepInMiliSec;
-        private int _rechargeForEachBeepInMiliSec;
-        private int _timerForResumeMusicsInMiliSec;
+        private int _timerBeforePlayBeepsInMilliSec;
+        private int _timerForAllBeepsInMilliSec;
+        private int _timerForEachBeepInMilliSec;
+        private int _rechargeForEachBeepInMilliSec;
+        private int _timerForResumeMusicsInMilliSec;
         private int _beepCounter;
         private float _justTimeForResumeMusics;
 
@@ -46,6 +55,9 @@ namespace CompetitionsTimeControl.Controllers
 
         public BeepsController(ComboBox comboBoxBeepPair)
         {
+            CountingBeepsDescription = "";
+            LastBeepsDescription = "";
+            TriggerCompetitionStartWithBeeps = false;
             _beepState = BeepState.WaitToRunBeeps;
             _beepsPath = string.Concat(AppDomain.CurrentDomain.BaseDirectory, DefaultBeepsFolderPath);
             GetBeepsSounds(comboBoxBeepPair);
@@ -138,8 +150,12 @@ namespace CompetitionsTimeControl.Controllers
             string secondMessage = string.Format("{0} segundo{1} d{2} beep{3} de contagem ({4} beep{5} de {6} segundo{7});",
                 sCountingBeeps, sCountingBeeps > 1 ? "s" : "", beepsAmountEorO, beepsAmountPlural, beepsAmount, beepsAmountPlural, sEachBeep, sEachBeep > 1 ? "s" : "");
 
-            string thirdMessage = string.Format("{0} segundo{1} de espera final. Sendo:\n     ({2} segundo{3} de duração do beep de início + {4} segundo{5} de \"Tempo para retomar músicas\")",
+            CountingBeepsDescription = secondMessage;
+
+            string thirdMessage = string.Format("{0} segundo{1} de espera final. Sendo: ({2} segundo{3} de duração do beep de início + {4} segundo{5} de \"Tempo para retomar músicas\")",
                 sTotalResumeMusics, sTotalResumeMusics > 1 ? "s" : "", sHighBeepDuration, sHighBeepDuration > 1 ? "s" : "", sResumeMusics, sResumeMusics == 1 ? "" : "s");
+
+            LastBeepsDescription = thirdMessage;
 
             if (beforeBeeps > 0)
                 headerMessage = $"{headerMessage}\n - {beforeBeeps} segundo{(beforeBeeps > 1 ? "s" : "")} de espera do \"Tempo extra antes dos beeps\";";
@@ -149,25 +165,39 @@ namespace CompetitionsTimeControl.Controllers
             return headerMessage;
         }
 
-        public void TryPerformBeeps(AxWindowsMediaPlayer beepMediaPlayer, int timeToDecrement, in Label lblTestMessages)
+        public void TryPerformBeeps(AxWindowsMediaPlayer beepMediaPlayer, int timeToDecrement,
+            in Label lblTestMessages, Action? finishCurrentIntervalCallback)
         {
             switch (_beepState)
             {
                 case BeepState.WaitToRunBeeps:
-                    _beepState = BeepState.WaitTimeBeforeBeeps;
-                    _timerBeforePlayBeepsInMiliSec = TimerController.FromSecondsToMiliseconds((int)TimeBeforePlayBeeps);
-                    _timerForEachBeepInMiliSec = TimerController.FromSecondsToMiliseconds((int)TimeForEachBeep);
-                    _rechargeForEachBeepInMiliSec = _timerForEachBeepInMiliSec;
-                    _timerForAllBeepsInMiliSec = _timerForEachBeepInMiliSec * (AmountOfBeeps - 1);
-                    _timerForResumeMusicsInMiliSec = TimerController.FromSecondsToMiliseconds((int)TimeForResumeMusics);
+                    _timerForEachBeepInMilliSec = TimerController.FromSecondsToMilliseconds(TimeForEachBeep);
                     _beepCounter = 0;
+
+                    if (TimeBeforePlayBeeps > 0 && !TriggerCompetitionStartWithBeeps)
+                    {
+                        _beepState = BeepState.WaitTimeBeforeBeeps;
+                        _timerBeforePlayBeepsInMilliSec = TimerController.FromSecondsToMilliseconds(TimeBeforePlayBeeps);
+                        _timerBeforePlayBeepsInMilliSec -= timeToDecrement;
+                    }
+                    else
+                    {
+                        _timerBeforePlayBeepsInMilliSec = 0;
+                        _beepState = BeepState.PerformBeeps;
+                        _beepCounter++;
+                        PlayBeep(beepMediaPlayer, LowBeepPath);
+                        _timerForEachBeepInMilliSec -= timeToDecrement;
+                    }
+                    _rechargeForEachBeepInMilliSec = _timerForEachBeepInMilliSec;
+                    _timerForAllBeepsInMilliSec = _timerForEachBeepInMilliSec * (AmountOfBeeps - 1);
+                    _timerForResumeMusicsInMilliSec = TimerController.FromSecondsToMilliseconds(TimeForResumeMusics);
                     break;
 
                 case BeepState.WaitTimeBeforeBeeps:
-                    if (TimerController.PerformCountdown(ref _timerBeforePlayBeepsInMiliSec, ref _timerForEachBeepInMiliSec,
-                        in _timerBeforePlayBeepsInMiliSec, timeToDecrement))
+                    if (TimerController.PerformCountdown(ref _timerBeforePlayBeepsInMilliSec, ref _timerForEachBeepInMilliSec,
+                        in _timerBeforePlayBeepsInMilliSec, timeToDecrement))
                     {
-                        _timerBeforePlayBeepsInMiliSec = 0;
+                        _timerBeforePlayBeepsInMilliSec = 0;
                         _beepState = BeepState.PerformBeeps;
                         _beepCounter++;
                         PlayBeep(beepMediaPlayer, LowBeepPath);
@@ -177,8 +207,8 @@ namespace CompetitionsTimeControl.Controllers
                 case BeepState.PerformBeeps:
                     void eachBeepCountdown()
                     {
-                        if (TimerController.PerformCountdown(ref _timerForEachBeepInMiliSec, ref _timerForEachBeepInMiliSec,
-                            _rechargeForEachBeepInMiliSec, timeToDecrement))
+                        if (TimerController.PerformCountdown(ref _timerForEachBeepInMilliSec, ref _timerForEachBeepInMilliSec,
+                            _rechargeForEachBeepInMilliSec, timeToDecrement))
                         {
                             _beepCounter++;
                             PlayBeep(beepMediaPlayer, _beepCounter < AmountOfBeeps ? LowBeepPath : HighBeepPath);
@@ -186,26 +216,28 @@ namespace CompetitionsTimeControl.Controllers
                     }
 
                     // All beeps countdown
-                    if (TimerController.PerformCountdown(ref _timerForAllBeepsInMiliSec, ref _timerForResumeMusicsInMiliSec,
-                        in _timerForAllBeepsInMiliSec, timeToDecrement, eachBeepCountdown))
+                    if (TimerController.PerformCountdown(ref _timerForAllBeepsInMilliSec, ref _timerForResumeMusicsInMilliSec,
+                        in _timerForAllBeepsInMilliSec, timeToDecrement, eachBeepCountdown))
                     {
-                        _timerForAllBeepsInMiliSec = 0;
+                        _timerForAllBeepsInMilliSec = 0;
                         _beepState = BeepState.TimeForResumeMusicsVolume;
+                        finishCurrentIntervalCallback?.Invoke();
                     }
+                    TriggerCompetitionStartWithBeeps = false;
                     break;
 
                 case BeepState.TimeForResumeMusicsVolume:
-                    if (TimerController.PerformCountdown(ref _timerForResumeMusicsInMiliSec, ref _timerForResumeMusicsInMiliSec,
-                        in _timerForResumeMusicsInMiliSec, timeToDecrement))
+                    if (TimerController.PerformCountdown(ref _timerForResumeMusicsInMilliSec, ref _timerForResumeMusicsInMilliSec,
+                        in _timerForResumeMusicsInMilliSec, timeToDecrement))
                     {
-                        _timerForResumeMusicsInMiliSec = 0;
-                        CanPerformBeeps = false;
+                        _timerForResumeMusicsInMilliSec = 0;
+                        CanPerformBeepsEvent = false;
                         _beepState = BeepState.WaitToRunBeeps;
                     }
                     break;
 
                 default:
-                    CanPerformBeeps = false;
+                    CanPerformBeepsEvent = false;
                     _beepState = BeepState.WaitToRunBeeps;
                     break;
             }
@@ -213,10 +245,17 @@ namespace CompetitionsTimeControl.Controllers
             if (lblTestMessages.Visible)
             {
                 lblTestMessages.Text = string.Concat(
-                    $"Antes dos beeps {GetTimeSpanFormat(_timerBeforePlayBeepsInMiliSec)} | ",
-                    $"Até último beep {GetTimeSpanFormat(_timerForAllBeepsInMiliSec)} | ",
-                    $"Após beeps {GetTimeSpanFormat(_timerForResumeMusicsInMiliSec)}");
+                    $"Antes dos beeps {GetTimeSpanFormat(_timerBeforePlayBeepsInMilliSec)} | ",
+                    $"Até último beep {GetTimeSpanFormat(_timerForAllBeepsInMilliSec)} | ",
+                    $"Após beeps {GetTimeSpanFormat(_timerForResumeMusicsInMilliSec)}");
             }
+        }
+
+        public void CancelBeepsEvent()
+        {
+            CanPerformBeepsEvent = false;
+            _beepState = BeepState.WaitToRunBeeps;
+            TriggerCompetitionStartWithBeeps = false;
         }
 
         public void PlayBeep(AxWindowsMediaPlayer beepMediaPlayer, string beepPath)

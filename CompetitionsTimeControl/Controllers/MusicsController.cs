@@ -1,4 +1,5 @@
 ﻿using AxWMPLib;
+using System.Security.Policy;
 using System.Text;
 
 namespace CompetitionsTimeControl.Controllers
@@ -18,7 +19,7 @@ namespace CompetitionsTimeControl.Controllers
 
         private bool _stepsHaveBeenConfigured;
         private float _currentMusicVolume;
-        private int _timerChangeVolumeInMiliSec;
+        private int _timerChangeVolumeInMilliSec;
         private float _stepsToChangeMusic;
         private ChangeVolume _changeVolume;
         private List<int> _checkedMusicToDelete;
@@ -220,7 +221,7 @@ namespace CompetitionsTimeControl.Controllers
         }
 
         private void TryPlayMusicBySelectionAndEnable(ListViewItem.ListViewSubItemCollection? listviewSubItemColl,
-            AxWindowsMediaPlayer musicMediaPlayer)
+            AxWindowsMediaPlayer musicMediaPlayer, bool forceRestartMusic = false)
         {
             if (listviewSubItemColl == null)
                 return;
@@ -229,26 +230,53 @@ namespace CompetitionsTimeControl.Controllers
             string format = listviewSubItemColl[1].Text;
             string path = listviewSubItemColl[3].Text;
 
-            if (!string.Equals(musicMediaPlayer.URL, $@"{path}\{music}.{format}"))
+            forceRestartMusic = forceRestartMusic || musicMediaPlayer.playState == WMPLib.WMPPlayState.wmppsUndefined;
+
+            if (!string.Equals(musicMediaPlayer.URL, $@"{path}\{music}.{format}") || forceRestartMusic)
                 musicMediaPlayer.URL = $@"{path}\{music}.{format}";
 
             musicMediaPlayer.Ctlcontrols.play();
             musicMediaPlayer.Ctlenabled = true;
         }
 
-        private void CreatePlaylist(AxWindowsMediaPlayer musicMediaPlayer, string url)
+        public void CreatePlaylist(AxWindowsMediaPlayer musicMediaPlayer, bool fromListBeginning)
         {
-            musicMediaPlayer.currentPlaylist.appendItem(musicMediaPlayer.newMedia(url));
+            string urlMusicPlaying = "";
+            
+            if (fromListBeginning)
+                musicMediaPlayer.currentPlaylist.clear();
+            else if (musicMediaPlayer.playState == WMPLib.WMPPlayState.wmppsPlaying)
+                urlMusicPlaying = musicMediaPlayer.currentMedia.sourceURL;
+
+            ListView.ListViewItemCollection listViewItemColl = _listViewMusics.Items;
+
+            for (int i = 0; i < listViewItemColl.Count; i++)
+            {
+                ListViewItem.ListViewSubItemCollection listviewSubItemColl = listViewItemColl[i].SubItems;
+                
+                string music = listviewSubItemColl[0].Text;
+                string format = listviewSubItemColl[1].Text;
+                string path = listviewSubItemColl[3].Text;
+                string url = $@"{path}\{music}.{format}";
+
+                if (url == urlMusicPlaying)
+                    continue;
+
+                musicMediaPlayer.currentPlaylist.appendItem(musicMediaPlayer.newMedia(url));
+            }
+            musicMediaPlayer.Ctlenabled = true;
+            musicMediaPlayer.Ctlcontrols.play();
         }
 
         public void TogglePlayMusicBySelectionCheckedChanged(CheckBox togglePlayMusicBySelection, ToolTip toolTip,
-            AxWindowsMediaPlayer musicMediaPlayer)
+            AxWindowsMediaPlayer musicMediaPlayer, bool startingCompetition)
         {
             if (togglePlayMusicBySelection.Checked)
             {
                 if (_listViewMusics.SelectedItems.Count > 0)
                 {
-                    TryPlayMusicBySelectionAndEnable(_listViewMusics.SelectedItems[0].SubItems, musicMediaPlayer);
+                    TryPlayMusicBySelectionAndEnable(_listViewMusics.SelectedItems[0].SubItems, musicMediaPlayer,
+                        _listViewMusics.Items.Count == 1);
                 }
 
                 togglePlayMusicBySelection.Text = "Cancelar";
@@ -256,8 +284,12 @@ namespace CompetitionsTimeControl.Controllers
             }
             else
             {
-                musicMediaPlayer.Ctlenabled = false;
-                musicMediaPlayer.currentPlaylist.clear();
+                if (!startingCompetition)
+                {
+                    musicMediaPlayer.Ctlenabled = false;
+                    musicMediaPlayer.currentPlaylist.clear();
+                }
+
                 togglePlayMusicBySelection.Text = "Selecionar e ouvir";
                 toolTip.SetToolTip(togglePlayMusicBySelection, "Habilita tocar a música ao selecioná-la na lista.");
             }
@@ -304,6 +336,9 @@ namespace CompetitionsTimeControl.Controllers
 
         public void SelectPlayingMusic(AxWindowsMediaPlayer musicMediaPlayer)
         {
+            if (musicMediaPlayer.playState != WMPLib.WMPPlayState.wmppsPlaying)
+                return;
+            
             ListViewItem? listViewItem = _listViewMusics.FindItemWithText(
                 Path.GetFileNameWithoutExtension(musicMediaPlayer.currentMedia.sourceURL));
 
@@ -312,13 +347,13 @@ namespace CompetitionsTimeControl.Controllers
 
             listViewItem.Selected = true;
             listViewItem.EnsureVisible();
-            _listViewMusics.Select();
         }
 
         public void ChangeVolumeInSeconds(byte seconds, ChangeVolume changeVolume)
         {
             _changeVolume = changeVolume;
             SecondsToChangeVolume = seconds;
+            _stepsHaveBeenConfigured = false;
         }
 
         public void TryChangeVolume(AxWindowsMediaPlayer musicMediaPlayer, TrackBar tbMusicCurrentVol,
@@ -331,8 +366,14 @@ namespace CompetitionsTimeControl.Controllers
             {
                 int volumeTarget = _changeVolume == ChangeVolume.ToMin
                     ? tbMusicVolumeMin.Value : tbMusicVolumeMax.Value;
-                
-                if (SecondsToChangeVolume.Value == 0)
+
+                bool SecondsToChangeIsZero = SecondsToChangeVolume.Value == 0;
+
+                tbMusicCurrentVol.Enabled = SecondsToChangeIsZero;
+                tbMusicVolumeMin.Enabled = SecondsToChangeIsZero;
+                tbMusicVolumeMax.Enabled = SecondsToChangeIsZero;
+
+                if (SecondsToChangeIsZero)
                 {
                     // Instant Set.
                     SecondsToChangeVolume = null;
@@ -341,18 +382,19 @@ namespace CompetitionsTimeControl.Controllers
                     return;
                 }
 
-                tbMusicCurrentVol.Enabled = false;
-                tbMusicVolumeMin.Enabled = false;
-                tbMusicVolumeMax.Enabled = false;
-
-                _timerChangeVolumeInMiliSec = TimerController.FromSecondsToMiliseconds(SecondsToChangeVolume.Value);
-                _stepsToChangeMusic = (float)(volumeTarget - tbMusicCurrentVol.Value) / _timerChangeVolumeInMiliSec;
+                _timerChangeVolumeInMilliSec = TimerController.FromSecondsToMilliseconds(SecondsToChangeVolume.Value);
+                _stepsToChangeMusic = (float)(volumeTarget - tbMusicCurrentVol.Value) / _timerChangeVolumeInMilliSec;
                 _currentMusicVolume = tbMusicCurrentVol.Value;
                 _stepsHaveBeenConfigured = true;
             }
 
-            if (!TimerController.PerformCountdown(ref _timerChangeVolumeInMiliSec, ref _timerChangeVolumeInMiliSec,
-                _timerChangeVolumeInMiliSec, timeToDecrement))
+            // After resume competition from pause
+            tbMusicCurrentVol.Enabled = false;
+            tbMusicVolumeMin.Enabled = false;
+            tbMusicVolumeMax.Enabled = false;
+
+            if (!TimerController.PerformCountdown(ref _timerChangeVolumeInMilliSec, ref _timerChangeVolumeInMilliSec,
+                _timerChangeVolumeInMilliSec, timeToDecrement))
             {
                 _currentMusicVolume += (_stepsToChangeMusic * timeToDecrement);
                 tbMusicCurrentVol.Value = (int)_currentMusicVolume;
@@ -369,5 +411,13 @@ namespace CompetitionsTimeControl.Controllers
             tbMusicVolumeMin.Enabled = true;
             tbMusicVolumeMax.Enabled = true;
         }
+
+        public void StopMusicAndClearPlaylist(AxWindowsMediaPlayer musicMediaPlayer)
+        {
+            musicMediaPlayer.Ctlcontrols.play();
+            musicMediaPlayer.currentPlaylist.clear();
+        }
+
+        public void PrepareForPause(TrackBar tbMusicCurrentVol) => tbMusicCurrentVol.Enabled = true;
     }
 }

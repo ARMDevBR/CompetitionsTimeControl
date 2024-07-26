@@ -149,12 +149,12 @@
             // 
             BtnStartCompetition.Enabled = false;
             BtnStartCompetition.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold);
-            BtnStartCompetition.Location = new Point(715, 22);
+            BtnStartCompetition.Location = new Point(702, 22);
             BtnStartCompetition.Name = "BtnStartCompetition";
-            BtnStartCompetition.Size = new Size(60, 30);
+            BtnStartCompetition.Size = new Size(68, 30);
             BtnStartCompetition.TabIndex = 55;
             BtnStartCompetition.Text = "Iniciar";
-            ToolTip.SetToolTip(BtnStartCompetition, "Inicia/Pausa a competição.");
+            ToolTip.SetToolTip(BtnStartCompetition, "Inicia/Pausa/Retoma a competição.");
             BtnStartCompetition.UseVisualStyleBackColor = true;
             BtnStartCompetition.Click += BtnStartCompetition_Click;
             // 
@@ -162,9 +162,9 @@
             // 
             BtnStopCompetition.Enabled = false;
             BtnStopCompetition.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold);
-            BtnStopCompetition.Location = new Point(781, 22);
+            BtnStopCompetition.Location = new Point(774, 22);
             BtnStopCompetition.Name = "BtnStopCompetition";
-            BtnStopCompetition.Size = new Size(60, 30);
+            BtnStopCompetition.Size = new Size(68, 30);
             BtnStopCompetition.TabIndex = 56;
             BtnStopCompetition.Text = "Parar";
             ToolTip.SetToolTip(BtnStopCompetition, "Encerra a competição.");
@@ -530,12 +530,12 @@
             // LblCompetitionIntervalTime
             // 
             LblCompetitionIntervalTime.AutoSize = true;
-            LblCompetitionIntervalTime.Location = new Point(482, 55);
+            LblCompetitionIntervalTime.Location = new Point(480, 55);
             LblCompetitionIntervalTime.Name = "LblCompetitionIntervalTime";
             LblCompetitionIntervalTime.Size = new Size(158, 19);
             LblCompetitionIntervalTime.TabIndex = 52;
             LblCompetitionIntervalTime.Text = "Tempo de cada intervalo";
-            ToolTip.SetToolTip(LblCompetitionIntervalTime, "Tempo em segundos de cada tiro (Máximo de 300s [5 mins]).");
+            ToolTip.SetToolTip(LblCompetitionIntervalTime, "Tempo em segundos de cada tiro (Máximo de 360s [6 mins]).");
             // 
             // CheckBoxStopMusicsAtEnd
             // 
@@ -553,7 +553,7 @@
             // LblCompetitionAmountIntervals
             // 
             LblCompetitionAmountIntervals.AutoSize = true;
-            LblCompetitionAmountIntervals.Location = new Point(482, 25);
+            LblCompetitionAmountIntervals.Location = new Point(480, 25);
             LblCompetitionAmountIntervals.Name = "LblCompetitionAmountIntervals";
             LblCompetitionAmountIntervals.Size = new Size(167, 19);
             LblCompetitionAmountIntervals.TabIndex = 50;
@@ -562,12 +562,11 @@
             // 
             // ProgressBarCompetitionElapsedTime
             // 
-            ProgressBarCompetitionElapsedTime.Location = new Point(715, 85);
+            ProgressBarCompetitionElapsedTime.Location = new Point(703, 85);
             ProgressBarCompetitionElapsedTime.Name = "ProgressBarCompetitionElapsedTime";
-            ProgressBarCompetitionElapsedTime.Size = new Size(126, 23);
+            ProgressBarCompetitionElapsedTime.Size = new Size(138, 23);
             ProgressBarCompetitionElapsedTime.TabIndex = 59;
             ToolTip.SetToolTip(ProgressBarCompetitionElapsedTime, "Progresso da competição.");
-            ProgressBarCompetitionElapsedTime.Value = 20;
             // 
             // LblIntervalsElapsed
             // 
@@ -580,16 +579,15 @@
             LblIntervalsElapsed.TabIndex = 58;
             LblIntervalsElapsed.Text = "100/100";
             LblIntervalsElapsed.TextAlign = ContentAlignment.MiddleCenter;
-            ToolTip.SetToolTip(LblIntervalsElapsed, "Quantidade de tiros já executados do total.");
+            ToolTip.SetToolTip(LblIntervalsElapsed, "Qual o tiro atual em relação ao total de tiros.");
             // 
             // ProgressBarCurrentIntervalElapsed
             // 
-            ProgressBarCurrentIntervalElapsed.Location = new Point(715, 57);
+            ProgressBarCurrentIntervalElapsed.Location = new Point(703, 57);
             ProgressBarCurrentIntervalElapsed.Name = "ProgressBarCurrentIntervalElapsed";
-            ProgressBarCurrentIntervalElapsed.Size = new Size(126, 23);
+            ProgressBarCurrentIntervalElapsed.Size = new Size(138, 23);
             ProgressBarCurrentIntervalElapsed.TabIndex = 57;
             ToolTip.SetToolTip(ProgressBarCurrentIntervalElapsed, "Progressão do intervalo atual.");
-            ProgressBarCurrentIntervalElapsed.Value = 20;
             // 
             // CheckBoxStartWithBeeps
             // 
@@ -631,9 +629,9 @@
             // 
             LblCompetitionTotalTime.BorderStyle = BorderStyle.Fixed3D;
             LblCompetitionTotalTime.Font = new Font("Segoe UI", 9F);
-            LblCompetitionTotalTime.Location = new Point(485, 81);
+            LblCompetitionTotalTime.Location = new Point(483, 81);
             LblCompetitionTotalTime.Name = "LblCompetitionTotalTime";
-            LblCompetitionTotalTime.Size = new Size(210, 30);
+            LblCompetitionTotalTime.Size = new Size(209, 30);
             LblCompetitionTotalTime.TabIndex = 54;
             LblCompetitionTotalTime.Text = "Tempo total da competição 00:00:00";
             LblCompetitionTotalTime.TextAlign = ContentAlignment.MiddleCenter;
@@ -809,7 +807,7 @@
             NumUDTimeForResumeMusics.Size = new Size(45, 25);
             NumUDTimeForResumeMusics.TabIndex = 10;
             NumUDTimeForResumeMusics.TextAlign = HorizontalAlignment.Center;
-            NumUDTimeForResumeMusics.Value = new decimal(new int[] { 4, 0, 0, 0 });
+            NumUDTimeForResumeMusics.Value = new decimal(new int[] { 2, 0, 0, 0 });
             NumUDTimeForResumeMusics.ValueChanged += NumUDTimeForResumeMusics_ValueChanged;
             // 
             // NumUDAmountOfBeeps
@@ -897,7 +895,7 @@
             // NumUDCompetitionAmountIntervals
             // 
             NumUDCompetitionAmountIntervals.Enabled = false;
-            NumUDCompetitionAmountIntervals.Location = new Point(650, 22);
+            NumUDCompetitionAmountIntervals.Location = new Point(647, 22);
             NumUDCompetitionAmountIntervals.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
             NumUDCompetitionAmountIntervals.Name = "NumUDCompetitionAmountIntervals";
             NumUDCompetitionAmountIntervals.Size = new Size(45, 25);
@@ -910,8 +908,8 @@
             // 
             NumUDCompetitionIntervalSeconds.Enabled = false;
             NumUDCompetitionIntervalSeconds.Increment = new decimal(new int[] { 15, 0, 0, 0 });
-            NumUDCompetitionIntervalSeconds.Location = new Point(650, 52);
-            NumUDCompetitionIntervalSeconds.Maximum = new decimal(new int[] { 300, 0, 0, 0 });
+            NumUDCompetitionIntervalSeconds.Location = new Point(647, 52);
+            NumUDCompetitionIntervalSeconds.Maximum = new decimal(new int[] { 360, 0, 0, 0 });
             NumUDCompetitionIntervalSeconds.Minimum = new decimal(new int[] { 15, 0, 0, 0 });
             NumUDCompetitionIntervalSeconds.Name = "NumUDCompetitionIntervalSeconds";
             NumUDCompetitionIntervalSeconds.Size = new Size(45, 25);

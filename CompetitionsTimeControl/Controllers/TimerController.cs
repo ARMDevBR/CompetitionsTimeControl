@@ -19,9 +19,14 @@ internal static class TimerController
         return ret;
     }
 
-    internal static int FromSecondsToMiliseconds(int seconds)
+    internal static int FromSecondsToMilliseconds(float seconds)
     {
-        return seconds * 1000;
+        return (int)(seconds * 1000);
+    }
+
+    internal static float FromMillisecondsToSeconds(int milliseconds)
+    {
+        return milliseconds * 0.001f;
     }
 }
 
