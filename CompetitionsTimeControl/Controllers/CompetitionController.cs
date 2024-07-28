@@ -17,7 +17,7 @@ namespace CompetitionsTimeControl.Controllers
 
         public enum CompetitionProgram { OnlyBeeps, MusicsAndBeeps }
         private enum InitializationProgram { FromMusicPlaying, FromListBeginning }
-        private enum PlaylistRestart { ShuffleList, SequentialList, InvertLastMode }
+        public enum PlaylistRestart { ShuffleList, SequentialList, InvertLastMode }
         private enum CompetitionProgramState
         {
             WaitToResumeProgram, WaitToRunProgram, WaitToAdjustMusicVolumeToMin, AdjustCurrentMusicVolumeToMin,
@@ -32,6 +32,7 @@ namespace CompetitionsTimeControl.Controllers
         public bool CanRunCompetition { get; private set; }
         public bool ProgramIsRunning { get; private set; }
         public CompetitionProgram CompetitionProgramSetup { get; private set; }
+        public PlaylistRestart PlaylistRestartMode { get; private set; }
 
         private byte _nextTimeToChangeVolume;
         private byte _currentInterval;
@@ -51,7 +52,6 @@ namespace CompetitionsTimeControl.Controllers
         private readonly Label _lblCompetitionElapsedTime = null!;
         private readonly ProgressBar _pbCurrentIntervalElapsed = null!;
         private readonly ProgressBar _pbCompetitionElapsedTime = null!;
-        private PlaylistRestart _playlistRestart;
 
         public CompetitionController(in Label lblCompetitionTotalTime, in ProgressBar pbCurrentIntervalElapsed,
             in Label lblIntervalsElapsed, in ProgressBar pbCompetitionElapsedTime, in Label lblCompetitionElapsedTime)
@@ -115,7 +115,7 @@ namespace CompetitionsTimeControl.Controllers
             if (selectedIndex < 0 || selectedIndex > Enum.GetNames(typeof(PlaylistRestart)).Length - 1)
                 return;
 
-            _playlistRestart = (PlaylistRestart)selectedIndex;
+            PlaylistRestartMode = (PlaylistRestart)selectedIndex;
         }
 
         public bool ValidateBeepsEventTimes(BeepsController beepsController)
@@ -179,17 +179,23 @@ namespace CompetitionsTimeControl.Controllers
             return ret;
         }
 
-        public void StartCompetition(AxWindowsMediaPlayer musicMediaPlayer, MusicsController musicsController, out Action? finishCurrentIntervalCallback)
+        public void StartCompetition(AxWindowsMediaPlayer musicMediaPlayer, MusicsController musicsController,
+            out Action? finishCurrentIntervalCallback)
         {
             finishCurrentIntervalCallback = null;
 
             if (CanRunCompetition || ProgramIsRunning)
                 return;
-            
+
+            musicsController.RepaintListViewGrid(false);
+
             if (CompetitionProgramSetup == CompetitionProgram.OnlyBeeps)
-                musicMediaPlayer.currentPlaylist.clear();
+                musicsController.StopMusicAndClearPlaylist(musicMediaPlayer);
             else
-                CreatePlaylistByInitializationProgram(musicMediaPlayer, musicsController);
+            {
+                musicsController.CreatePlaylist(musicMediaPlayer,
+                    _initializationProgram == InitializationProgram.FromListBeginning);
+            }
             
             _currentInterval = 0;
             AdjustLabelIntervalsElapsed();
@@ -200,13 +206,6 @@ namespace CompetitionsTimeControl.Controllers
             _programState = CompetitionProgramState.WaitToRunProgram;
             CanRunCompetition = true;
             finishCurrentIntervalCallback = FinishCurrentInterval;
-        }
-
-        private void CreatePlaylistByInitializationProgram(AxWindowsMediaPlayer musicMediaPlayer,
-            MusicsController musicsController)
-        {
-            musicsController.CreatePlaylist(musicMediaPlayer,
-                _initializationProgram == InitializationProgram.FromListBeginning);
         }
 
         public bool StopCompetition()
@@ -264,7 +263,7 @@ namespace CompetitionsTimeControl.Controllers
         }
 
         public void TryPerformCompetition(BeepsController beepsController, MusicsController musicsController,
-            Action clearPlaylistAndStopMusicCallback, Action formStopCompetitionCallback, int timeToDecrement)
+            Action<bool> chooseHowToClearPlaylist, Action formStopCompetitionCallback, int timeToDecrement)
         {
             if (!CanRunCompetition)
             {
@@ -360,13 +359,7 @@ namespace CompetitionsTimeControl.Controllers
                     ProgramIsRunning = false;
                     CanRunCompetition = false;
                     _programState = CompetitionProgramState.WaitToRunProgram;
-
-                    if (CompetitionProgramSetup == CompetitionProgram.MusicsAndBeeps)
-                        musicsController.ChangeVolumeInSeconds(0, MusicsController.ChangeVolume.ToMax);
-
-                    if (StopMusicsAtEnd)
-                        clearPlaylistAndStopMusicCallback();
-                    
+                    chooseHowToClearPlaylist(StopMusicsAtEnd);                    
                     break;
                 
                 default:
@@ -409,6 +402,9 @@ namespace CompetitionsTimeControl.Controllers
                 _timerCompetitionIntervalInMs = 0;
                 _timerCompetitionTotalInMs = 0;
                 _programState = CompetitionProgramState.FinishCompetition;
+
+                if (CompetitionProgramSetup == CompetitionProgram.MusicsAndBeeps)
+                    musicsController.ChangeVolumeInSeconds(0, MusicsController.ChangeVolume.ToMax);
             }
 
             _lblCompetitionElapsedTime.Text = TimeSpan.FromMilliseconds(competitionElapsedTimeInMs).ToString(@"hh\:mm\:ss");

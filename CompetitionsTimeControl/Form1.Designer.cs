@@ -77,6 +77,11 @@
             BeepMediaPlayer = new AxWMPLib.AxWindowsMediaPlayer();
             MenuStrip = new MenuStrip();
             arquivoToolStripMenuItem = new ToolStripMenuItem();
+            ToolStripMenuItemOpenConfiguration = new ToolStripMenuItem();
+            ToolStripMenuItemSaveConfiguration = new ToolStripMenuItem();
+            ToolStripMenuItemUpdateBeepsList = new ToolStripMenuItem();
+            ToolStripMenuItemEnableTextAndButtonsTips = new ToolStripMenuItem();
+            ToolStripMenuItemCloseProgram = new ToolStripMenuItem();
             sobreToolStripMenuItem = new ToolStripMenuItem();
             GroupBoxBeepsCtrls = new GroupBox();
             GroupBoxControlsAndTest = new GroupBox();
@@ -126,6 +131,7 @@
             MusicMediaPlayer.OcxState = (AxHost.State)resources.GetObject("MusicMediaPlayer.OcxState");
             MusicMediaPlayer.Size = new Size(420, 90);
             MusicMediaPlayer.TabIndex = 35;
+            MusicMediaPlayer.PlayStateChange += MusicMediaPlayer_PlayStateChange;
             // 
             // TBMusicVolumeMin
             // 
@@ -438,6 +444,7 @@
             // 
             // ToolTip
             // 
+            ToolTip.Active = false;
             ToolTip.AutomaticDelay = 1000;
             ToolTip.AutoPopDelay = 6000;
             ToolTip.InitialDelay = 1000;
@@ -671,9 +678,45 @@
             // 
             // arquivoToolStripMenuItem
             // 
+            arquivoToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { ToolStripMenuItemOpenConfiguration, ToolStripMenuItemSaveConfiguration, ToolStripMenuItemUpdateBeepsList, ToolStripMenuItemEnableTextAndButtonsTips, ToolStripMenuItemCloseProgram });
             arquivoToolStripMenuItem.Name = "arquivoToolStripMenuItem";
             arquivoToolStripMenuItem.Size = new Size(69, 23);
             arquivoToolStripMenuItem.Text = "Arquivo";
+            // 
+            // ToolStripMenuItemOpenConfiguration
+            // 
+            ToolStripMenuItemOpenConfiguration.Name = "ToolStripMenuItemOpenConfiguration";
+            ToolStripMenuItemOpenConfiguration.Size = new Size(280, 24);
+            ToolStripMenuItemOpenConfiguration.Text = "Abrir configuração";
+            ToolStripMenuItemOpenConfiguration.Click += ToolStripMenuItemOpenConfiguration_Click;
+            // 
+            // ToolStripMenuItemSaveConfiguration
+            // 
+            ToolStripMenuItemSaveConfiguration.Name = "ToolStripMenuItemSaveConfiguration";
+            ToolStripMenuItemSaveConfiguration.Size = new Size(280, 24);
+            ToolStripMenuItemSaveConfiguration.Text = "Salvar Configuração";
+            ToolStripMenuItemSaveConfiguration.Click += ToolStripMenuItemSaveConfiguration_Click;
+            // 
+            // ToolStripMenuItemUpdateBeepsList
+            // 
+            ToolStripMenuItemUpdateBeepsList.Name = "ToolStripMenuItemUpdateBeepsList";
+            ToolStripMenuItemUpdateBeepsList.Size = new Size(280, 24);
+            ToolStripMenuItemUpdateBeepsList.Text = "Atualizar lista de beeps";
+            ToolStripMenuItemUpdateBeepsList.Click += ToolStripMenuItemUpdateBeepsList_Click;
+            // 
+            // ToolStripMenuItemEnableTextAndButtonsTips
+            // 
+            ToolStripMenuItemEnableTextAndButtonsTips.Name = "ToolStripMenuItemEnableTextAndButtonsTips";
+            ToolStripMenuItemEnableTextAndButtonsTips.Size = new Size(280, 24);
+            ToolStripMenuItemEnableTextAndButtonsTips.Text = "Habilitar dicas de textos e botões";
+            ToolStripMenuItemEnableTextAndButtonsTips.Click += ToolStripMenuItemEnableTextAndButtonsTips_Click;
+            // 
+            // ToolStripMenuItemCloseProgram
+            // 
+            ToolStripMenuItemCloseProgram.Name = "ToolStripMenuItemCloseProgram";
+            ToolStripMenuItemCloseProgram.Size = new Size(280, 24);
+            ToolStripMenuItemCloseProgram.Text = "Sair";
+            ToolStripMenuItemCloseProgram.Click += ToolStripMenuItemCloseProgram_Click;
             // 
             // sobreToolStripMenuItem
             // 
@@ -841,6 +884,7 @@
             // ComboBoxBeepPair
             // 
             ComboBoxBeepPair.DropDownStyle = ComboBoxStyle.DropDownList;
+            ComboBoxBeepPair.Enabled = false;
             ComboBoxBeepPair.FormattingEnabled = true;
             ComboBoxBeepPair.Location = new Point(165, 22);
             ComboBoxBeepPair.Name = "ComboBoxBeepPair";
@@ -1004,7 +1048,6 @@
         private TrackBar TBMusicVolumeMax;
         private AxWMPLib.AxWindowsMediaPlayer BeepMediaPlayer;
         private Button BtnConfigTest;
-        private GroupBox GroupBoxBeepCtrls;
         private MenuStrip MenuStrip;
         private ToolStripMenuItem arquivoToolStripMenuItem;
         private ToolStripMenuItem sobreToolStripMenuItem;
@@ -1036,7 +1079,6 @@
         private Button BtnClearMusicsList;
         private NumericUpDown NumUDTimeToVolMin;
         private Label LblTimeToChangeVolume;
-        private Button button3;
         private GroupBox GroupBoxProgram;
         private ComboBox ComboBoxProgramming;
         private Label LblProgramming;
@@ -1060,5 +1102,10 @@
         private CheckBox TogglePlaylistMode;
         private CheckBox TogglePlayMusicBySelection;
         private ListView ListViewMusics;
+        private ToolStripMenuItem ToolStripMenuItemEnableTextAndButtonsTips;
+        private ToolStripMenuItem ToolStripMenuItemOpenConfiguration;
+        private ToolStripMenuItem ToolStripMenuItemSaveConfiguration;
+        private ToolStripMenuItem ToolStripMenuItemCloseProgram;
+        private ToolStripMenuItem ToolStripMenuItemUpdateBeepsList;
     }
 }

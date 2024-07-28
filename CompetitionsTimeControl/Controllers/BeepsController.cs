@@ -63,7 +63,7 @@ namespace CompetitionsTimeControl.Controllers
             GetBeepsSounds(comboBoxBeepPair);
         }
 
-        private void GetBeepsSounds(ComboBox comboBoxBeepPair)
+        public void GetBeepsSounds(ComboBox comboBoxBeepPair)
         {
             if (!Directory.Exists(_beepsPath))
             {
@@ -74,6 +74,8 @@ namespace CompetitionsTimeControl.Controllers
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Warning);
 
+                comboBoxBeepPair.Items.Clear();
+                _beepPairsList?.Clear();
                 return;
             }
 
@@ -88,6 +90,9 @@ namespace CompetitionsTimeControl.Controllers
                     MessageBoxIcon.Warning);
             }
 
+            comboBoxBeepPair.Items.Clear();
+            _beepPairsList?.Clear();
+
             foreach (string beepPath in beepsPathsArray)
             {
                 string[] beepsArray = Directory.GetFiles(beepPath, "??Beep.*", SearchOption.TopDirectoryOnly)
@@ -96,9 +101,10 @@ namespace CompetitionsTimeControl.Controllers
 
                 if (beepsArray.Length == AmountOfBeepsPerFolder)
                 {
-                    _beepPairsList ??= new List<BeepPair>();
+                    _beepPairsList ??= [];
 
                     comboBoxBeepPair.Items.Add(beepPath.Remove(0, _beepsPath.Length + 1));
+                    comboBoxBeepPair.Enabled = true;
                     _beepPairsList.Add(new BeepPair(beepsArray[0], beepsArray[1]));
                 }
                 else
