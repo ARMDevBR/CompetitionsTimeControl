@@ -1,9 +1,8 @@
 ﻿using CompetitionsTimeControl.Controllers;
+using System.Diagnostics;
 using System.Text;
-using System.Timers;
 using WMPLib;
 using static CompetitionsTimeControl.Controllers.CompetitionController;
-using Timer = System.Timers.Timer;
 
 namespace CompetitionsTimeControl
 {
@@ -23,23 +22,21 @@ namespace CompetitionsTimeControl
         private BeepsController _beepsController = null!;
         private CompetitionController _competitionController = null!;
         private MusicsController _musicsController = null!;
-        private Timer _timer;
+        private Stopwatch _stopwatch;
         private int _lastMillisecond;
 
         public MainForm()
         {
-            _timer = new Timer(10);
-            _timer.Elapsed += Timer_Tick;
-            _timer.AutoReset = true;
-            _timer.SynchronizingObject = this;
             _lastMillisecond = 0;
-
             InitializeComponent();
             ConfigureBeepMediaPlayer();
             ConfigureMusicMediaPlayer();
             _finishCurrentIntervalCallback = null;
             _recreatePlaylist = false;
             _closingApplication = false;
+
+            TimerController.CreateThreadTimer(ThreadTimerTick);
+            _stopwatch = new Stopwatch();
         }
 
         private void ConfigureBeepMediaPlayer()
@@ -62,8 +59,7 @@ namespace CompetitionsTimeControl
         {
             if (_beepsController == null)
             {
-                _beepsController = new(ComboBoxBeepPair);
-                _timer.Enabled = true;
+                _beepsController = new(ComboBoxBeepPair, LblCompetitionTotalTime);
 
                 if (_beepsController != null)
                 {
@@ -78,8 +74,8 @@ namespace CompetitionsTimeControl
 
             if (_competitionController == null)
             {
-                _competitionController = new(LblCompetitionTotalTime, ProgressBarCurrentIntervalElapsed,
-                    LblIntervalsElapsed, ProgressBarCompetitionElapsedTime, LblCompetitionElapsedTime);
+                _competitionController = new(LblCompetitionTotalTime, ProgressBarCurrentIntervalElapsed, LblIntervalsElapsed,
+                    ProgressBarCompetitionElapsedTime, LblCurrentIntervalElapsedTime, LblCompetitionElapsedTime);
 
                 if (_competitionController != null)
                 {
@@ -88,6 +84,12 @@ namespace CompetitionsTimeControl
                     _competitionController.StopMusicsAtEnd = CheckBoxStopMusicsAtEnd.Checked;
                     _competitionController.SetCompetitionAmountIntervals((byte)NumUDCompetitionAmountIntervals.Value);
                     _competitionController.SetCompetitionIntervalSeconds((int)NumUDCompetitionIntervalSeconds.Value);
+
+                    if (_beepsController != null && _musicsController != null)
+                    {
+                        _stopwatch.Start();
+                        TimerController.StartThreadTimer();
+                    }
                 }
             }
         }
@@ -95,23 +97,45 @@ namespace CompetitionsTimeControl
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
             _closingApplication = true;
-            _timer.Stop();
-            _timer.Dispose();
+            TimerController.StopThreadTimer();
+            _stopwatch.Stop();
             BeepMediaPlayer.close();
             MusicMediaPlayer.close();
             BeepMediaPlayer.Dispose();
             MusicMediaPlayer.Dispose();
+            TimerController.DisposeThreadTimer();
         }
 
-        private void Timer_Tick(object? source, ElapsedEventArgs e)
+        private void ThreadTimerTick(object? stateInfo)
+        {
+            /*if (!TimerController.ThreadTimerIsRunning || _closingApplication)
+                return;*/
+            try
+            {
+                Invoke(() =>
+                {
+                    if (this.IsDisposed)
+                        return;
+
+                    FormTimerTick();
+                });
+            }
+            catch (ObjectDisposedException)
+            {
+            }
+        }
+
+        private void FormTimerTick()
         {
             if (_closingApplication)
                 return;
 
-            int currentMillisecond = e.SignalTime.Millisecond;
+            if (_stopwatch.ElapsedMilliseconds < _lastMillisecond)
+                _stopwatch.Restart();
 
-            int elapsedTime = currentMillisecond >= _lastMillisecond
-                ? currentMillisecond - _lastMillisecond : 1000 + currentMillisecond - _lastMillisecond;
+            int currentMillisecond = (int)_stopwatch.ElapsedMilliseconds;
+
+            int elapsedTime = Math.Abs(currentMillisecond - _lastMillisecond);
 
             _lastMillisecond = currentMillisecond;
 
@@ -136,7 +160,7 @@ namespace CompetitionsTimeControl
                     !_recreatePlaylist)
                 {
                     _musicsController.SelectPlayingMusic(MusicMediaPlayer, ref _setVisibleAndFocus);
-                    _musicsController.AutoChangeToNextMusic(MusicMediaPlayer);
+                    _musicsController.AutoChangeToNextMusic(MusicMediaPlayer, elapsedTime);
                 }
 
                 if (_recreatePlaylist)
@@ -144,6 +168,7 @@ namespace CompetitionsTimeControl
                     TryToRecreatePlaylist();
                     _recreatePlaylist = false;
                 }
+                LblCompetitionTotalTime.Text = elapsedTime.ToString();
             }
 
             if (_beepsController.CanPerformBeepsEvent &&
@@ -160,6 +185,42 @@ namespace CompetitionsTimeControl
         }
 
         #region STRIP MENU
+        private void ToolStripMenuItemOpenConfiguration_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void ToolStripMenuItemSaveConfiguration_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void ToolStripMenuItemSaveConfigurationAs_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void ToolStripMenuItemEnableTextAndButtonsTips_Click(object sender, EventArgs e)
+        {
+            ToolStripMenuItemEnableTextAndButtonsTips.Checked = !ToolStripMenuItemEnableTextAndButtonsTips.Checked;
+            ToolTip.Active = ToolStripMenuItemEnableTextAndButtonsTips.Checked;
+        }
+
+        private void ToolStripMenuItemReloadBeepList_Click(object sender, EventArgs e)
+        {
+            _beepsController?.GetBeepsSounds(ComboBoxBeepPair);
+            ComboBoxBeepPair_SelectedIndexChanged(sender, EventArgs.Empty);
+        }
+
+        private void ToolStripMenuItemAbout_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void ToolStripMenuItemCloseProgram_Click(object sender, EventArgs e)
+        {
+            Application.Exit();
+        }
         #endregion
 
         #region BEEPS CONTROLLER
@@ -170,7 +231,14 @@ namespace CompetitionsTimeControl
             NumUDTimeForResumeMusics_ValueChanged(sender, e);
             SetEnableBeepsControls(enableButtons);
             ComboBoxProgramming.Enabled = enableButtons;
-            ComboBoxBeepPair.Enabled = ComboBoxBeepPair.Items.Count > 0;
+
+            if (ComboBoxBeepPair.Items.Count > 0)
+                ComboBoxBeepPair.Enabled = true;
+            else
+            {
+                ComboBoxBeepPair.Enabled = false;
+                ComboBoxProgramming.SelectedIndex = -1;
+            }
         }
 
         private void TBBeepVolume_ValueChanged(object sender, EventArgs e)
@@ -439,24 +507,35 @@ namespace CompetitionsTimeControl
 
             if (_competitionController.CompetitionProgramSetup == CompetitionProgram.MusicsAndBeeps)
             {
-                enableMoreControls = _musicsController.HasValidMusics();
+                enableMoreControls = ListViewMusics.Items.Count > 0;
 
                 if (!enableMoreControls)
                 {
-                    StringBuilder sb = new("Não há músicas válidas na lista de músicas (em vermelho são inválidas).\n\n");
-                    sb.Append("Selecione músicas válidas para tocar se deseja esta opção para a competição.");
+                    StringBuilder sb = new("Não há nenhuma música na lista para tocar durante a competição.\n\n");
+                    sb.Append("Adicione músicas na lista se deseja esta opção.");
 
                     MessageBox.Show(sb.ToString(), "ATENÇÃO", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     ComboBoxProgramming.SelectedIndex = 0;
+                }
+                else
+                {
+                    enableMoreControls = _musicsController.HasValidMusics();
+
+                    if (!enableMoreControls)
+                    {
+                        StringBuilder sb = new("Não há músicas válidas. (Músicas em vermelho na lista são inválidas).\n\n");
+                        sb.Append("Adicione músicas válidas para tocar se deseja esta opção para a competição.");
+
+                        MessageBox.Show(sb.ToString(), "ATENÇÃO", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        ComboBoxProgramming.SelectedIndex = 0;
+                    }
                 }
             }
 
             ComboBoxInitialization.Enabled = enableMoreControls;
             ComboBoxRepeatPlaylist.Enabled = enableMoreControls;
-            NumUDTimeToVolMin.Enabled = enableMoreControls;
-            CheckBoxStopMusicsAtEnd.Enabled = enableMoreControls;
             CheckBoxStartWithBeeps.Enabled = true;
-            EnableControlsToStartCompetition(!enableMoreControls);
+            EnableControlsToStartCompetition();
         }
 
         private void ComboBoxInitialization_SelectedIndexChanged(object sender, EventArgs e)
@@ -473,17 +552,24 @@ namespace CompetitionsTimeControl
             EnableControlsToStartCompetition();
         }
 
-        private void EnableControlsToStartCompetition(bool forceEnable = false)
+        private void EnableControlsToStartCompetition()
         {
-            bool enableMoreControls = forceEnable ||
-                (ComboBoxInitialization.SelectedIndex >= 0 && ComboBoxRepeatPlaylist.SelectedIndex >= 0);
+            bool enableOnlyBeepsControls = ComboBoxProgramming.SelectedIndex == 0; // "CompetitionProgram.OnlyBeeps"
 
-            if (_competitionController != null && !_competitionController.CanRunCompetition)
+            bool enableMusicsAndBeepsControls = ComboBoxProgramming.SelectedIndex > 0 &&
+                ComboBoxInitialization.SelectedIndex >= 0 && ComboBoxRepeatPlaylist.SelectedIndex >= 0;
+
+            if (_competitionController != null)
             {
-                NumUDCompetitionAmountIntervals.Enabled = enableMoreControls;
-                NumUDCompetitionIntervalSeconds.Enabled = enableMoreControls;
+                //if (!_competitionController.CanRunCompetition)// ver aqui
+                {
+                    NumUDTimeToVolMin.Enabled = enableMusicsAndBeepsControls;
+                    CheckBoxStopMusicsAtEnd.Enabled = enableMusicsAndBeepsControls;
+                    NumUDCompetitionAmountIntervals.Enabled = enableOnlyBeepsControls || enableMusicsAndBeepsControls;
+                    NumUDCompetitionIntervalSeconds.Enabled = enableOnlyBeepsControls || enableMusicsAndBeepsControls;
+                }
+                BtnStartCompetition.Enabled = enableOnlyBeepsControls || enableMusicsAndBeepsControls;
             }
-            BtnStartCompetition.Enabled = enableMoreControls;
         }
 
         private void NumUDTimeToVolMin_ValueChanged(object sender, EventArgs e)
@@ -579,32 +665,5 @@ namespace CompetitionsTimeControl
             ChooseHowToClearPlaylist(_competitionController.StopMusicsAtEnd);
         }
         #endregion
-
-        private void ToolStripMenuItemOpenConfiguration_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void ToolStripMenuItemSaveConfiguration_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void ToolStripMenuItemUpdateBeepsList_Click(object sender, EventArgs e)
-        {
-            _beepsController?.GetBeepsSounds(ComboBoxBeepPair);
-            ComboBoxBeepPair_SelectedIndexChanged(sender, EventArgs.Empty);
-        }
-
-        private void ToolStripMenuItemEnableTextAndButtonsTips_Click(object sender, EventArgs e)
-        {
-            ToolStripMenuItemEnableTextAndButtonsTips.Checked = !ToolStripMenuItemEnableTextAndButtonsTips.Checked;
-            ToolTip.Active = ToolStripMenuItemEnableTextAndButtonsTips.Checked;
-        }
-
-        private void ToolStripMenuItemCloseProgram_Click(object sender, EventArgs e)
-        {
-            Application.Exit();
-        }
     }
 }

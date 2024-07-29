@@ -1,11 +1,5 @@
 ﻿using AxWMPLib;
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
 
 namespace CompetitionsTimeControl.Controllers
 {
@@ -15,7 +9,7 @@ namespace CompetitionsTimeControl.Controllers
         private const byte MaxAmountIntervals = 100; //Max amount to remove slash spaces.
         private const int ProgressBarValueOffset = 550;
 
-        public enum CompetitionProgram { OnlyBeeps, MusicsAndBeeps }
+        public enum CompetitionProgram { None = -1, OnlyBeeps, MusicsAndBeeps }
         private enum InitializationProgram { FromMusicPlaying, FromListBeginning }
         public enum PlaylistRestart { ShuffleList, SequentialList, InvertLastMode }
         private enum CompetitionProgramState
@@ -36,12 +30,10 @@ namespace CompetitionsTimeControl.Controllers
 
         private byte _nextTimeToChangeVolume;
         private byte _currentInterval;
-        private bool _canAdjustMusicVolumeToMin;
+        private bool _showFinishMessage;
         private int _timerAdjustMusicVolumeToMin;
         private int _timerCompetitionIntervalInMs;
         private int _timerCompetitionTotalInMs;
-        private int _rechargeTimerAdjMusicVolToMin;
-        private int _rechargeCompetitionIntervalInMs;
         private int _competitionIntervalsInMs;
         private int _competitionTotalTimeInMs;
         private CompetitionProgramState _programState;
@@ -49,19 +41,22 @@ namespace CompetitionsTimeControl.Controllers
         private InitializationProgram _initializationProgram;
         private readonly Label _lblCompetitionTotalTime = null!;
         private readonly Label _lblIntervalsElapsed = null!;
+        private readonly Label _lblCurrIntervalsElapsedTime = null!;
         private readonly Label _lblCompetitionElapsedTime = null!;
         private readonly ProgressBar _pbCurrentIntervalElapsed = null!;
         private readonly ProgressBar _pbCompetitionElapsedTime = null!;
 
         public CompetitionController(in Label lblCompetitionTotalTime, in ProgressBar pbCurrentIntervalElapsed,
-            in Label lblIntervalsElapsed, in ProgressBar pbCompetitionElapsedTime, in Label lblCompetitionElapsedTime)
+            in Label lblIntervalsElapsed, in ProgressBar pbCompetitionElapsedTime, in Label lblCurrIntervalsElapsedTime,
+            in Label lblCompetitionElapsedTime)
         {
-            _canAdjustMusicVolumeToMin = true;
+            _showFinishMessage = true;
             _programState = CompetitionProgramState.WaitToRunProgram;
             _lblCompetitionTotalTime = lblCompetitionTotalTime;
             _pbCurrentIntervalElapsed = pbCurrentIntervalElapsed;
             _lblIntervalsElapsed = lblIntervalsElapsed;
             _pbCompetitionElapsedTime = pbCompetitionElapsedTime;
+            _lblCurrIntervalsElapsedTime = lblCurrIntervalsElapsedTime;
             _lblCompetitionElapsedTime = lblCompetitionElapsedTime;
         }
 
@@ -96,7 +91,7 @@ namespace CompetitionsTimeControl.Controllers
 
         public void ChangeCompetitionProgramSelection(int selectedIndex)
         {
-            if (selectedIndex < 0 || selectedIndex > Enum.GetNames(typeof(CompetitionProgram)).Length - 1)
+            if (selectedIndex < -1 || selectedIndex > Enum.GetNames(typeof(CompetitionProgram)).Length - 2)
                 return;
 
             CompetitionProgramSetup = (CompetitionProgram)selectedIndex;
@@ -190,7 +185,7 @@ namespace CompetitionsTimeControl.Controllers
             musicsController.RepaintListViewGrid(false);
 
             if (CompetitionProgramSetup == CompetitionProgram.OnlyBeeps)
-                musicsController.StopMusicAndClearPlaylist(musicMediaPlayer);
+                musicsController.DisablePlayerAndClearPlaylist(musicMediaPlayer);
             else
             {
                 musicsController.CreatePlaylist(musicMediaPlayer,
@@ -199,11 +194,13 @@ namespace CompetitionsTimeControl.Controllers
             
             _currentInterval = 0;
             AdjustLabelIntervalsElapsed();
+            _lblCurrIntervalsElapsedTime.Text = "00:00:00";
             _lblCompetitionElapsedTime.Text = "00:00:00";
             _pbCurrentIntervalElapsed.Value = 0;
             _pbCompetitionElapsedTime.Value = 0;
             _lblIntervalsElapsed.BackColor = Color.LimeGreen;
             _programState = CompetitionProgramState.WaitToRunProgram;
+            _showFinishMessage = true;
             CanRunCompetition = true;
             finishCurrentIntervalCallback = FinishCurrentInterval;
         }
@@ -216,6 +213,7 @@ namespace CompetitionsTimeControl.Controllers
             if (MessageBox.Show(sb.ToString(), "ATENÇÃO", MessageBoxButtons.YesNo, MessageBoxIcon.Warning,
                 MessageBoxDefaultButton.Button2) == DialogResult.Yes)
             {
+                _showFinishMessage = false;
                 _programState = CompetitionProgramState.FinishCompetition;
                 return true;
             }
@@ -256,9 +254,6 @@ namespace CompetitionsTimeControl.Controllers
             if (_currentInterval < CompetitionAmountIntervals)
                 _currentInterval++;
 
-            if (_currentInterval != CompetitionAmountIntervals)
-                _canAdjustMusicVolumeToMin = false;
-
             AdjustLabelIntervalsElapsed();
         }
 
@@ -278,6 +273,7 @@ namespace CompetitionsTimeControl.Controllers
                 
                 case CompetitionProgramState.WaitToRunProgram:
                     _nextTimeToChangeVolume = TimeToChangeVolume;
+                    _programState = CompetitionProgramState.WaitToAdjustMusicVolumeToMin;
 
                     if (!ProgramIsRunning)
                     {
@@ -286,35 +282,32 @@ namespace CompetitionsTimeControl.Controllers
                         _timerCompetitionTotalInMs = _competitionTotalTimeInMs;
                         _competitionIntervalsInMs = TimerController.FromSecondsToMilliseconds(CompetitionIntervalSeconds);
                         _timerCompetitionIntervalInMs = _competitionIntervalsInMs;
-                        _rechargeCompetitionIntervalInMs = _competitionIntervalsInMs;
-                        _timerAdjustMusicVolumeToMin = _competitionIntervalsInMs - beepsController.TotalTimeBeforeLastBeepInMs;
+                        _timerAdjustMusicVolumeToMin = beepsController.TotalTimeBeforeLastBeepInMs;
 
                         if (CompetitionProgramSetup == CompetitionProgram.MusicsAndBeeps)
-                            _timerAdjustMusicVolumeToMin -= TimerController.FromSecondsToMilliseconds(TimeToChangeVolume);
+                            _timerAdjustMusicVolumeToMin += TimerController.FromSecondsToMilliseconds(TimeToChangeVolume);
 
                         if (StartWithBeeps)
                         {
                             _currentInterval = 0;
-                            _nextTimeToChangeVolume = 0;
-                            _canAdjustMusicVolumeToMin = true;
-                            beepsController.TriggerCompetitionStartWithBeeps = true;
+                            _programState = CompetitionProgramState.WaitToPerformBeeps;
+                            if (CompetitionProgramSetup == CompetitionProgram.MusicsAndBeeps)
+                                musicsController.ChangeVolumeInSeconds(0, MusicsController.ChangeVolume.ToMin);
                         }
                         else
                         {
                             FinishCurrentInterval(); // Start in 1;
                         }
 
-                        _rechargeTimerAdjMusicVolToMin = _timerAdjustMusicVolumeToMin;
                         _pbCurrentIntervalElapsed.Maximum = _competitionIntervalsInMs;
                         _pbCompetitionElapsedTime.Maximum = _competitionTotalTimeInMs;
                     }
 
                     ProgramIsRunning = true;
-                    _programState = CompetitionProgramState.WaitToAdjustMusicVolumeToMin;
                     break;
                 
                 case CompetitionProgramState.WaitToAdjustMusicVolumeToMin:
-                    if (!(_canAdjustMusicVolumeToMin && _currentInterval < CompetitionAmountIntervals))
+                    if (!(_timerCompetitionIntervalInMs <= _timerAdjustMusicVolumeToMin && _currentInterval < CompetitionAmountIntervals))
                         break;
                     
                     if (CompetitionProgramSetup == CompetitionProgram.MusicsAndBeeps)
@@ -384,20 +377,11 @@ namespace CompetitionsTimeControl.Controllers
             _pbCurrentIntervalElapsed.Value = Math.Clamp(intervalElapsedInMs + ProgressBarValueOffset,
                 0, _pbCurrentIntervalElapsed.Maximum);
 
-            if (!_canAdjustMusicVolumeToMin && TimerController.PerformCountdown(ref _timerAdjustMusicVolumeToMin,
-                ref _timerAdjustMusicVolumeToMin, _rechargeTimerAdjMusicVolToMin, timeToDecrement))
-            {
-                _canAdjustMusicVolumeToMin = true;
-            }
-
-            if (ProgramIsRunning)
-            {
-                TimerController.PerformCountdown(ref _timerCompetitionIntervalInMs, ref _timerCompetitionIntervalInMs,
-                    _rechargeCompetitionIntervalInMs, timeToDecrement);
-            }
+            TimerController.PerformCountdown(ref _timerCompetitionIntervalInMs, ref _timerCompetitionIntervalInMs,
+                _competitionIntervalsInMs, timeToDecrement, false);
 
             if (TimerController.PerformCountdown(ref _timerCompetitionTotalInMs, ref _timerCompetitionTotalInMs,
-                _timerCompetitionTotalInMs, timeToDecrement))
+                _timerCompetitionTotalInMs, timeToDecrement, true))
             {
                 _timerCompetitionIntervalInMs = 0;
                 _timerCompetitionTotalInMs = 0;
@@ -407,13 +391,15 @@ namespace CompetitionsTimeControl.Controllers
                     musicsController.ChangeVolumeInSeconds(0, MusicsController.ChangeVolume.ToMax);
             }
 
+            _lblCurrIntervalsElapsedTime.Text = TimeSpan.FromMilliseconds(intervalElapsedInMs).ToString(@"hh\:mm\:ss");
             _lblCompetitionElapsedTime.Text = TimeSpan.FromMilliseconds(competitionElapsedTimeInMs).ToString(@"hh\:mm\:ss");
 
-            if (!CanRunCompetition)
+            if (!CanRunCompetition && _showFinishMessage)
             {
                 string message = "Os controles estão liberados novamente.";
                 formStopCompetitionCallback();
-                MessageBox.Show(message, "COMPETIÇÃO CONCLUÍDA COM SUCESSO", MessageBoxButtons.OK);
+                MessageBox.Show(message, "COMPETIÇÃO CONCLUÍDA COM SUCESSO", MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
             }
         }
     }

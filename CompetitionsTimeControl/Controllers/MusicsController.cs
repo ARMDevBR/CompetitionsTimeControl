@@ -1,6 +1,7 @@
 ﻿using AxWMPLib;
 using System.Text;
 using WMPLib;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.TaskbarClock;
 
 namespace CompetitionsTimeControl.Controllers
 {
@@ -10,8 +11,8 @@ namespace CompetitionsTimeControl.Controllers
         private const int MusicFormatColumnWidth = 75;
         private const int MusicDurationColumnWidth = 55;
         private const int MusicPathColumnWidth = 400;
-        private const byte LoopsToKeepVisibleAndFocus = 4;
         private const byte AmountOfMusicsToAutoChangePlaylist = 2;
+        private const double OffsetTimeToChangeMusicInMS = 0.005d;
 
         public enum ChangeVolume { ToMin, ToMax }
 
@@ -23,7 +24,6 @@ namespace CompetitionsTimeControl.Controllers
         private bool _playlistInRandomMode;
         private float _currentMusicVolume;
         private int _timerChangeVolumeInMilliSec;
-        private int _counterSetVisibleAndFocus;
         private float _stepsToChangeMusic;
         private ChangeVolume _changeVolume;
         private List<int> _checkedMusicToDelete;
@@ -37,7 +37,6 @@ namespace CompetitionsTimeControl.Controllers
             _listViewMusics = listViewMusics;
             SecondsToChangeVolume = null;
             GenerateListHeaders();
-            _counterSetVisibleAndFocus = LoopsToKeepVisibleAndFocus;
         }
 
         public void GenerateListHeaders()
@@ -93,10 +92,10 @@ namespace CompetitionsTimeControl.Controllers
                     BackColor = (index++ & 1) > 0 ? Color.Azure : Color.Beige
                 };
 
-                if (index is 2 or 4)
+                /*if (index is 2 or 4)
                 {
                     listViewItem.ForeColor = Color.Red; // Test for bad music in the list
-                }
+                }*/
 
                 _listViewMusics.Items.Add(listViewItem);
             }
@@ -286,19 +285,33 @@ namespace CompetitionsTimeControl.Controllers
         {
             string urlMusicPlaying = "";
 
-            if (!fromListBeginning && musicMediaPlayer.playState is WMPPlayState.wmppsPlaying or WMPPlayState.wmppsPaused)
+            if (!fromListBeginning && musicMediaPlayer.playState is WMPPlayState.wmppsPlaying or WMPPlayState.wmppsPaused
+                or WMPPlayState.wmppsStopped)
+            {
                 urlMusicPlaying = musicMediaPlayer.currentMedia.sourceURL;
+            }
             else
+            {
+                musicMediaPlayer.Ctlcontrols.stop();
                 musicMediaPlayer.currentPlaylist.clear();
+            }
 
             ListView.ListViewItemCollection listViewItemColl = _listViewMusics.Items;
                 
             int[] nextIndex = Enumerable.Range(0, listViewItemColl.Count).ToArray();
-
+            
             if (_playlistInRandomMode)
             {
+                int n = nextIndex.Length;
                 Random rnd = new Random();
-                nextIndex = [.. nextIndex.OrderBy(x => rnd.Next())];
+
+                while (n > 1)
+                {
+                    int k = rnd.Next(n--);
+                    int temp = nextIndex[n];
+                    nextIndex[n] = nextIndex[k];
+                    nextIndex[k] = temp;
+                }
             }
 
             for (int i = 0; i < listViewItemColl.Count; i++)
@@ -315,7 +328,7 @@ namespace CompetitionsTimeControl.Controllers
                 string path = listviewSubItemColl[3].Text;
                 string url = $@"{path}\{music}.{format}";
 
-                if (url == urlMusicPlaying)
+                if (urlMusicPlaying != "" && urlMusicPlaying == url)
                     continue;
 
                 _lastPlaylistMedia = musicMediaPlayer.newMedia(url);
@@ -359,7 +372,7 @@ namespace CompetitionsTimeControl.Controllers
 
                 if (!startingCompetition)
                 {
-                    StopMusicAndClearPlaylist(musicMediaPlayer);
+                    DisablePlayerAndClearPlaylist(musicMediaPlayer);
                 }
             }
         }
@@ -395,7 +408,7 @@ namespace CompetitionsTimeControl.Controllers
             else
             {
                 _listViewMusics.Columns[0].Width = MusicNameColumnWidth + MusicFormatColumnWidth + MusicFormatColumnWidth;
-                _listViewMusics.Columns[0].Width -= 20;
+                _listViewMusics.Columns[0].Width -= 35;
                 _listViewMusics.Columns[1].Width = 0;
                 _listViewMusics.Columns[2].Width = 0;
                 _listViewMusics.Columns[3].Width = 0;
@@ -415,20 +428,12 @@ namespace CompetitionsTimeControl.Controllers
                 return;
 
             listViewItem.Selected = true;
-            
+
             if (setVisibleAndFocus)
             {
-                if (_counterSetVisibleAndFocus-- > 0)
-                {
-                    listViewItem.EnsureVisible();
-                    _listViewMusics.Focus();
-                }
-
-                if (_counterSetVisibleAndFocus <= 0)
-                {
-                    setVisibleAndFocus = false;
-                    _counterSetVisibleAndFocus = LoopsToKeepVisibleAndFocus;
-                }
+                _listViewMusics.Focus();
+                listViewItem.EnsureVisible();
+                setVisibleAndFocus = false;
             }
         }
 
@@ -439,18 +444,23 @@ namespace CompetitionsTimeControl.Controllers
         /// OBS: Using the previous or next command does not cancel the visualization.
         /// </summary>
         /// <param name="musicMediaPlayer"> Refernece to form AxWindowsMediaPlayer control.</param>
-        public void AutoChangeToNextMusic(AxWindowsMediaPlayer musicMediaPlayer)
+        /// <param name="timeToDecrement"> Timer resolution in Milliseconds.</param>
+        public void AutoChangeToNextMusic(AxWindowsMediaPlayer musicMediaPlayer, int timeToDecrement)
         {
             if (musicMediaPlayer.playState != WMPPlayState.wmppsPlaying ||
                 musicMediaPlayer.currentPlaylist.count < AmountOfMusicsToAutoChangePlaylist)
             {
                 return;
             }
-
+            
             IWMPMedia currentMedia = musicMediaPlayer.currentMedia;
             bool isTheLastMusic = string.Equals(currentMedia.sourceURL, _lastPlaylistMedia.sourceURL);
+            double durationAndCurrPositionDifference = currentMedia.duration - musicMediaPlayer.Ctlcontrols.currentPosition;
 
-            if (!isTheLastMusic && (currentMedia.duration - musicMediaPlayer.Ctlcontrols.currentPosition) <= 0.02d) //20ms
+            double offsetTimeToChangeMusicInSecs = OffsetTimeToChangeMusicInMS +
+                TimerController.FromMillisecondsToSeconds(timeToDecrement); // About 20ms
+
+            if (!isTheLastMusic && durationAndCurrPositionDifference <= offsetTimeToChangeMusicInSecs)
                 musicMediaPlayer.Ctlcontrols.next();
         }
 
@@ -499,7 +509,7 @@ namespace CompetitionsTimeControl.Controllers
             tbMusicVolumeMax.Enabled = false;
 
             if (!TimerController.PerformCountdown(ref _timerChangeVolumeInMilliSec, ref _timerChangeVolumeInMilliSec,
-                _timerChangeVolumeInMilliSec, timeToDecrement))
+                _timerChangeVolumeInMilliSec, timeToDecrement, true))
             {
                 _currentMusicVolume += (_stepsToChangeMusic * timeToDecrement);
                 tbMusicCurrentVol.Value = (int)_currentMusicVolume;
@@ -520,15 +530,14 @@ namespace CompetitionsTimeControl.Controllers
         public void ChooseHowToClearPlaylist(AxWindowsMediaPlayer musicMediaPlayer, bool clearAllPlaylist)
         {
             if (clearAllPlaylist)
-                StopMusicAndClearPlaylist(musicMediaPlayer);
+                DisablePlayerAndClearPlaylist(musicMediaPlayer);
             else
                 KeepOnlyCurrentMusicInThePlaylist(musicMediaPlayer);
         }
 
-        public void StopMusicAndClearPlaylist(AxWindowsMediaPlayer musicMediaPlayer)
+        public void DisablePlayerAndClearPlaylist(AxWindowsMediaPlayer musicMediaPlayer)
         {
             musicMediaPlayer.Ctlenabled = false;
-            musicMediaPlayer.Ctlcontrols.stop();
             musicMediaPlayer.currentPlaylist.clear();
         }
 
