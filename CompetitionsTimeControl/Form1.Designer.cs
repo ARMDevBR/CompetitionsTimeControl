@@ -74,7 +74,7 @@
             LblRepeatPlaylist = new Label();
             LblCompetitionTotalTime = new Label();
             LblCurrentIntervalElapsedTime = new Label();
-            BtnConfigTest = new Button();
+            BtnBeepsTest = new Button();
             BeepMediaPlayer = new AxWMPLib.AxWindowsMediaPlayer();
             MenuStrip = new MenuStrip();
             arquivoToolStripMenuItem = new ToolStripMenuItem();
@@ -659,18 +659,18 @@
             LblCurrentIntervalElapsedTime.TextAlign = ContentAlignment.MiddleCenter;
             ToolTip.SetToolTip(LblCurrentIntervalElapsedTime, "Tempo do tiro atual.");
             // 
-            // BtnConfigTest
+            // BtnBeepsTest
             // 
-            BtnConfigTest.Enabled = false;
-            BtnConfigTest.Font = new Font("Segoe UI", 10F);
-            BtnConfigTest.Location = new Point(15, 60);
-            BtnConfigTest.Name = "BtnConfigTest";
-            BtnConfigTest.Size = new Size(120, 30);
-            BtnConfigTest.TabIndex = 24;
-            BtnConfigTest.Text = "Testar config.";
-            BtnConfigTest.UseVisualStyleBackColor = true;
-            BtnConfigTest.Click += BtnConfigTest_Click;
-            BtnConfigTest.MouseHover += BtnConfigTest_MouseHover;
+            BtnBeepsTest.Enabled = false;
+            BtnBeepsTest.Font = new Font("Segoe UI", 10F);
+            BtnBeepsTest.Location = new Point(15, 60);
+            BtnBeepsTest.Name = "BtnBeepsTest";
+            BtnBeepsTest.Size = new Size(120, 30);
+            BtnBeepsTest.TabIndex = 24;
+            BtnBeepsTest.Text = "Testar beeps";
+            BtnBeepsTest.UseVisualStyleBackColor = true;
+            BtnBeepsTest.Click += BtnBeepsTest_Click;
+            BtnBeepsTest.MouseHover += BtnBeepTest_MouseHover;
             // 
             // BeepMediaPlayer
             // 
@@ -784,7 +784,7 @@
             GroupBoxControlsAndTest.Controls.Add(LblBeepVolumePercent);
             GroupBoxControlsAndTest.Controls.Add(LblBeepVolume);
             GroupBoxControlsAndTest.Controls.Add(TBBeepVolume);
-            GroupBoxControlsAndTest.Controls.Add(BtnConfigTest);
+            GroupBoxControlsAndTest.Controls.Add(BtnBeepsTest);
             GroupBoxControlsAndTest.Controls.Add(BtnStartBeepTest);
             GroupBoxControlsAndTest.Controls.Add(BtnCountdownBeepTest);
             GroupBoxControlsAndTest.Controls.Add(LblTestMessages);
@@ -1079,7 +1079,7 @@
         private ToolTip ToolTip;
         private TrackBar TBMusicVolumeMax;
         private AxWMPLib.AxWindowsMediaPlayer BeepMediaPlayer;
-        private Button BtnConfigTest;
+        private Button BtnBeepsTest;
         private MenuStrip MenuStrip;
         private ToolStripMenuItem arquivoToolStripMenuItem;
         private ToolStripMenuItem ToolStripMenuItemAbout;

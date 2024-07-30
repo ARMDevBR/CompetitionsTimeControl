@@ -1,4 +1,5 @@
 ﻿using AxWMPLib;
+using Newtonsoft.Json;
 using WMPLib;
 
 namespace CompetitionsTimeControl.Controllers
@@ -9,6 +10,7 @@ namespace CompetitionsTimeControl.Controllers
         public string LowBeepPath { get; private set; } = lowBeepPath;
     }
 
+    [JsonObject(MemberSerialization.OptIn)]
     internal class BeepsController
     {
         private const int AmountOfBeepsPerFolder = 2;
@@ -19,21 +21,21 @@ namespace CompetitionsTimeControl.Controllers
         public string HighBeepPath => _currentBeepPair?.HighBeepPath ?? "";
         public string LowBeepPath => _currentBeepPair?.LowBeepPath ?? "";
 
-        public float TimeBeforePlayBeeps { get; set; }
-        public int AmountOfBeeps { get; set; }
-        public float TimeForEachBeep { get; set; }
-        public float TimeForResumeMusics { get; private set; }
+        [JsonProperty] public byte CurrentBeepPairIndex { get; private set; }
+        [JsonProperty] public float TimeBeforePlayBeeps { get; set; }
+        [JsonProperty] public int AmountOfBeeps { get; set; }
+        [JsonProperty] public float TimeForEachBeep { get; set; }
+        [JsonProperty] public float TimeForResumeMusics { get; private set; }
+        [JsonProperty] public byte CurrentBeepsVolume { get; private set; }
         public string CountingBeepsDescription { get; private set; }
         public string LastBeepsDescription { get; private set; }
 
         public int TotalTimeBeforeLastBeepInMs =>
             TimerController.FromSecondsToMilliseconds(TimeForEachBeep * (AmountOfBeeps - 1) + TimeBeforePlayBeeps);
-            //(int)((TimeForEachBeep * (AmountOfBeeps - 1) + TimeBeforePlayBeeps) * 1000);
         
         public int TotalTimeForAllBeepEventInMs =>
             TimerController.FromSecondsToMilliseconds(TimeForEachBeep * (AmountOfBeeps - 1)
                 + TimeBeforePlayBeeps + TimeForResumeMusics);
-        //(int)(TimeForResumeMusics * 1000) + TotalTimeBeforeLastBeepInMs;
 
         public int HighBeepDuration { get; private set; }
         public bool CanPerformBeepsEvent { get; set; }
@@ -118,6 +120,11 @@ namespace CompetitionsTimeControl.Controllers
             }
         }
 
+        public void SetVolumePercentage(byte beepVolume)
+        {
+            CurrentBeepsVolume = beepVolume;
+        }
+
         public void SetTimeForResumeMusics(AxWindowsMediaPlayer beepMediaPlayer, float value)
         {
             IWMPMedia media = beepMediaPlayer.newMedia(HighBeepPath);
@@ -132,6 +139,7 @@ namespace CompetitionsTimeControl.Controllers
             if (_beepPairsList == null || selectedIndex < 0 || selectedIndex > _beepPairsList.Count - 1)
                 return false;
 
+            CurrentBeepPairIndex = (byte)selectedIndex;
             _currentBeepPair = _beepPairsList[selectedIndex];
 
             return _currentBeepPair != null;
@@ -242,14 +250,12 @@ namespace CompetitionsTimeControl.Controllers
                         in _timerForResumeMusicsInMilliSec, timeToDecrement, true))
                     {
                         _timerForResumeMusicsInMilliSec = 0;
-                        CanPerformBeepsEvent = false;
-                        _beepState = BeepState.WaitToRunBeeps;
+                        CancelBeepsEvent();
                     }
                     break;
 
                 default:
-                    CanPerformBeepsEvent = false;
-                    _beepState = BeepState.WaitToRunBeeps;
+                    CancelBeepsEvent();
                     break;
             }
 

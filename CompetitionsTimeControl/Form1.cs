@@ -10,11 +10,6 @@ namespace CompetitionsTimeControl
     {
         public const string SupportedExtensions = "*.mp3; *.wma; *.wav";
 
-        private const int MusicNameColumnWidth = 300;
-        private const int MusicFormatColumnWidth = 75;
-        private const int MusicDurationColumnWidth = 55;
-        private const int MusicPathColumnWidth = 400;
-
         private Action? _finishCurrentIntervalCallback;
         private bool _recreatePlaylist;
         private bool _setVisibleAndFocus;
@@ -179,7 +174,9 @@ namespace CompetitionsTimeControl
 
                 if (!_competitionController.CanRunCompetition && !_beepsController.CanPerformBeepsEvent)
                 {
-                    PrepareBeepTest(false);
+                    PrepareBeepsTest(false);
+                    CheckEnableCompetitionControls();
+                    ComboBoxProgramming.Enabled = true;
                 }
             }
         }
@@ -243,22 +240,25 @@ namespace CompetitionsTimeControl
 
         private void TBBeepVolume_ValueChanged(object sender, EventArgs e)
         {
-            int beepVolume = TBBeepVolume.Value * -1;
+            byte beepVolume = (byte)(TBBeepVolume.Value * -1);
 
             LblBeepVolumePercent.Text = $"{beepVolume}%";
             BeepMediaPlayer.settings.volume = beepVolume;
+            _beepsController.SetVolumePercentage(beepVolume);
         }
 
-        private void BtnConfigTest_Click(object sender, EventArgs e)
+        private void BtnBeepsTest_Click(object sender, EventArgs e)
         {
             _beepsController.CanPerformBeepsEvent = true;
-            PrepareBeepTest(true);
+            PrepareBeepsTest(true);
+            DisableCompetitionControls();
+            BtnStartCompetition.Enabled = false;
         }
 
-        private void PrepareBeepTest(bool startTest)
+        private void PrepareBeepsTest(bool startTest)
         {
             SetEnableBeepsControls(!startTest);
-            BtnConfigTest.Visible = !startTest;
+            BtnBeepsTest.Visible = !startTest;
             BtnCountdownBeepTest.Visible = !startTest;
             BtnStartBeepTest.Visible = !startTest;
             LblTestMessages.Visible = startTest;
@@ -271,7 +271,7 @@ namespace CompetitionsTimeControl
             NumUDAmountOfBeeps.Enabled = enable;
             NumUDTimeForEachBeep.Enabled = enable;
             NumUDTimeForResumeMusics.Enabled = enable;
-            BtnConfigTest.Enabled = enable;
+            BtnBeepsTest.Enabled = enable;
             BtnCountdownBeepTest.Enabled = enable;
             BtnStartBeepTest.Enabled = enable;
         }
@@ -308,12 +308,12 @@ namespace CompetitionsTimeControl
         {
             _beepsController?.SetTimeForResumeMusics(BeepMediaPlayer, (float)NumUDTimeForResumeMusics.Value);
         }
-
-        private void BtnConfigTest_MouseHover(object sender, EventArgs e)
+        
+        private void BtnBeepTest_MouseHover(object sender, EventArgs e)
         {
             string toolTipMessage = _beepsController?.GetBtnConfigTestToolTipMsg() ?? string.Empty;
 
-            ToolTip.SetToolTip(BtnConfigTest, toolTipMessage);
+            ToolTip.SetToolTip(BtnBeepsTest, toolTipMessage);
         }
         #endregion
 
@@ -629,9 +629,8 @@ namespace CompetitionsTimeControl
                 _competitionController.CanStartCompetition())
             {
                 _setVisibleAndFocus = true;
-
-                _competitionController.StartCompetition(MusicMediaPlayer, _musicsController,
-                    out _finishCurrentIntervalCallback);
+                _competitionController.BlockListviewAndCreatePlaylist(MusicMediaPlayer, _musicsController);
+                _competitionController.StartCompetition(out _finishCurrentIntervalCallback);
 
                 SetEnableBeepsControls(false);
                 SetEnableMusicsControls(false);
@@ -656,6 +655,9 @@ namespace CompetitionsTimeControl
         {
             _beepsController.CancelBeepsEvent();
             _musicsController.RepaintListViewGrid(true);
+            TBMusicCurrentVol.Enabled = true;
+            TBMusicVolumeMin.Enabled = true;
+            TBMusicVolumeMax.Enabled = true;
             SetEnableBeepsControls(true);
             SetEnableMusicsControls(true);
             ComboBoxProgramming.Enabled = true;

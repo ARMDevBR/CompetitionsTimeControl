@@ -12,7 +12,7 @@ namespace CompetitionsTimeControl.Controllers
         private const int MusicDurationColumnWidth = 55;
         private const int MusicPathColumnWidth = 400;
         private const byte AmountOfMusicsToAutoChangePlaylist = 2;
-        private const double OffsetTimeToChangeMusicInMS = 0.005d;
+        private const double OffsetTimeToChangeMusicInMS = 0.004d;
 
         public enum ChangeVolume { ToMin, ToMax }
 
@@ -443,7 +443,7 @@ namespace CompetitionsTimeControl.Controllers
         /// 
         /// OBS: Using the previous or next command does not cancel the visualization.
         /// </summary>
-        /// <param name="musicMediaPlayer"> Refernece to form AxWindowsMediaPlayer control.</param>
+        /// <param name="musicMediaPlayer"> Reference to form AxWindowsMediaPlayer control.</param>
         /// <param name="timeToDecrement"> Timer resolution in Milliseconds.</param>
         public void AutoChangeToNextMusic(AxWindowsMediaPlayer musicMediaPlayer, int timeToDecrement)
         {
@@ -461,7 +461,11 @@ namespace CompetitionsTimeControl.Controllers
                 TimerController.FromMillisecondsToSeconds(timeToDecrement); // About 20ms
 
             if (!isTheLastMusic && durationAndCurrPositionDifference <= offsetTimeToChangeMusicInSecs)
+            {
+                musicMediaPlayer.Ctlcontrols.stop();
                 musicMediaPlayer.Ctlcontrols.next();
+                musicMediaPlayer.Ctlcontrols.play();
+            }
         }
 
         public void ChangeVolumeInSeconds(byte seconds, ChangeVolume changeVolume)
