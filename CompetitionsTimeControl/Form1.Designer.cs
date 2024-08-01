@@ -999,7 +999,7 @@
             ComboBoxInitialization.DropDownStyle = ComboBoxStyle.DropDownList;
             ComboBoxInitialization.Enabled = false;
             ComboBoxInitialization.FormattingEnabled = true;
-            ComboBoxInitialization.Items.AddRange(new object[] { "Música tocando", "Começo da lista" });
+            ComboBoxInitialization.Items.AddRange(new object[] { "Começo da lista", "Música tocando" });
             ComboBoxInitialization.Location = new Point(115, 52);
             ComboBoxInitialization.Name = "ComboBoxInitialization";
             ComboBoxInitialization.Size = new Size(130, 25);

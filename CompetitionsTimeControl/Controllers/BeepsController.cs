@@ -21,7 +21,7 @@ namespace CompetitionsTimeControl.Controllers
         public string HighBeepPath => _currentBeepPair?.HighBeepPath ?? "";
         public string LowBeepPath => _currentBeepPair?.LowBeepPath ?? "";
 
-        [JsonProperty] public byte CurrentBeepPairIndex { get; private set; }
+        [JsonProperty] public int CurrentBeepPairIndex { get; private set; }
         [JsonProperty] public float TimeBeforePlayBeeps { get; set; }
         [JsonProperty] public int AmountOfBeeps { get; set; }
         [JsonProperty] public float TimeForEachBeep { get; set; }
@@ -35,7 +35,7 @@ namespace CompetitionsTimeControl.Controllers
         
         public int TotalTimeForAllBeepEventInMs =>
             TimerController.FromSecondsToMilliseconds(TimeForEachBeep * (AmountOfBeeps - 1)
-                + TimeBeforePlayBeeps + TimeForResumeMusics);
+                + TimeBeforePlayBeeps + TimeForResumeMusics + HighBeepDuration);
 
         public int HighBeepDuration { get; private set; }
         public bool CanPerformBeepsEvent { get; set; }
@@ -48,7 +48,6 @@ namespace CompetitionsTimeControl.Controllers
         private int _rechargeForEachBeepInMilliSec;
         private int _timerForResumeMusicsInMilliSec;
         private int _beepCounter;
-        private float _justTimeForResumeMusics;
 
         private BeepState _beepState;
         private BeepPair? _currentBeepPair;
@@ -57,6 +56,7 @@ namespace CompetitionsTimeControl.Controllers
 
         public BeepsController(ComboBox comboBoxBeepPair, Label lblCompetitionTotalTime)
         {
+            CurrentBeepPairIndex = -1;
             CountingBeepsDescription = "";
             LastBeepsDescription = "";
             _beepState = BeepState.WaitToRunBeeps;
@@ -129,9 +129,8 @@ namespace CompetitionsTimeControl.Controllers
         {
             IWMPMedia media = beepMediaPlayer.newMedia(HighBeepPath);
             HighBeepDuration = (int)media.duration;
-            _justTimeForResumeMusics = value;
 
-            TimeForResumeMusics = _justTimeForResumeMusics + HighBeepDuration;
+            TimeForResumeMusics = value;
         }
 
         public bool ChangeBeepPairSelection(int selectedIndex)
@@ -154,7 +153,7 @@ namespace CompetitionsTimeControl.Controllers
             float sEachBeep = TimeForEachBeep;
             float sCountingBeeps = (float)(beepsAmount * sEachBeep);
             int sHighBeepDuration = HighBeepDuration;
-            int sResumeMusics = (int)_justTimeForResumeMusics;
+            int sResumeMusics = (int)TimeForResumeMusics;
             int sTotalResumeMusics = sHighBeepDuration + sResumeMusics;
 
             bool isBeepsAmountPlural = beepsAmount > 1;
@@ -189,7 +188,9 @@ namespace CompetitionsTimeControl.Controllers
                     _timerBeforePlayBeepsInMilliSec = TimerController.FromSecondsToMilliseconds(TimeBeforePlayBeeps);
                     _rechargeForEachBeepInMilliSec = _timerForEachBeepInMilliSec;
                     _timerForAllBeepsInMilliSec = _timerForEachBeepInMilliSec * (AmountOfBeeps - 1);
-                    _timerForResumeMusicsInMilliSec = TimerController.FromSecondsToMilliseconds(TimeForResumeMusics);
+                    _timerForResumeMusicsInMilliSec =
+                        TimerController.FromSecondsToMilliseconds(TimeForResumeMusics + HighBeepDuration);
+                    
                     _beepState = BeepState.WaitTimeBeforeBeeps;
                     _beepCounter = 0;
                     break;

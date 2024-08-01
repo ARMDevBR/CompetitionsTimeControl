@@ -1,8 +1,10 @@
 ﻿using CompetitionsTimeControl.Controllers;
+using Newtonsoft.Json;
 using System.Diagnostics;
 using System.Text;
 using WMPLib;
 using static CompetitionsTimeControl.Controllers.CompetitionController;
+using static System.Windows.Forms.DataFormats;
 
 namespace CompetitionsTimeControl
 {
@@ -61,11 +63,22 @@ namespace CompetitionsTimeControl
                     _beepsController.TimeBeforePlayBeeps = (float)NumUDTimeBeforePlayBeeps.Value;
                     _beepsController.AmountOfBeeps = (int)NumUDAmountOfBeeps.Value;
                     _beepsController.TimeForEachBeep = (float)NumUDTimeForEachBeep.Value;
+                    _beepsController.SetVolumePercentage((byte)(TBBeepVolume.Value * -1));
                     _beepsController.SetTimeForResumeMusics(BeepMediaPlayer, (float)NumUDTimeForResumeMusics.Value);
                 }
             }
 
-            _musicsController ??= new(ListViewMusics);
+            if (_musicsController == null)
+            {
+                _musicsController = new(ListViewMusics);
+
+                if (_musicsController != null)
+                {
+                    _musicsController.SetMinVolumePercentage((byte)(TBMusicVolumeMin.Value * -1));
+                    _musicsController.SetMaxVolumePercentage((byte)(TBMusicVolumeMax.Value * -1));
+                    _musicsController.SetVolumePercentage((byte)(TBMusicCurrentVol.Value * -1));
+                }
+            }
 
             if (_competitionController == null)
             {
@@ -126,7 +139,10 @@ namespace CompetitionsTimeControl
                 return;
 
             if (_stopwatch.ElapsedMilliseconds < _lastMillisecond)
+            {
+                _lastMillisecond = 0;
                 _stopwatch.Restart();
+            }
 
             int currentMillisecond = (int)_stopwatch.ElapsedMilliseconds;
 
@@ -155,15 +171,16 @@ namespace CompetitionsTimeControl
                     !_recreatePlaylist)
                 {
                     _musicsController.SelectPlayingMusic(MusicMediaPlayer, ref _setVisibleAndFocus);
-                    _musicsController.AutoChangeToNextMusic(MusicMediaPlayer, elapsedTime);
+
+                    if (!MusicMediaPlayer.settings.getMode("loop"))
+                        _musicsController.AutoChangeToNextMusic(MusicMediaPlayer, elapsedTime);
                 }
 
-                if (_recreatePlaylist)
+                if (!MusicMediaPlayer.settings.getMode("loop") && _recreatePlaylist)
                 {
                     TryToRecreatePlaylist();
                     _recreatePlaylist = false;
                 }
-                LblCompetitionTotalTime.Text = elapsedTime.ToString();
             }
 
             if (_beepsController.CanPerformBeepsEvent &&
@@ -189,7 +206,15 @@ namespace CompetitionsTimeControl
 
         private void ToolStripMenuItemSaveConfiguration_Click(object sender, EventArgs e)
         {
+            ConfigurationsDataController dataController = new()
+            {
+                DataBeepsController = _beepsController,
+                DataMusicsController = _musicsController,
+                DataCompetitionController = _competitionController
+            };
 
+            string json = JsonConvert.SerializeObject(dataController, Formatting.Indented);
+            File.WriteAllText(@"D:\dev\CompetitionsTimeControl\dataController.json", json);
         }
 
         private void ToolStripMenuItemSaveConfigurationAs_Click(object sender, EventArgs e)
@@ -353,7 +378,10 @@ namespace CompetitionsTimeControl
         private void ChooseHowToClearPlaylist(bool clearAllPlaylist)
         {
             if (_competitionController?.CompetitionProgramSetup == CompetitionProgram.MusicsAndBeeps)
+            {
+                TogglePlayMusicBySelection.Checked = !clearAllPlaylist;
                 _musicsController?.ChooseHowToClearPlaylist(MusicMediaPlayer, clearAllPlaylist);
+            }
         }
 
         private void SetEnableMusicsControls(bool enable)
@@ -388,7 +416,6 @@ namespace CompetitionsTimeControl
             BtnClearMusicsList.Enabled = enable;
             ToggleMarkAndExclude.Enabled = enable;
             TogglePlayMusicBySelection.Enabled = enable;
-            TogglePlayMusicBySelection.Checked = false;
             ListViewMusics.GridLines = enable;
         }
 
@@ -402,6 +429,7 @@ namespace CompetitionsTimeControl
             if (ComboBoxProgramming.SelectedIndex > 0 && !hasValidMusics)
                 ComboBoxProgramming.SelectedIndex = 0;
 
+            TogglePlayMusicBySelection.Checked = false;
             EnableControlsHavingItems(hasItemsInTheList);
             TogglePlayMusicBySelection.Enabled = !ToggleMarkAndExclude.Checked && hasItemsInTheList;
             _musicsController?.SetMarkAndExcludeTextAndToolTip(ToggleMarkAndExclude, ToolTip);
@@ -444,8 +472,11 @@ namespace CompetitionsTimeControl
             // Se volume mínimo (barra é negativa) passar do volume atual, atualiza volume atual.
             if (TBMusicCurrentVol.Value > TBMusicVolumeMin.Value)
                 TBMusicCurrentVol.Value = TBMusicVolumeMin.Value;
+            
+            byte musicVolumeMin = (byte)(TBMusicVolumeMin.Value * -1);
 
-            LblMusicVolMinPercent.Text = $"{TBMusicVolumeMin.Value * -1}%";
+            LblMusicVolMinPercent.Text = $"{musicVolumeMin}%";
+            _musicsController.SetMinVolumePercentage(musicVolumeMin);
         }
 
         private void TBMusicVolumeMax_ValueChanged(object sender, EventArgs e)
@@ -458,11 +489,15 @@ namespace CompetitionsTimeControl
             if (TBMusicVolumeMin.Value < TBMusicVolumeMax.Value)
                 TBMusicVolumeMin.Value = TBMusicVolumeMax.Value;
 
-            LblMusicVolMaxPercent.Text = $"{TBMusicVolumeMax.Value * -1}%";
+            byte musicVolumeMax = (byte)(TBMusicVolumeMax.Value * -1);
+
+            LblMusicVolMaxPercent.Text = $"{musicVolumeMax}%";
+            _musicsController.SetMaxVolumePercentage(musicVolumeMax);
         }
 
         private void MusicMediaPlayer_PlayStateChange(object sender, AxWMPLib._WMPOCXEvents_PlayStateChangeEvent e)
         {
+            LblCompetitionTotalTime.Text = $"{(WMPPlayState)e.newState}";
             if (_competitionController.CompetitionProgramSetup != CompetitionProgram.MusicsAndBeeps ||
                 !_competitionController.CanRunCompetition)
             {
@@ -470,7 +505,13 @@ namespace CompetitionsTimeControl
             }
 
             if ((WMPPlayState)e.newState == WMPPlayState.wmppsReady)
-                _recreatePlaylist = true;
+            {
+                //MessageBox.Show("wmppsReady");
+                _recreatePlaylist = _musicsController?.IsTheLastPlaylistMusic() ?? false;
+            }
+
+            if ((WMPPlayState)e.newState == WMPPlayState.wmppsPlaying)
+                _musicsController?.SetCurrentPlaylistMedia(MusicMediaPlayer);
 
             if ((WMPPlayState)e.newState == WMPPlayState.wmppsTransitioning)
                 _setVisibleAndFocus = true;
@@ -486,7 +527,10 @@ namespace CompetitionsTimeControl
             if (TBMusicVolumeMax.Value > TBMusicCurrentVol.Value)
                 TBMusicVolumeMax.Value = TBMusicCurrentVol.Value;
 
-            LblMusicCurrentVolPercent.Text = $"{TBMusicCurrentVol.Value * -1}%";
+            byte musicVolume = (byte)(TBMusicCurrentVol.Value * -1);
+
+            LblMusicCurrentVolPercent.Text = $"{musicVolume}%";
+            _musicsController.SetVolumePercentage(musicVolume);
         }
         #endregion
 
@@ -561,13 +605,10 @@ namespace CompetitionsTimeControl
 
             if (_competitionController != null)
             {
-                //if (!_competitionController.CanRunCompetition)// ver aqui
-                {
-                    NumUDTimeToVolMin.Enabled = enableMusicsAndBeepsControls;
-                    CheckBoxStopMusicsAtEnd.Enabled = enableMusicsAndBeepsControls;
-                    NumUDCompetitionAmountIntervals.Enabled = enableOnlyBeepsControls || enableMusicsAndBeepsControls;
-                    NumUDCompetitionIntervalSeconds.Enabled = enableOnlyBeepsControls || enableMusicsAndBeepsControls;
-                }
+                NumUDTimeToVolMin.Enabled = enableMusicsAndBeepsControls;
+                CheckBoxStopMusicsAtEnd.Enabled = enableMusicsAndBeepsControls;
+                NumUDCompetitionAmountIntervals.Enabled = enableOnlyBeepsControls || enableMusicsAndBeepsControls;
+                NumUDCompetitionIntervalSeconds.Enabled = enableOnlyBeepsControls || enableMusicsAndBeepsControls;
                 BtnStartCompetition.Enabled = enableOnlyBeepsControls || enableMusicsAndBeepsControls;
             }
         }
@@ -634,6 +675,7 @@ namespace CompetitionsTimeControl
 
                 SetEnableBeepsControls(false);
                 SetEnableMusicsControls(false);
+                TogglePlayMusicBySelection.Checked = false;
                 DisableCompetitionControls();
                 BtnStartCompetition.Text = "Pausar";
                 BtnStopCompetition.Enabled = true;

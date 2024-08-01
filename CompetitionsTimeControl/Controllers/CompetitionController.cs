@@ -1,9 +1,10 @@
 ﻿using AxWMPLib;
+using Newtonsoft.Json;
 using System.Text;
 
 namespace CompetitionsTimeControl.Controllers
 {
-
+    [JsonObject(MemberSerialization.OptIn)]
     internal class CompetitionController
     {
         private const byte MaxAmountIntervals = 100; //Max amount to remove slash spaces.
@@ -11,23 +12,25 @@ namespace CompetitionsTimeControl.Controllers
         private const int OffsetTimerAdjustMusicVolumeToMinInMs = 100;
 
         public enum CompetitionProgram { None = -1, OnlyBeeps, MusicsAndBeeps }
-        private enum InitializationProgram { FromListBeginning, FromMusicPlaying }
-        public enum PlaylistRestart { ShuffleList, SequentialList, InvertLastMode }
+        public enum InitializationProgram { None = -1, FromListBeginning, FromMusicPlaying }
+        public enum PlaylistRestart { None = -1, ShuffleList, SequentialList, InvertLastMode }
         private enum CompetitionProgramState
         {
             WaitToResumeProgram, WaitToRunProgram, WaitToAdjustMusicVolumeToMin, AdjustCurrentMusicVolumeToMin,
             StartBeepsEvent, WaitToAdjustMusicVolumeToMax, AdjustCurrentMusicVolumeToMax, FinishCompetition
         }
 
-        public byte TimeToChangeVolume { get; set; }
-        public bool StartWithBeeps { get; set; }
-        public bool StopMusicsAtEnd { get; set; }
-        public byte CompetitionAmountIntervals { get; private set; }
-        public int CompetitionIntervalSeconds { get; private set; }
+        [JsonProperty] public CompetitionProgram CompetitionProgramSetup { get; private set; }
+        [JsonProperty] public InitializationProgram InitializationProgramOption { get; private set; }
+        [JsonProperty] public PlaylistRestart PlaylistRestartMode { get; private set; }
+        [JsonProperty] public byte TimeToChangeVolume { get; set; }
+        [JsonProperty] public bool StartWithBeeps { get; set; }
+        [JsonProperty] public bool StopMusicsAtEnd { get; set; }
+        [JsonProperty] public byte CompetitionAmountIntervals { get; private set; }
+        [JsonProperty] public int CompetitionIntervalSeconds { get; private set; }
+
         public bool CanRunCompetition { get; private set; }
         public bool ProgramIsRunning { get; private set; }
-        public CompetitionProgram CompetitionProgramSetup { get; private set; }
-        public PlaylistRestart PlaylistRestartMode { get; private set; }
 
         private byte _nextTimeToChangeVolume;
         private byte _currentInterval;
@@ -39,7 +42,6 @@ namespace CompetitionsTimeControl.Controllers
         private int _competitionTotalTimeInMs;
         private CompetitionProgramState _programState;
         private CompetitionProgramState _lastProgramState;
-        private InitializationProgram _initializationProgram;
         private readonly Label _lblCompetitionTotalTime = null!;
         private readonly Label _lblIntervalsElapsed = null!;
         private readonly Label _lblCurrIntervalsElapsedTime = null!;
@@ -51,6 +53,9 @@ namespace CompetitionsTimeControl.Controllers
             in Label lblIntervalsElapsed, in ProgressBar pbCompetitionElapsedTime, in Label lblCurrIntervalsElapsedTime,
             in Label lblCompetitionElapsedTime)
         {
+            CompetitionProgramSetup = CompetitionProgram.None;
+            InitializationProgramOption = InitializationProgram.None;
+            PlaylistRestartMode = PlaylistRestart.None;
             _showFinishMessage = true;
             _programState = CompetitionProgramState.WaitToRunProgram;
             _lblCompetitionTotalTime = lblCompetitionTotalTime;
@@ -100,15 +105,15 @@ namespace CompetitionsTimeControl.Controllers
 
         public void ChangeInitializationProgramSelection(int selectedIndex, AxWindowsMediaPlayer musicMediaPlayer)
         {
-            if (selectedIndex < 0 || selectedIndex > Enum.GetNames(typeof(InitializationProgram)).Length - 1)
+            if (selectedIndex < -1 || selectedIndex > Enum.GetNames(typeof(InitializationProgram)).Length - 2)
                 return;
 
-            _initializationProgram = (InitializationProgram)selectedIndex;
+            InitializationProgramOption = (InitializationProgram)selectedIndex;
         }
 
         public void ChangePlaylistRestartSelection(int selectedIndex)
         {
-            if (selectedIndex < 0 || selectedIndex > Enum.GetNames(typeof(PlaylistRestart)).Length - 1)
+            if (selectedIndex < -1 || selectedIndex > Enum.GetNames(typeof(PlaylistRestart)).Length - 2)
                 return;
 
             PlaylistRestartMode = (PlaylistRestart)selectedIndex;
@@ -187,7 +192,7 @@ namespace CompetitionsTimeControl.Controllers
             else
             {
                 musicsController.CreatePlaylist(musicMediaPlayer,
-                    _initializationProgram == InitializationProgram.FromListBeginning);
+                    InitializationProgramOption == InitializationProgram.FromListBeginning);
             }
         }
 
@@ -357,10 +362,10 @@ namespace CompetitionsTimeControl.Controllers
                     break;
 
                 case CompetitionProgramState.FinishCompetition:
+                    chooseHowToClearPlaylist(StopMusicsAtEnd);
                     ProgramIsRunning = false;
                     CanRunCompetition = false;
                     _programState = CompetitionProgramState.WaitToRunProgram;
-                    chooseHowToClearPlaylist(StopMusicsAtEnd);                    
                     break;
                 
                 default:
