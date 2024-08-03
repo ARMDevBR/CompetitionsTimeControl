@@ -21,18 +21,18 @@ namespace CompetitionsTimeControl.Controllers
         public string HighBeepPath => _currentBeepPair?.HighBeepPath ?? "";
         public string LowBeepPath => _currentBeepPair?.LowBeepPath ?? "";
 
-        [JsonProperty] public int CurrentBeepPairIndex { get; private set; }
+        [JsonProperty] public string CurrentBeepPairText { get; private set; }
         [JsonProperty] public float TimeBeforePlayBeeps { get; set; }
         [JsonProperty] public int AmountOfBeeps { get; set; }
         [JsonProperty] public float TimeForEachBeep { get; set; }
-        [JsonProperty] public float TimeForResumeMusics { get; private set; }
+        [JsonProperty] public float TimeForResumeMusics { get; set; }
         [JsonProperty] public byte CurrentBeepsVolume { get; private set; }
         public string CountingBeepsDescription { get; private set; }
         public string LastBeepsDescription { get; private set; }
 
         public int TotalTimeBeforeLastBeepInMs =>
             TimerController.FromSecondsToMilliseconds(TimeForEachBeep * (AmountOfBeeps - 1) + TimeBeforePlayBeeps);
-        
+
         public int TotalTimeForAllBeepEventInMs =>
             TimerController.FromSecondsToMilliseconds(TimeForEachBeep * (AmountOfBeeps - 1)
                 + TimeBeforePlayBeeps + TimeForResumeMusics + HighBeepDuration);
@@ -52,17 +52,16 @@ namespace CompetitionsTimeControl.Controllers
         private BeepState _beepState;
         private BeepPair? _currentBeepPair;
         private List<BeepPair>? _beepPairsList;
-        private Label _lblCompetitionTotalTime;
 
-        public BeepsController(ComboBox comboBoxBeepPair, Label lblCompetitionTotalTime)
+        public BeepsController(ComboBox? comboBoxBeepPair)
         {
-            CurrentBeepPairIndex = -1;
             CountingBeepsDescription = "";
             LastBeepsDescription = "";
             _beepState = BeepState.WaitToRunBeeps;
             _beepsPath = string.Concat(AppDomain.CurrentDomain.BaseDirectory, DefaultBeepsFolderPath);
-            GetBeepsSounds(comboBoxBeepPair);
-            _lblCompetitionTotalTime = lblCompetitionTotalTime;
+            
+            if (comboBoxBeepPair != null)
+                GetBeepsSounds(comboBoxBeepPair);
         }
 
         public void GetBeepsSounds(ComboBox comboBoxBeepPair)
@@ -125,23 +124,24 @@ namespace CompetitionsTimeControl.Controllers
             CurrentBeepsVolume = beepVolume;
         }
 
-        public void SetTimeForResumeMusics(AxWindowsMediaPlayer beepMediaPlayer, float value)
+        public bool ChangeBeepPairSelection(int selectedIndex, string text, AxWindowsMediaPlayer beepMediaPlayer)
         {
-            IWMPMedia media = beepMediaPlayer.newMedia(HighBeepPath);
-            HighBeepDuration = (int)media.duration;
+            bool ret = false;
 
-            TimeForResumeMusics = value;
-        }
-
-        public bool ChangeBeepPairSelection(int selectedIndex)
-        {
             if (_beepPairsList == null || selectedIndex < 0 || selectedIndex > _beepPairsList.Count - 1)
-                return false;
+                return ret;
 
-            CurrentBeepPairIndex = (byte)selectedIndex;
+            CurrentBeepPairText = text;
             _currentBeepPair = _beepPairsList[selectedIndex];
 
-            return _currentBeepPair != null;
+            if (_currentBeepPair != null)
+            {
+                IWMPMedia media = beepMediaPlayer.newMedia(HighBeepPath);
+                HighBeepDuration = (int)media.duration;
+                ret = true;
+            }
+
+            return ret;
         }
 
         public string GetBtnConfigTestToolTipMsg()
@@ -190,7 +190,7 @@ namespace CompetitionsTimeControl.Controllers
                     _timerForAllBeepsInMilliSec = _timerForEachBeepInMilliSec * (AmountOfBeeps - 1);
                     _timerForResumeMusicsInMilliSec =
                         TimerController.FromSecondsToMilliseconds(TimeForResumeMusics + HighBeepDuration);
-                    
+
                     _beepState = BeepState.WaitTimeBeforeBeeps;
                     _beepCounter = 0;
                     break;

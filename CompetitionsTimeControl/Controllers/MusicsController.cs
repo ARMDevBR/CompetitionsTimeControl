@@ -14,7 +14,7 @@ namespace CompetitionsTimeControl.Controllers
         private const int MusicDurationColumnWidth = 55;
         private const int MusicPathColumnWidth = 400;
         private const byte AmountOfMusicsToAutoChangePlaylist = 2;
-        private const double OffsetTimeToChangeMusicInMS = 0.004d;
+        private const double OffsetTimeToChangeMusicInMS = 0.006d;
 
         public enum ChangeVolume { ToMin, ToMax }
 
@@ -69,6 +69,7 @@ namespace CompetitionsTimeControl.Controllers
             OpenFileDialog openFileDialog = new()
             {
                 Filter = $"Arquivos de som | {MainForm.SupportedExtensions}",
+                Title = "Selecione as músicas desejadas",
                 Multiselect = true
             };
 
@@ -77,15 +78,24 @@ namespace CompetitionsTimeControl.Controllers
             if (_listViewMusics == null || openFileDialog.FileNames == null || openFileDialog.FileNames.Length <= 0)
                 return false;
 
-            MusicsPathsList.AddRange(openFileDialog.FileNames);
+            return FillListView(openFileDialog.FileNames, musicMediaPlayer);
+        }
+
+        public bool FillListView(string[] musicsArray, AxWindowsMediaPlayer musicMediaPlayer)
+        {
+            bool ret = false;
+
+            StringBuilder? sb = null;
+
+            MusicsPathsList.AddRange(musicsArray);
             _listViewMusics.GridLines = true;
             int index = _listViewMusics.Items.Count;
 
-            foreach (string pathFileName in openFileDialog.FileNames)
+            foreach (string pathFileName in musicsArray)
             {
                 string nameWithExtension = Path.GetFileName(pathFileName);
                 string musicName = nameWithExtension[..^4];
-                string musicFormat = nameWithExtension[^3..];
+                string musicExtension = nameWithExtension[^3..];
                 string mediaDurationStr = musicMediaPlayer.newMedia(pathFileName).durationString;
                 string path = Path.GetDirectoryName(pathFileName) ?? "";
 
@@ -97,7 +107,7 @@ namespace CompetitionsTimeControl.Controllers
                     continue;
                 }
 
-                ListViewItem listViewItem = new([musicName, musicFormat, mediaDurationStr, path])
+                ListViewItem listViewItem = new([musicName, musicExtension, mediaDurationStr, path])
                 {
                     BackColor = (index++ & 1) > 0 ? Color.Azure : Color.Beige
                 };
@@ -108,6 +118,8 @@ namespace CompetitionsTimeControl.Controllers
                 }*/
 
                 _listViewMusics.Items.Add(listViewItem);
+
+                ret = true;
             }
 
             if (sb != null)
@@ -117,7 +129,7 @@ namespace CompetitionsTimeControl.Controllers
                 MessageBox.Show(sb.ToString(), "ATENÇÃO", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
 
-            return true;
+            return ret;
         }
 
         public bool TryClearListViewMusics()
@@ -398,7 +410,6 @@ namespace CompetitionsTimeControl.Controllers
         public void TogglePlaylistModeCheckedChanged(AxWindowsMediaPlayer musicMediaPlayer,
             CheckBox togglePlaylistMode, ToolTip toolTip)
         {
-            //musicMediaPlayer.settings.setMode("shuffle", togglePlaylistMode.Checked);
             PlaylistInRandomMode = togglePlaylistMode.Checked;
 
             if (togglePlaylistMode.Checked)
@@ -503,9 +514,9 @@ namespace CompetitionsTimeControl.Controllers
 
             if (!isTheLastMusic && durationAndCurrPositionDifference <= offsetTimeToChangeMusicInSecs)
             {
-                //musicMediaPlayer.Ctlcontrols.stop();
+                musicMediaPlayer.Ctlcontrols.stop();
                 musicMediaPlayer.Ctlcontrols.next();
-                //musicMediaPlayer.Ctlcontrols.play();
+                musicMediaPlayer.Ctlcontrols.play();
             }
         }
 

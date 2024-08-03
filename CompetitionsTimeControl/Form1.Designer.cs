@@ -77,7 +77,7 @@
             BtnBeepsTest = new Button();
             BeepMediaPlayer = new AxWMPLib.AxWindowsMediaPlayer();
             MenuStrip = new MenuStrip();
-            arquivoToolStripMenuItem = new ToolStripMenuItem();
+            ToolStripMenuItemConfiguration = new ToolStripMenuItem();
             ToolStripMenuItemOpenConfiguration = new ToolStripMenuItem();
             ToolStripMenuItemSaveConfiguration = new ToolStripMenuItem();
             ToolStripMenuItemSaveConfigurationAs = new ToolStripMenuItem();
@@ -684,20 +684,20 @@
             // MenuStrip
             // 
             MenuStrip.Font = new Font("Segoe UI", 10F);
-            MenuStrip.Items.AddRange(new ToolStripItem[] { arquivoToolStripMenuItem, ToolStripMenuItemAbout, ToolStripMenuItemCloseProgram });
+            MenuStrip.Items.AddRange(new ToolStripItem[] { ToolStripMenuItemConfiguration, ToolStripMenuItemAbout, ToolStripMenuItemCloseProgram });
             MenuStrip.Location = new Point(0, 0);
             MenuStrip.Name = "MenuStrip";
             MenuStrip.RenderMode = ToolStripRenderMode.Professional;
             MenuStrip.Size = new Size(950, 27);
             MenuStrip.TabIndex = 0;
             // 
-            // arquivoToolStripMenuItem
+            // ToolStripMenuItemConfiguration
             // 
-            arquivoToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { ToolStripMenuItemOpenConfiguration, ToolStripMenuItemSaveConfiguration, ToolStripMenuItemSaveConfigurationAs, ToolStripMenuItemEnableTextAndButtonsTips, ToolStripMenuItemReloadBeepList });
-            arquivoToolStripMenuItem.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
-            arquivoToolStripMenuItem.Name = "arquivoToolStripMenuItem";
-            arquivoToolStripMenuItem.Size = new Size(75, 23);
-            arquivoToolStripMenuItem.Text = "Arquivo";
+            ToolStripMenuItemConfiguration.DropDownItems.AddRange(new ToolStripItem[] { ToolStripMenuItemOpenConfiguration, ToolStripMenuItemSaveConfiguration, ToolStripMenuItemSaveConfigurationAs, ToolStripMenuItemEnableTextAndButtonsTips, ToolStripMenuItemReloadBeepList });
+            ToolStripMenuItemConfiguration.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            ToolStripMenuItemConfiguration.Name = "ToolStripMenuItemConfiguration";
+            ToolStripMenuItemConfiguration.Size = new Size(75, 23);
+            ToolStripMenuItemConfiguration.Text = "Configuração";
             // 
             // ToolStripMenuItemOpenConfiguration
             // 
@@ -709,6 +709,7 @@
             // 
             // ToolStripMenuItemSaveConfiguration
             // 
+            ToolStripMenuItemSaveConfiguration.Enabled = false;
             ToolStripMenuItemSaveConfiguration.Font = new Font("Segoe UI", 10F);
             ToolStripMenuItemSaveConfiguration.Name = "ToolStripMenuItemSaveConfiguration";
             ToolStripMenuItemSaveConfiguration.Size = new Size(280, 24);
@@ -1081,7 +1082,7 @@
         private AxWMPLib.AxWindowsMediaPlayer BeepMediaPlayer;
         private Button BtnBeepsTest;
         private MenuStrip MenuStrip;
-        private ToolStripMenuItem arquivoToolStripMenuItem;
+        private ToolStripMenuItem ToolStripMenuItemConfiguration;
         private ToolStripMenuItem ToolStripMenuItemAbout;
         private GroupBox GroupBoxBeepsCtrls;
         private ComboBox ComboBoxBeepPair;

@@ -56,7 +56,7 @@ namespace CompetitionsTimeControl
         {
             if (_beepsController == null)
             {
-                _beepsController = new(ComboBoxBeepPair, LblCompetitionTotalTime);
+                _beepsController = new(ComboBoxBeepPair);
 
                 if (_beepsController != null)
                 {
@@ -64,7 +64,7 @@ namespace CompetitionsTimeControl
                     _beepsController.AmountOfBeeps = (int)NumUDAmountOfBeeps.Value;
                     _beepsController.TimeForEachBeep = (float)NumUDTimeForEachBeep.Value;
                     _beepsController.SetVolumePercentage((byte)(TBBeepVolume.Value * -1));
-                    _beepsController.SetTimeForResumeMusics(BeepMediaPlayer, (float)NumUDTimeForResumeMusics.Value);
+                    _beepsController.TimeForResumeMusics = (float)NumUDTimeForResumeMusics.Value;
                 }
             }
 
@@ -201,25 +201,57 @@ namespace CompetitionsTimeControl
         #region STRIP MENU
         private void ToolStripMenuItemOpenConfiguration_Click(object sender, EventArgs e)
         {
+            if (ConfigurationsDataController.GetFileToOpenConfiguration(out ConfigurationsDataController? dataController))
+            {
+                if (dataController == null) // Não foi possível ler arquivo
+                    return;
 
+                BeepsController dataBeepsController = dataController.DataBeepsController;
+                MusicsController dataMusicsController = dataController.DataMusicsController;
+                CompetitionController dataCompetitionController = dataController.DataCompetitionController;
+
+                // Não foi possível ler arquivo
+                if (dataBeepsController == null || dataMusicsController == null || dataCompetitionController == null)
+                    return;
+
+                ComboBoxBeepPair.Text = dataBeepsController.CurrentBeepPairText;
+                NumUDTimeBeforePlayBeeps.Value = (decimal)dataBeepsController.TimeBeforePlayBeeps;
+                NumUDAmountOfBeeps.Value = dataBeepsController.AmountOfBeeps;
+                NumUDTimeForEachBeep.Value = (decimal)dataBeepsController.TimeForEachBeep;
+                NumUDTimeForResumeMusics.Value = (decimal)dataBeepsController.TimeForResumeMusics;
+                TBBeepVolume.Value = dataBeepsController.CurrentBeepsVolume * -1;
+
+                if (_musicsController?.FillListView([.. dataMusicsController.MusicsPathsList], MusicMediaPlayer) ?? false)
+                    EnableControlsHavingItems(_musicsController?.HasValidMusics() ?? false);
+
+                TogglePlaylistMode.Checked = dataMusicsController.PlaylistInRandomMode;
+                ToggleSeeDetails.Checked = !dataMusicsController.IsSimplifiedView;
+                TBMusicVolumeMin.Value = dataMusicsController.LimitMinMusicVolume * -1;
+                TBMusicVolumeMax.Value = dataMusicsController.LimitMaxMusicVolume * -1;
+                TBMusicCurrentVol.Value = dataMusicsController.CurrentMusicVolume * -1;
+
+                ComboBoxProgramming.SelectedIndex = (int)dataCompetitionController.CompetitionProgramSetup;
+                ComboBoxInitialization.SelectedIndex = (int)dataCompetitionController.InitializationProgramOption;
+                ComboBoxRepeatPlaylist.SelectedIndex = (int)dataCompetitionController.PlaylistRestartMode;
+                NumUDTimeToVolMin.Value = dataCompetitionController.TimeToChangeVolume;
+                CheckBoxStartWithBeeps.Checked = dataCompetitionController.StartWithBeeps;
+                CheckBoxStopMusicsAtEnd.Checked = dataCompetitionController.StopMusicsAtEnd;
+                NumUDCompetitionAmountIntervals.Value = dataCompetitionController.CompetitionAmountIntervals;
+                NumUDCompetitionIntervalSeconds.Value = dataCompetitionController.CompetitionIntervalSeconds;
+                CheckEnableCompetitionControls();
+            }
         }
 
         private void ToolStripMenuItemSaveConfiguration_Click(object sender, EventArgs e)
         {
-            ConfigurationsDataController dataController = new()
-            {
-                DataBeepsController = _beepsController,
-                DataMusicsController = _musicsController,
-                DataCompetitionController = _competitionController
-            };
-
-            string json = JsonConvert.SerializeObject(dataController, Formatting.Indented);
-            File.WriteAllText(@"D:\dev\CompetitionsTimeControl\dataController.json", json);
+            
         }
 
         private void ToolStripMenuItemSaveConfigurationAs_Click(object sender, EventArgs e)
         {
+            ConfigurationsDataController.SaveFileConfiguration(_beepsController, _musicsController, _competitionController);
 
+            //ToolStripMenuItemSaveConfiguration.Enabled = true; // Habilita se tiver arquivo salvo ou lido.
         }
 
         private void ToolStripMenuItemEnableTextAndButtonsTips_Click(object sender, EventArgs e)
@@ -248,8 +280,9 @@ namespace CompetitionsTimeControl
         #region BEEPS CONTROLLER
         private void ComboBoxBeepPair_SelectedIndexChanged(object sender, EventArgs e)
         {
-            bool enableButtons = _beepsController?.ChangeBeepPairSelection(ComboBoxBeepPair.SelectedIndex) ?? false;
-
+            bool enableButtons = _beepsController?.ChangeBeepPairSelection(
+                ComboBoxBeepPair.SelectedIndex, ComboBoxBeepPair.Text, BeepMediaPlayer) ?? false;
+            
             NumUDTimeForResumeMusics_ValueChanged(sender, e);
             SetEnableBeepsControls(enableButtons);
             ComboBoxProgramming.Enabled = enableButtons;
@@ -261,6 +294,31 @@ namespace CompetitionsTimeControl
                 ComboBoxBeepPair.Enabled = false;
                 ComboBoxProgramming.SelectedIndex = -1;
             }
+            EnableControlsToStartCompetition();
+        }
+
+        private void NumUDTimeBeforePlayBeeps_ValueChanged(object sender, EventArgs e)
+        {
+            if (_beepsController != null)
+                _beepsController.TimeBeforePlayBeeps = (float)NumUDTimeBeforePlayBeeps.Value;
+        }
+
+        private void NumUDAmountOfBeeps_ValueChanged(object sender, EventArgs e)
+        {
+            if (_beepsController != null)
+                _beepsController.AmountOfBeeps = (int)NumUDAmountOfBeeps.Value;
+        }
+
+        private void NumUDTimeForEachBeep_ValueChanged(object sender, EventArgs e)
+        {
+            if (_beepsController != null)
+                _beepsController.TimeForEachBeep = (float)NumUDTimeForEachBeep.Value;
+        }
+
+        private void NumUDTimeForResumeMusics_ValueChanged(object sender, EventArgs e)
+        {
+            if (_beepsController != null)
+                _beepsController.TimeForResumeMusics = (float)NumUDTimeForResumeMusics.Value;
         }
 
         private void TBBeepVolume_ValueChanged(object sender, EventArgs e)
@@ -309,29 +367,6 @@ namespace CompetitionsTimeControl
         private void BtnStartBeepTest_Click(object sender, EventArgs e)
         {
             _beepsController?.PlayBeep(BeepMediaPlayer, _beepsController.HighBeepPath);
-        }
-
-        private void NumUDTimeBeforePlayBeeps_ValueChanged(object sender, EventArgs e)
-        {
-            if (_beepsController != null)
-                _beepsController.TimeBeforePlayBeeps = (float)NumUDTimeBeforePlayBeeps.Value;
-        }
-
-        private void NumUDAmountOfBeeps_ValueChanged(object sender, EventArgs e)
-        {
-            if (_beepsController != null)
-                _beepsController.AmountOfBeeps = (int)NumUDAmountOfBeeps.Value;
-        }
-
-        private void NumUDTimeForEachBeep_ValueChanged(object sender, EventArgs e)
-        {
-            if (_beepsController != null)
-                _beepsController.TimeForEachBeep = (float)NumUDTimeForEachBeep.Value;
-        }
-
-        private void NumUDTimeForResumeMusics_ValueChanged(object sender, EventArgs e)
-        {
-            _beepsController?.SetTimeForResumeMusics(BeepMediaPlayer, (float)NumUDTimeForResumeMusics.Value);
         }
         
         private void BtnBeepTest_MouseHover(object sender, EventArgs e)
@@ -497,7 +532,7 @@ namespace CompetitionsTimeControl
 
         private void MusicMediaPlayer_PlayStateChange(object sender, AxWMPLib._WMPOCXEvents_PlayStateChangeEvent e)
         {
-            LblCompetitionTotalTime.Text = $"{(WMPPlayState)e.newState}";
+            //LblCompetitionTotalTime.Text = $"{(WMPPlayState)e.newState}";
             if (_competitionController.CompetitionProgramSetup != CompetitionProgram.MusicsAndBeeps ||
                 !_competitionController.CanRunCompetition)
             {
@@ -603,13 +638,16 @@ namespace CompetitionsTimeControl
             bool enableMusicsAndBeepsControls = ComboBoxProgramming.SelectedIndex > 0 &&
                 ComboBoxInitialization.SelectedIndex >= 0 && ComboBoxRepeatPlaylist.SelectedIndex >= 0;
 
+            bool canStartCompetition = ComboBoxProgramming.Enabled &&
+                (enableOnlyBeepsControls || enableMusicsAndBeepsControls);
+
             if (_competitionController != null)
             {
                 NumUDTimeToVolMin.Enabled = enableMusicsAndBeepsControls;
                 CheckBoxStopMusicsAtEnd.Enabled = enableMusicsAndBeepsControls;
-                NumUDCompetitionAmountIntervals.Enabled = enableOnlyBeepsControls || enableMusicsAndBeepsControls;
-                NumUDCompetitionIntervalSeconds.Enabled = enableOnlyBeepsControls || enableMusicsAndBeepsControls;
-                BtnStartCompetition.Enabled = enableOnlyBeepsControls || enableMusicsAndBeepsControls;
+                NumUDCompetitionAmountIntervals.Enabled = canStartCompetition;
+                NumUDCompetitionIntervalSeconds.Enabled = canStartCompetition;
+                BtnStartCompetition.Enabled = canStartCompetition;
             }
         }
 

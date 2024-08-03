@@ -9,7 +9,7 @@ namespace CompetitionsTimeControl.Controllers
     {
         private const byte MaxAmountIntervals = 100; //Max amount to remove slash spaces.
         private const int ProgressBarValueOffset = 550;
-        private const int OffsetTimerAdjustMusicVolumeToMinInMs = 100;
+        private const int OffsetTimerAdjustMusicVolumeToMinInMs = 150;
 
         public enum CompetitionProgram { None = -1, OnlyBeeps, MusicsAndBeeps }
         public enum InitializationProgram { None = -1, FromListBeginning, FromMusicPlaying }
