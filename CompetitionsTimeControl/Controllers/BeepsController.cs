@@ -55,11 +55,12 @@ namespace CompetitionsTimeControl.Controllers
 
         public BeepsController(ComboBox? comboBoxBeepPair)
         {
+            CurrentBeepPairText = "";
             CountingBeepsDescription = "";
             LastBeepsDescription = "";
             _beepState = BeepState.WaitToRunBeeps;
             _beepsPath = string.Concat(AppDomain.CurrentDomain.BaseDirectory, DefaultBeepsFolderPath);
-            
+
             if (comboBoxBeepPair != null)
                 GetBeepsSounds(comboBoxBeepPair);
         }
@@ -202,23 +203,11 @@ namespace CompetitionsTimeControl.Controllers
                         _timerBeforePlayBeepsInMilliSec = 0;
                         _beepState = BeepState.PerformBeeps;
                         _beepCounter++;
-                        //_lblCompetitionTotalTime.Text = $"WaitTimeBeforeBeeps - Beep {_beepCounter}";
                         PlayBeep(beepMediaPlayer, LowBeepPath);
                     }
                     break;
 
                 case BeepState.PerformBeeps:
-                    /*void eachBeepCountdown()
-                    {
-                        if (TimerController.PerformCountdown(ref _timerForEachBeepInMilliSec, ref _timerForEachBeepInMilliSec,
-                            _rechargeForEachBeepInMilliSec, timeToDecrement, false))
-                        {
-                            _beepCounter++;
-                            //_lblCompetitionTotalTime.Text = $"PerformBeeps - Beep {_beepCounter}";
-                            PlayBeep(beepMediaPlayer, _beepCounter < AmountOfBeeps ? LowBeepPath : HighBeepPath);
-                        }
-                    }*/
-
                     if (TimerController.PerformCountdown(ref _timerForEachBeepInMilliSec, ref _timerForEachBeepInMilliSec,
                         _rechargeForEachBeepInMilliSec, timeToDecrement, false))
                     {
@@ -240,9 +229,6 @@ namespace CompetitionsTimeControl.Controllers
                         in _timerForAllBeepsInMilliSec, timeToDecrement, true))
                     {
                         _timerForAllBeepsInMilliSec = 0;
-                        //_beepState = BeepState.TimeForResumeMusicsVolume;
-                        //_lblCompetitionTotalTime.Text = $"All beeps countdown";
-                        //finishCurrentIntervalCallback?.Invoke();
                     }
                     break;
 

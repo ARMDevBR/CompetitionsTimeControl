@@ -10,22 +10,31 @@ namespace CompetitionsTimeControl.Controllers
         public BeepsController DataBeepsController { get; set; } = null!;
         public MusicsController DataMusicsController { get; set; } = null!;
         public CompetitionController DataCompetitionController { get; set; } = null!;
+        public string? Checksum { get; set; }
 
-        public static void SaveFileConfiguration(BeepsController beepsController, MusicsController musicsController,
+        public static string SaveFileConfigurationAs(BeepsController beepsController, MusicsController musicsController,
             CompetitionController competitionController)
         {
             SaveFileDialog saveFileDialog = new()
             {
                 Filter = $"Arquivo CTCI | *.ctci",
-                //saveFileDialog.Title = "Selecione um arquivo para carregar";
                 Title = "Salvar arquivo CTCI"
             };
 
             if (saveFileDialog.ShowDialog() != DialogResult.OK)
-                return;
-            
-            string filePath = saveFileDialog.FileName;
+                return "";
 
+            string filePath = "";
+
+            if (SaveFileConfiguration(saveFileDialog.FileName, beepsController, musicsController, competitionController))
+                filePath = saveFileDialog.FileName;
+
+            return filePath;
+        }
+
+        public static bool SaveFileConfiguration(string filePath, BeepsController beepsController,
+            MusicsController musicsController, CompetitionController competitionController)
+        {
             try
             {
                 ConfigurationsDataController dataController = new()
@@ -36,30 +45,24 @@ namespace CompetitionsTimeControl.Controllers
                 };
 
                 string json = JsonConvert.SerializeObject(dataController, Formatting.Indented);
-                string checksum = CalculateChecksum(json);
+                dataController.Checksum = CalculateChecksum(json);
 
-                var jsonWithChecksum = new
-                {
-                    Data = json,
-                    Checksum = checksum
-                };
-
-                string finalJson = JsonConvert.SerializeObject(jsonWithChecksum, Formatting.Indented);
+                string finalJson = JsonConvert.SerializeObject(dataController, Formatting.Indented);
                 File.WriteAllText(filePath, finalJson);
 
                 MessageBox.Show($"Dados salvos em: {filePath}");
+                return true;
             }
             catch (IOException ex)
             {
                 // Log ou trate o erro
                 MessageBox.Show($"Erro ao salvar dados: {ex.Message}");
+                return false;
             }
         }
 
-        public static bool GetFileToOpenConfiguration(out ConfigurationsDataController? dataController)
+        public static string GetFileToOpenConfiguration(out ConfigurationsDataController? dataController)
         {
-            bool ret = false;
-
             dataController = null;
 
             OpenFileDialog openFileDialog = new()
@@ -71,47 +74,48 @@ namespace CompetitionsTimeControl.Controllers
 
             if (openFileDialog.ShowDialog() != DialogResult.OK)
             {
-                return false;
+                return "";
             }
+
+            string filePath = "";
 
             try
             {
                 string finalJson = File.ReadAllText(openFileDialog.FileName);
-                var jsonWithChecksum = JsonConvert.DeserializeObject<dynamic>(finalJson);
+                dataController = JsonConvert.DeserializeObject<ConfigurationsDataController>(finalJson);
 
-                if (jsonWithChecksum == null) // Dar mensagem
-                    return false;
+                if (dataController == null) // Mensagem aqui
+                    return "";
 
-                string data = jsonWithChecksum.Data;
-                string storedChecksum = jsonWithChecksum.Checksum;
-                string calculatedChecksum = CalculateChecksum(data);
+                string readChecksum = dataController.Checksum ?? "";
+                dataController.Checksum = null;
+                string recalculatedJson = JsonConvert.SerializeObject(dataController, Formatting.Indented);
 
-                if (storedChecksum == calculatedChecksum)
+                if (readChecksum == CalculateChecksum(recalculatedJson))
                 {
-                    dataController = JsonConvert.DeserializeObject<ConfigurationsDataController>(data);
-                    ret = true;
+                    filePath = openFileDialog.FileName;
                 }
                 else
                 {
+                    filePath = "";
                     // Checksum não corresponde, pode haver corrupção
                     MessageBox.Show("Erro: O arquivo JSON pode estar corrompido.");
-                    ret = false;
                 }
             }
             catch (IOException ex)
             {
+                filePath = "";
                 // Log ou trate o erro
                 MessageBox.Show($"Erro ao carregar dados: {ex.Message}");
-                ret = false;
             }
             catch (Exception ex)
             {
+                filePath = "";
                 // Log ou trate o erro
                 MessageBox.Show($"Erro ao desserializar: {ex.Message}");
-                ret = false;
             }
 
-            return ret;
+            return filePath;
         }
 
         private static string CalculateChecksum(string data)
