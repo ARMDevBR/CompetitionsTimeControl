@@ -1,5 +1,6 @@
 ﻿using AxWMPLib;
 using Newtonsoft.Json;
+using System.IO;
 using System.Text;
 using WMPLib;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.ListView;
@@ -14,28 +15,33 @@ namespace CompetitionsTimeControl.Controllers
         private const int MusicDurationColumnWidth = 55;
         private const int MusicPathColumnWidth = 400;
         private const byte AmountOfMusicsToAutoChangePlaylist = 2;
-        private const double OffsetTimeToChangeMusicInMS = 0.006d;
+        private const double OffsetTimeToChangeMusicInMS = 0.167d;
 
         public enum ChangeVolume { ToMin, ToMax }
 
+        private enum AutoChangeMusicState { WaitForStopAndChange, PlayNextMusic }
+
         public byte? SecondsToChangeVolume { get; private set; }
+        public bool HasJustOneValidMusic { get; private set; }
         [JsonProperty] public List<string> MusicsPathsList { get; private set; }
         [JsonProperty] public bool PlaylistInRandomMode { get; private set; }
         [JsonProperty] public bool IsSimplifiedView { get; private set; }
-        [JsonProperty] public byte LimitMinMusicVolume { get; private set; }
-        [JsonProperty] public byte LimitMaxMusicVolume { get; private set; }
-        [JsonProperty] public byte CurrentMusicVolume { get; private set; }
+        [JsonProperty] public byte LimitMinMusicVolume { get; set; }
+        [JsonProperty] public byte LimitMaxMusicVolume { get; set; }
+        [JsonProperty] public byte CurrentMusicVolume { get; set; }
 
-        private ListView _listViewMusics;
+        private readonly ListView _listViewMusics;
 
         private bool _stepsHaveBeenConfigured;
         private float _currentMusicVolume;
         private int _timerChangeVolumeInMilliSec;
         private float _stepsToChangeMusic;
         private ChangeVolume _changeVolume;
-        private List<int> _checkedMusicToDelete;
+        private AutoChangeMusicState _autoChangeMusicState;
+        private readonly List<int> _checkedMusicToDelete;
         private IWMPMedia _currentPlaylistMedia = null!;
         private IWMPMedia _lastPlaylistMedia = null!;
+        private string _lastDirectory;
 
         public MusicsController(ListView listViewMusics)
         {
@@ -45,6 +51,7 @@ namespace CompetitionsTimeControl.Controllers
             _listViewMusics = listViewMusics;
             MusicsPathsList = [];
             SecondsToChangeVolume = null;
+            _lastDirectory = "";
             GenerateListHeaders();
         }
 
@@ -64,13 +71,12 @@ namespace CompetitionsTimeControl.Controllers
 
         public bool AddMusicsToList(AxWindowsMediaPlayer musicMediaPlayer)
         {
-            StringBuilder? sb = null;
-
             OpenFileDialog openFileDialog = new()
             {
                 Filter = $"Arquivos de som | {MainForm.SupportedExtensions}",
                 Title = "Selecione as músicas desejadas",
-                Multiselect = true
+                Multiselect = true,
+                InitialDirectory = _lastDirectory
             };
 
             openFileDialog.ShowDialog();
@@ -78,12 +84,17 @@ namespace CompetitionsTimeControl.Controllers
             if (_listViewMusics == null || openFileDialog.FileNames == null || openFileDialog.FileNames.Length <= 0)
                 return false;
 
+            _lastDirectory = Path.GetDirectoryName(openFileDialog.FileNames[0]) ?? "";
+
             return FillListView(openFileDialog.FileNames, musicMediaPlayer);
         }
 
-        public bool FillListView(string[] musicsArray, AxWindowsMediaPlayer musicMediaPlayer)
+        public bool FillListView(string[] musicsArray, AxWindowsMediaPlayer musicMediaPlayer, bool clearAllBefore = false)
         {
             bool ret = false;
+
+            if (clearAllBefore)
+                ClearAllLists();
 
             StringBuilder? sb = null;
 
@@ -141,11 +152,16 @@ namespace CompetitionsTimeControl.Controllers
                 MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) == DialogResult.No)
                 return false;
 
+            ClearAllLists();
+            return true;
+        }
+
+        private void ClearAllLists()
+        {
             _checkedMusicToDelete.Clear();
             MusicsPathsList.Clear();
             _listViewMusics.Items.Clear();
             _listViewMusics.CheckBoxes = false;
-            return true;
         }
 
         public void SetMarkAndExcludeTextAndToolTip(CheckBox toggleMarkAndExclude, ToolTip toolTip)
@@ -253,9 +269,7 @@ namespace CompetitionsTimeControl.Controllers
                 }
                 else if (_listViewMusics.SelectedItems.Count > 0)
                 {
-                    //ListViewItem.ListViewSubItemCollection? listviewSubItemColl = lvi.SubItems;
-
-                    TryPlayMusicBySelectionAndEnable(/*listviewSubItemColl*/lvi.Index, musicMediaPlayer);
+                    TryPlayMusicBySelectionAndEnable(lvi.Index, musicMediaPlayer);
                 }
             }
             else
@@ -265,37 +279,33 @@ namespace CompetitionsTimeControl.Controllers
             }
         }
 
-        private void ShowInvalidMusicMessage()
+        private static void ShowInvalidMusicMessage()
         {
             StringBuilder sb = new("Esta música pode estar corrompida ou não existir mais na origem.\n\n");
             sb.Append("As músicas listadas em vermelho NÃO são válidas e podem ser excluídas da lista.");
 
             MessageBox.Show(sb.ToString(), "ATENÇÃO", MessageBoxButtons.OK, MessageBoxIcon.Warning);
         }
-
+        
         public bool HasValidMusics()
         {
             ListView.ListViewItemCollection listViewItemColl = _listViewMusics.Items;
+            bool ret = false;
             
             for (int i = 0; i < listViewItemColl.Count; i++)
             {
                 if (listViewItemColl[i].ForeColor == SystemColors.WindowText)
-                    return true;
+                {
+                    HasJustOneValidMusic = !ret;
+                    ret = true;
+                }
             }
-            return false;
+            return ret;
         }
 
-        private void TryPlayMusicBySelectionAndEnable(/*ListViewItem.ListViewSubItemCollection? listviewSubItemColl,*/
-            int selectedItemIndex,
-            AxWindowsMediaPlayer musicMediaPlayer, bool forceRestartMusic = false)
+        private void TryPlayMusicBySelectionAndEnable(int selectedItemIndex, AxWindowsMediaPlayer musicMediaPlayer,
+            bool forceRestartMusic = false)
         {
-            /*if (listviewSubItemColl == null)
-                return;
-
-            string music = listviewSubItemColl[0].Text;
-            string format = listviewSubItemColl[1].Text;
-            string path = listviewSubItemColl[3].Text;*/
-
             forceRestartMusic = forceRestartMusic || musicMediaPlayer.playState == WMPPlayState.wmppsUndefined;
 
             IWMPMedia currentMedia = musicMediaPlayer.currentMedia;
@@ -344,17 +354,10 @@ namespace CompetitionsTimeControl.Controllers
 
             for (int i = 0; i < itemsCount; i++)
             {
-                //ListViewItem lvi = listViewItemColl[nextIndex[i]];
-
-                if (/*lvi*/listViewItemColl[nextIndex[i]].ForeColor == Color.Red)
+                if (listViewItemColl[nextIndex[i]].ForeColor == Color.Red)
                     continue;
 
-                /*ListViewItem.ListViewSubItemCollection listviewSubItemColl = lvi.SubItems;
-
-                string music = listviewSubItemColl[0].Text;
-                string format = listviewSubItemColl[1].Text;
-                string path = listviewSubItemColl[3].Text;*/
-                string url = MusicsPathsList[nextIndex[i]];// $@"{path}\{music}.{format}";
+                string url = MusicsPathsList[nextIndex[i]];
 
                 if (urlMusicPlaying != "" && urlMusicPlaying == url)
                     continue;
@@ -362,8 +365,6 @@ namespace CompetitionsTimeControl.Controllers
                 _lastPlaylistMedia = musicMediaPlayer.newMedia(url);
                 musicMediaPlayer.currentPlaylist.appendItem(_lastPlaylistMedia);
             }
-
-            musicMediaPlayer.settings.setMode("loop", itemsCount == 1);
 
             if (musicMediaPlayer.currentPlaylist.count > 0)
             {
@@ -390,8 +391,8 @@ namespace CompetitionsTimeControl.Controllers
                     }
                     else
                     {
-                        TryPlayMusicBySelectionAndEnable(/*lvi.SubItems*/lvi.Index, musicMediaPlayer,
-                            _listViewMusics.Items.Count == 1);
+                        // Trocar a contagem por itens válidos
+                        TryPlayMusicBySelectionAndEnable(lvi.Index, musicMediaPlayer, _listViewMusics.Items.Count == 1);
                     }
                 }
             }
@@ -407,8 +408,7 @@ namespace CompetitionsTimeControl.Controllers
             }
         }
 
-        public void TogglePlaylistModeCheckedChanged(AxWindowsMediaPlayer musicMediaPlayer,
-            CheckBox togglePlaylistMode, ToolTip toolTip)
+        public void TogglePlaylistModeCheckedChanged(CheckBox togglePlaylistMode, ToolTip toolTip)
         {
             PlaylistInRandomMode = togglePlaylistMode.Checked;
 
@@ -447,7 +447,7 @@ namespace CompetitionsTimeControl.Controllers
             }
         }
 
-        public void SetMinVolumePercentage(byte limitMinMusicVolume)
+        /*public void SetMinVolumePercentage(byte limitMinMusicVolume)
         {
             LimitMinMusicVolume = limitMinMusicVolume;
         }
@@ -460,7 +460,7 @@ namespace CompetitionsTimeControl.Controllers
         public void SetVolumePercentage(byte musicVolume)
         {
             CurrentMusicVolume = musicVolume;
-        }
+        }*/
 
         public void SelectPlayingMusic(AxWindowsMediaPlayer musicMediaPlayer, ref bool setVisibleAndFocus)
         {
@@ -496,27 +496,47 @@ namespace CompetitionsTimeControl.Controllers
         /// </summary>
         /// <param name="musicMediaPlayer"> Reference to form AxWindowsMediaPlayer control.</param>
         /// <param name="timeToDecrement"> Timer resolution in Milliseconds.</param>
-        public void AutoChangeToNextMusic(AxWindowsMediaPlayer musicMediaPlayer, int timeToDecrement)
+        public void AutoChangeToNextMusic(AxWindowsMediaPlayer musicMediaPlayer, int elapsedTime)
         {
-            if (_currentPlaylistMedia == null ||
-                musicMediaPlayer.playState != WMPPlayState.wmppsPlaying ||
-                musicMediaPlayer.currentPlaylist.count < AmountOfMusicsToAutoChangePlaylist)
+            switch (_autoChangeMusicState)
             {
-                return;
-            }
-            
-            //_currentPlaylistMedia = musicMediaPlayer.currentMedia;
-            bool isTheLastMusic = IsTheLastPlaylistMusic();
-            double durationAndCurrPositionDifference = _currentPlaylistMedia.duration - musicMediaPlayer.Ctlcontrols.currentPosition;
+                case AutoChangeMusicState.WaitForStopAndChange:
+                    if (_currentPlaylistMedia == null)// ||
+                        //musicMediaPlayer.playState != WMPPlayState.wmppsPlaying)// ||
+                        //musicMediaPlayer.currentPlaylist.count < AmountOfMusicsToAutoChangePlaylist)
+                    {
+                        return;
+                    }
 
-            double offsetTimeToChangeMusicInSecs = OffsetTimeToChangeMusicInMS +
-                TimerController.FromMillisecondsToSeconds(timeToDecrement); // About 20ms
+                    double durationAndCurrPositionDifference = _currentPlaylistMedia.duration -
+                        musicMediaPlayer.Ctlcontrols.currentPosition;
 
-            if (!isTheLastMusic && durationAndCurrPositionDifference <= offsetTimeToChangeMusicInSecs)
-            {
-                musicMediaPlayer.Ctlcontrols.stop();
-                musicMediaPlayer.Ctlcontrols.next();
-                musicMediaPlayer.Ctlcontrols.play();
+                    double offsetTimeToChangeMusicInSecs = OffsetTimeToChangeMusicInMS +
+                        TimerController.FromMillisecondsToSeconds(elapsedTime); // About 180ms
+
+                    if (durationAndCurrPositionDifference <= offsetTimeToChangeMusicInSecs)
+                    {
+                        musicMediaPlayer.Ctlcontrols.stop();
+
+                        if (HasJustOneValidMusic)
+                            musicMediaPlayer.URL = _currentPlaylistMedia.sourceURL;
+                        else
+                            musicMediaPlayer.Ctlcontrols.next();
+
+                        _autoChangeMusicState = AutoChangeMusicState.PlayNextMusic;
+                    }
+                    break;
+                
+                case AutoChangeMusicState.PlayNextMusic:
+                    if (musicMediaPlayer.playState == WMPPlayState.wmppsStopped ||
+                        musicMediaPlayer.playState == WMPPlayState.wmppsReady)
+                    {
+                        musicMediaPlayer.Ctlcontrols.play();
+                    }
+                    
+                    if (musicMediaPlayer.playState == WMPPlayState.wmppsPlaying)
+                        _autoChangeMusicState = AutoChangeMusicState.WaitForStopAndChange;
+                    break;
             }
         }
 
@@ -589,23 +609,21 @@ namespace CompetitionsTimeControl.Controllers
             tbMusicVolumeMax.Enabled = true;
         }
 
-        public void ChooseHowToClearPlaylist(AxWindowsMediaPlayer musicMediaPlayer, bool clearAllPlaylist)
+        public static void ChooseHowToClearPlaylist(AxWindowsMediaPlayer musicMediaPlayer, bool clearAllPlaylist)
         {
-            musicMediaPlayer.settings.setMode("loop", false);
-
             if (clearAllPlaylist)
                 DisablePlayerAndClearPlaylist(musicMediaPlayer);
             else
                 KeepOnlyCurrentMusicInThePlaylist(musicMediaPlayer);
         }
 
-        public void DisablePlayerAndClearPlaylist(AxWindowsMediaPlayer musicMediaPlayer)
+        public static void DisablePlayerAndClearPlaylist(AxWindowsMediaPlayer musicMediaPlayer)
         {
             musicMediaPlayer.Ctlenabled = false;
             musicMediaPlayer.currentPlaylist.clear();
         }
 
-        private void KeepOnlyCurrentMusicInThePlaylist(AxWindowsMediaPlayer musicMediaPlayer)
+        private static void KeepOnlyCurrentMusicInThePlaylist(AxWindowsMediaPlayer musicMediaPlayer)
         {
             int amountOfMusics = musicMediaPlayer.currentPlaylist.count;
             string currentMediaUrl = musicMediaPlayer.currentMedia.sourceURL;
@@ -619,6 +637,6 @@ namespace CompetitionsTimeControl.Controllers
             }
         }
 
-        public void PrepareForPause(TrackBar tbMusicCurrentVol) => tbMusicCurrentVol.Enabled = true;
+        public static void PrepareForPause(TrackBar tbMusicCurrentVol) => tbMusicCurrentVol.Enabled = true;
     }
 }

@@ -26,7 +26,7 @@ namespace CompetitionsTimeControl.Controllers
         [JsonProperty] public int AmountOfBeeps { get; set; }
         [JsonProperty] public float TimeForEachBeep { get; set; }
         [JsonProperty] public float TimeForResumeMusics { get; set; }
-        [JsonProperty] public byte CurrentBeepsVolume { get; private set; }
+        [JsonProperty] public byte CurrentBeepsVolume { get; set; }
         public string CountingBeepsDescription { get; private set; }
         public string LastBeepsDescription { get; private set; }
 
@@ -39,6 +39,7 @@ namespace CompetitionsTimeControl.Controllers
 
         public int HighBeepDuration { get; private set; }
         public bool CanPerformBeepsEvent { get; set; }
+        public bool BeepsEventIsRunning { get; private set; }
 
         private readonly string _beepsPath;
 
@@ -120,10 +121,10 @@ namespace CompetitionsTimeControl.Controllers
             }
         }
 
-        public void SetVolumePercentage(byte beepVolume)
+        /*public void SetVolumePercentage(byte beepVolume)
         {
             CurrentBeepsVolume = beepVolume;
-        }
+        }*/
 
         public bool ChangeBeepPairSelection(int selectedIndex, string text, AxWindowsMediaPlayer beepMediaPlayer)
         {
@@ -205,6 +206,7 @@ namespace CompetitionsTimeControl.Controllers
                         _beepCounter++;
                         PlayBeep(beepMediaPlayer, LowBeepPath);
                     }
+                    BeepsEventIsRunning = true;
                     break;
 
                 case BeepState.PerformBeeps:
@@ -258,6 +260,7 @@ namespace CompetitionsTimeControl.Controllers
         public void CancelBeepsEvent()
         {
             CanPerformBeepsEvent = false;
+            BeepsEventIsRunning = false;
             _beepState = BeepState.WaitToRunBeeps;
         }
 

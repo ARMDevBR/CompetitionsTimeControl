@@ -1,7 +1,6 @@
 ﻿using Newtonsoft.Json;
 using System.Security.Cryptography;
 using System.Text;
-using static System.Windows.Forms.DataFormats;
 
 namespace CompetitionsTimeControl.Controllers
 {
@@ -11,6 +10,7 @@ namespace CompetitionsTimeControl.Controllers
         public MusicsController DataMusicsController { get; set; } = null!;
         public CompetitionController DataCompetitionController { get; set; } = null!;
         public string? Checksum { get; set; }
+        [JsonIgnore] private static string _lastDirectory = string.Empty;
 
         public static string SaveFileConfigurationAs(BeepsController beepsController, MusicsController musicsController,
             CompetitionController competitionController)
@@ -18,7 +18,8 @@ namespace CompetitionsTimeControl.Controllers
             SaveFileDialog saveFileDialog = new()
             {
                 Filter = $"Arquivo CTCI | *.ctci",
-                Title = "Salvar arquivo CTCI"
+                Title = "Salvar arquivo CTCI",
+                InitialDirectory = _lastDirectory
             };
 
             if (saveFileDialog.ShowDialog() != DialogResult.OK)
@@ -27,7 +28,10 @@ namespace CompetitionsTimeControl.Controllers
             string filePath = "";
 
             if (SaveFileConfiguration(saveFileDialog.FileName, beepsController, musicsController, competitionController))
+            {
                 filePath = saveFileDialog.FileName;
+                _lastDirectory = Path.GetDirectoryName(filePath) ?? "";
+            }
 
             return filePath;
         }
@@ -50,13 +54,21 @@ namespace CompetitionsTimeControl.Controllers
                 string finalJson = JsonConvert.SerializeObject(dataController, Formatting.Indented);
                 File.WriteAllText(filePath, finalJson);
 
-                MessageBox.Show($"Dados salvos em: {filePath}");
+                StringBuilder sb = new("Os dados foram salvos com sucesso!\n\n");
+                sb.Append($"Local do arquivo: [ {filePath} ]");
+
+                MessageBox.Show(sb.ToString(), "ATENÇÃO", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return true;
             }
             catch (IOException ex)
             {
-                // Log ou trate o erro
-                MessageBox.Show($"Erro ao salvar dados: {ex.Message}");
+                StringBuilder sb = new("Houve algum problema ao salvar os dados.\n\n");
+
+                if (ex.Message != "") sb.AppendLine($"Mensagem do sistema: [{ex.Message}].\n");
+
+                sb.Append("Tente salvar em outro local.");
+
+                MessageBox.Show(sb.ToString(), "ATENÇÃO", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return false;
             }
         }
@@ -69,7 +81,8 @@ namespace CompetitionsTimeControl.Controllers
             {
                 Filter = $"Arquivo CTCI | *.ctci",
                 Title = "Selecione um arquivo para carregar",
-                Multiselect = false
+                Multiselect = false,
+                InitialDirectory = _lastDirectory
             };
 
             if (openFileDialog.ShowDialog() != DialogResult.OK)
@@ -77,15 +90,15 @@ namespace CompetitionsTimeControl.Controllers
                 return "";
             }
 
-            string filePath = "";
+            string filePath;
 
             try
             {
                 string finalJson = File.ReadAllText(openFileDialog.FileName);
                 dataController = JsonConvert.DeserializeObject<ConfigurationsDataController>(finalJson);
 
-                if (dataController == null) // Mensagem aqui
-                    return "";
+                if (dataController == null)
+                    throw new Exception();
 
                 string readChecksum = dataController.Checksum ?? "";
                 dataController.Checksum = null;
@@ -94,25 +107,38 @@ namespace CompetitionsTimeControl.Controllers
                 if (readChecksum == CalculateChecksum(recalculatedJson))
                 {
                     filePath = openFileDialog.FileName;
+                    _lastDirectory = Path.GetDirectoryName(filePath) ?? "";
                 }
                 else
                 {
+                    StringBuilder sb = new("O arquivo CTCI pode estar corrompido!\n\n");
+                    sb.Append("Tente abrir um arquivo válido.");
+
                     filePath = "";
-                    // Checksum não corresponde, pode haver corrupção
-                    MessageBox.Show("Erro: O arquivo JSON pode estar corrompido.");
+
+                    MessageBox.Show(sb.ToString(), "ATENÇÃO", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
             catch (IOException ex)
             {
+                StringBuilder sb = new("Houve algum problema ao carregar os dados.\n\n");
+
+                if (ex.Message != "") sb.AppendLine($"Mensagem do sistema: [{ex.Message}].\n");
+
+                sb.Append("Tente abrir um arquivo válido.");
+
                 filePath = "";
-                // Log ou trate o erro
-                MessageBox.Show($"Erro ao carregar dados: {ex.Message}");
+
+                MessageBox.Show(sb.ToString(), "ATENÇÃO", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
+                StringBuilder sb = new("Este arquivo CTCI não é válido.\n\n");
+                sb.Append("Tente abrir um arquivo válido.");
+
                 filePath = "";
-                // Log ou trate o erro
-                MessageBox.Show($"Erro ao desserializar: {ex.Message}");
+
+                MessageBox.Show(sb.ToString(), "ATENÇÃO", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
 
             return filePath;
@@ -120,12 +146,9 @@ namespace CompetitionsTimeControl.Controllers
 
         private static string CalculateChecksum(string data)
         {
-            using (SHA256 sha256 = SHA256.Create())
-            {
-                byte[] bytes = Encoding.UTF8.GetBytes(data);
-                byte[] hash = sha256.ComputeHash(bytes);
-                return Convert.ToBase64String(hash);
-            }
+            byte[] bytes = Encoding.UTF8.GetBytes(data);
+            byte[] hash = SHA256.HashData(bytes);
+            return Convert.ToBase64String(hash);
         }
     }
 }

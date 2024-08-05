@@ -1,5 +1,7 @@
 ﻿using AxWMPLib;
 using Newtonsoft.Json;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 
 namespace CompetitionsTimeControl.Controllers
@@ -40,6 +42,7 @@ namespace CompetitionsTimeControl.Controllers
         private int _timerCompetitionTotalInMs;
         private int _competitionIntervalsInMs;
         private int _competitionTotalTimeInMs;
+        private long _lastMillisecond;
         private CompetitionProgramState _programState;
         private CompetitionProgramState _lastProgramState;
         private readonly Label _lblCompetitionTotalTime = null!;
@@ -58,6 +61,7 @@ namespace CompetitionsTimeControl.Controllers
             PlaylistRestartMode = PlaylistRestart.None;
             _showFinishMessage = true;
             _programState = CompetitionProgramState.WaitToRunProgram;
+            _lastMillisecond = 0;
             _lblCompetitionTotalTime = lblCompetitionTotalTime;
             _pbCurrentIntervalElapsed = pbCurrentIntervalElapsed;
             _lblIntervalsElapsed = lblIntervalsElapsed;
@@ -188,7 +192,7 @@ namespace CompetitionsTimeControl.Controllers
             musicsController.RepaintListViewGrid(false);
 
             if (CompetitionProgramSetup == CompetitionProgram.OnlyBeeps)
-                musicsController.DisablePlayerAndClearPlaylist(musicMediaPlayer);
+                MusicsController.DisablePlayerAndClearPlaylist(musicMediaPlayer);
             else
             {
                 musicsController.CreatePlaylist(musicMediaPlayer,
@@ -268,9 +272,17 @@ namespace CompetitionsTimeControl.Controllers
             AdjustLabelIntervalsElapsed();
         }
 
+        public void KeepLastMillisecondUpdated(long elapsedMilliseconds) => _lastMillisecond = elapsedMilliseconds;
+
         public void TryPerformCompetition(BeepsController beepsController, MusicsController musicsController,
-            Action<bool> chooseHowToClearPlaylist, Action formStopCompetitionCallback, int timeToDecrement)
+            Action<bool> chooseHowToClearPlaylist, Action formStopCompetitionCallback, long elapsedMilliseconds)
         {
+            long currentMillisecond = elapsedMilliseconds; // up to 2 trillion hours
+
+            int timeToDecrement = (int)Math.Abs(currentMillisecond - _lastMillisecond);
+
+            _lastMillisecond = currentMillisecond;
+
             if (!CanRunCompetition)
             {
                 _programState = CompetitionProgramState.WaitToRunProgram;
@@ -342,7 +354,8 @@ namespace CompetitionsTimeControl.Controllers
                     break;
 
                 case CompetitionProgramState.WaitToAdjustMusicVolumeToMax:
-                    _lblIntervalsElapsed.BackColor = Color.Yellow;
+                    if (beepsController.BeepsEventIsRunning)
+                        _lblIntervalsElapsed.BackColor = Color.Yellow;
 
                     if (beepsController.CanPerformBeepsEvent)
                         break;
@@ -384,17 +397,13 @@ namespace CompetitionsTimeControl.Controllers
             _pbCompetitionElapsedTime.Value = Math.Clamp(competitionElapsedTimeInMs + ProgressBarValueOffset,
                 0, _pbCompetitionElapsedTime.Maximum);
 
-            int intervalElapsedInMs = 0;/*Math.Clamp(_competitionIntervalsInMs - _timerCompetitionIntervalInMs,
-                0, _pbCurrentIntervalElapsed.Maximum);*/
+            int intervalElapsedTimeInMs = competitionElapsedTimeInMs -
+                (_currentInterval - 1) * _pbCurrentIntervalElapsed.Maximum;
 
-            intervalElapsedInMs = competitionElapsedTimeInMs - (_currentInterval - 1) * _pbCurrentIntervalElapsed.Maximum;
-
-            _pbCurrentIntervalElapsed.Value = Math.Clamp(intervalElapsedInMs + ProgressBarValueOffset,
+            _pbCurrentIntervalElapsed.Value = Math.Clamp(intervalElapsedTimeInMs + ProgressBarValueOffset,
                 0, _pbCurrentIntervalElapsed.Maximum);
 
-            _timerCompetitionIntervalInMs = /*_competitionIntervalsInMs - */intervalElapsedInMs;
-            /*TimerController.PerformCountdown(ref _timerCompetitionIntervalInMs, ref _timerCompetitionIntervalInMs,
-                _competitionIntervalsInMs, timeToDecrement, false);*/
+            _timerCompetitionIntervalInMs = intervalElapsedTimeInMs;
 
             if (TimerController.PerformCountdown(ref _timerCompetitionTotalInMs, ref _timerCompetitionTotalInMs,
                 _timerCompetitionTotalInMs, timeToDecrement, true))
@@ -407,7 +416,7 @@ namespace CompetitionsTimeControl.Controllers
                     musicsController.ChangeVolumeInSeconds(0, MusicsController.ChangeVolume.ToMax);
             }
 
-            _lblCurrIntervalsElapsedTime.Text = TimeSpan.FromMilliseconds(intervalElapsedInMs).ToString(@"hh\:mm\:ss");
+            _lblCurrIntervalsElapsedTime.Text = TimeSpan.FromMilliseconds(intervalElapsedTimeInMs).ToString(@"hh\:mm\:ss");
             _lblCompetitionElapsedTime.Text = TimeSpan.FromMilliseconds(competitionElapsedTimeInMs).ToString(@"hh\:mm\:ss");
 
             if (!CanRunCompetition && _showFinishMessage)
