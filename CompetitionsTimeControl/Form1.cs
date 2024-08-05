@@ -13,6 +13,7 @@ namespace CompetitionsTimeControl
         private string CurrentConfigurationFile { get; set; }
 
         private Action? _finishCurrentIntervalCallback;
+        private Action? _setLblIntervalsElapsedYellowColor;
         private bool _recreatePlaylist;
         private bool _setVisibleAndFocus;
         private bool _closingApplication;
@@ -30,6 +31,7 @@ namespace CompetitionsTimeControl
             ConfigureBeepMediaPlayer();
             ConfigureMusicMediaPlayer();
             _finishCurrentIntervalCallback = null;
+            _setLblIntervalsElapsedYellowColor = null;
             _recreatePlaylist = false;
             _closingApplication = false;
 
@@ -181,8 +183,7 @@ namespace CompetitionsTimeControl
                         TBMusicVolumeMax, elapsedTime);
                 }
 
-                if (_competitionController.CompetitionProgramSetup == CompetitionProgram.MusicsAndBeeps)// &&
-                    //!_recreatePlaylist)
+                if (_competitionController.CompetitionProgramSetup == CompetitionProgram.MusicsAndBeeps)
                 {
                     _musicsController.SelectPlayingMusic(MusicMediaPlayer, ref _setVisibleAndFocus);
                     _musicsController.AutoChangeToNextMusic(MusicMediaPlayer, elapsedTime);
@@ -203,7 +204,7 @@ namespace CompetitionsTimeControl
                 (_competitionController.CanRunCompetition == _competitionController.ProgramIsRunning))
             {
                 _beepsController.TryPerformBeeps(BeepMediaPlayer, elapsedTime, LblTestMessages,
-                    _finishCurrentIntervalCallback);
+                    _finishCurrentIntervalCallback, _setLblIntervalsElapsedYellowColor);
 
                 if (!_competitionController.CanRunCompetition && !_beepsController.CanPerformBeepsEvent)
                 {
@@ -240,7 +241,7 @@ namespace CompetitionsTimeControl
             TBBeepVolume.Value = dataBeepsController.CurrentBeepsVolume * -1;
 
             if (_musicsController?.FillListView([.. dataMusicsController.MusicsPathsList], MusicMediaPlayer, true) ?? false)
-                EnableControlsHavingItems(_musicsController?.HasValidMusics() ?? false);
+                EnableControlsHavingItems(true);
 
             TogglePlaylistMode.Checked = dataMusicsController.PlaylistInRandomMode;
             ToggleSeeDetails.Checked = !dataMusicsController.IsSimplifiedView;
@@ -391,12 +392,12 @@ namespace CompetitionsTimeControl
 
         private void BtnCountdownBeepTest_Click(object sender, EventArgs e)
         {
-            _beepsController?.PlayBeep(BeepMediaPlayer, _beepsController.LowBeepPath);
+            BeepsController.PlayBeep(BeepMediaPlayer, _beepsController.LowBeepPath);
         }
 
         private void BtnStartBeepTest_Click(object sender, EventArgs e)
         {
-            _beepsController?.PlayBeep(BeepMediaPlayer, _beepsController.HighBeepPath);
+            BeepsController.PlayBeep(BeepMediaPlayer, _beepsController.HighBeepPath);
         }
 
         private void BtnBeepTest_MouseHover(object sender, EventArgs e)
@@ -459,7 +460,7 @@ namespace CompetitionsTimeControl
         private void BtnAddMusics_Click(object sender, EventArgs e)
         {
             if (_musicsController?.AddMusicsToList(MusicMediaPlayer) ?? false)
-                EnableControlsHavingItems(_musicsController?.HasValidMusics() ?? false);
+                EnableControlsHavingItems(true);
         }
 
         private void BtnClearMusicsList_Click(object sender, EventArgs e)
@@ -730,12 +731,17 @@ namespace CompetitionsTimeControl
                 return;
             }
 
-            if (_competitionController.ValidateBeepsEventTimes(_beepsController) &&
-                _competitionController.CanStartCompetition())
+            bool hasMusicsToPlaylist = _competitionController.ValidateHasMusicsToPlaylist(
+                _musicsController, out bool skipCanStartMessage);
+            
+            CheckEnableCompetitionControls();
+
+            if (_competitionController.ValidateBeepsEventTimes(_beepsController) && hasMusicsToPlaylist &&
+                _competitionController.CanStartCompetition(skipCanStartMessage))
             {
                 _setVisibleAndFocus = true;
                 _competitionController.BlockListviewAndCreatePlaylist(MusicMediaPlayer, _musicsController);
-                _competitionController.StartCompetition(out _finishCurrentIntervalCallback);
+                _competitionController.StartCompetition(out _finishCurrentIntervalCallback, out _setLblIntervalsElapsedYellowColor);
 
                 SetEnableBeepsControls(false);
                 SetEnableMusicsControls(false);

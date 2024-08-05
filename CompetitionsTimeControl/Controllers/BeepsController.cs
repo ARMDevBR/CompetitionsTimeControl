@@ -39,7 +39,6 @@ namespace CompetitionsTimeControl.Controllers
 
         public int HighBeepDuration { get; private set; }
         public bool CanPerformBeepsEvent { get; set; }
-        public bool BeepsEventIsRunning { get; private set; }
 
         private readonly string _beepsPath;
 
@@ -106,7 +105,7 @@ namespace CompetitionsTimeControl.Controllers
                 {
                     _beepPairsList ??= [];
 
-                    comboBoxBeepPair.Items.Add(beepPath.Remove(0, _beepsPath.Length + 1));
+                    comboBoxBeepPair.Items.Add(beepPath.Remove(0, _beepsPath.Length + 1)); // Add most inner path name
                     comboBoxBeepPair.Enabled = true;
                     _beepPairsList.Add(new BeepPair(beepsArray[0], beepsArray[1]));
                 }
@@ -180,8 +179,8 @@ namespace CompetitionsTimeControl.Controllers
             return headerMessage;
         }
 
-        public void TryPerformBeeps(AxWindowsMediaPlayer beepMediaPlayer, int timeToDecrement,
-            in Label lblTestMessages, Action? finishCurrentIntervalCallback)
+        public void TryPerformBeeps(AxWindowsMediaPlayer beepMediaPlayer, int timeToDecrement, in Label lblTestMessages,
+            Action? finishCurrentIntervalCallback, Action? setLblIntervalsElapsedYellowColor)
         {
             switch (_beepState)
             {
@@ -198,6 +197,8 @@ namespace CompetitionsTimeControl.Controllers
                     break;
 
                 case BeepState.WaitTimeBeforeBeeps:
+                    setLblIntervalsElapsedYellowColor?.Invoke();
+
                     if (TimerController.PerformCountdown(ref _timerBeforePlayBeepsInMilliSec, ref _timerForEachBeepInMilliSec,
                         in _timerBeforePlayBeepsInMilliSec, timeToDecrement, true))
                     {
@@ -206,7 +207,6 @@ namespace CompetitionsTimeControl.Controllers
                         _beepCounter++;
                         PlayBeep(beepMediaPlayer, LowBeepPath);
                     }
-                    BeepsEventIsRunning = true;
                     break;
 
                 case BeepState.PerformBeeps:
@@ -239,12 +239,14 @@ namespace CompetitionsTimeControl.Controllers
                         in _timerForResumeMusicsInMilliSec, timeToDecrement, true))
                     {
                         _timerForResumeMusicsInMilliSec = 0;
+                        //setLblIntervalsElapsedBkColor?.Invoke(Color.LimeGreen);
                         CancelBeepsEvent();
                     }
                     break;
 
                 default:
                     CancelBeepsEvent();
+                    //setLblIntervalsElapsedBkColor?.Invoke(Color.LimeGreen);
                     break;
             }
 
@@ -260,16 +262,15 @@ namespace CompetitionsTimeControl.Controllers
         public void CancelBeepsEvent()
         {
             CanPerformBeepsEvent = false;
-            BeepsEventIsRunning = false;
             _beepState = BeepState.WaitToRunBeeps;
         }
 
-        public void PlayBeep(AxWindowsMediaPlayer beepMediaPlayer, string beepPath)
+        public static void PlayBeep(AxWindowsMediaPlayer beepMediaPlayer, string beepPath)
         {
             beepMediaPlayer.Ctlcontrols.stop();
             beepMediaPlayer.URL = beepPath;
         }
 
-        private string GetTimeSpanFormat(double value) => TimeSpan.FromMilliseconds(value).ToString(@"ss\.fff");
+        private static string GetTimeSpanFormat(double value) => TimeSpan.FromMilliseconds(value).ToString(@"ss\.fff");
     }
 }

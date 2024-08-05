@@ -10,6 +10,7 @@ namespace CompetitionsTimeControl.Controllers
         public MusicsController DataMusicsController { get; set; } = null!;
         public CompetitionController DataCompetitionController { get; set; } = null!;
         public string? Checksum { get; set; }
+
         [JsonIgnore] private static string _lastDirectory = string.Empty;
 
         public static string SaveFileConfigurationAs(BeepsController beepsController, MusicsController musicsController,

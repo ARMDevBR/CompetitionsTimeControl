@@ -1,7 +1,5 @@
 ﻿using AxWMPLib;
 using Newtonsoft.Json;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Text;
 
 namespace CompetitionsTimeControl.Controllers
@@ -166,7 +164,15 @@ namespace CompetitionsTimeControl.Controllers
             return true;
         }
 
-        public bool CanStartCompetition()
+        public bool ValidateHasMusicsToPlaylist(MusicsController musicsController, out bool skipCanStartMessage)
+        {
+            skipCanStartMessage = false;
+
+            return CompetitionProgramSetup == CompetitionProgram.OnlyBeeps ||
+                musicsController.HasMusicsToPlaylist(out skipCanStartMessage);
+        }
+
+        public bool CanStartCompetition(bool skipCanStartMessage)
         {
             bool ret = false;
 
@@ -175,7 +181,7 @@ namespace CompetitionsTimeControl.Controllers
 
             string message = "As configurações estão prontas para começar a competição?";
 
-            if (MessageBox.Show(message, "ATENÇÃO", MessageBoxButtons.YesNo, MessageBoxIcon.Question,
+            if (skipCanStartMessage || MessageBox.Show(message, "ATENÇÃO", MessageBoxButtons.YesNo, MessageBoxIcon.Question,
                 MessageBoxDefaultButton.Button2) == DialogResult.Yes)
             {
                 ret = true;
@@ -200,9 +206,11 @@ namespace CompetitionsTimeControl.Controllers
             }
         }
 
-        public void StartCompetition(out Action? finishCurrentIntervalCallback)
+        public void StartCompetition(out Action? finishCurrentIntervalCallback,
+            out Action? setLblIntervalsElapsedYellowColor)
         {
             finishCurrentIntervalCallback = null;
+            setLblIntervalsElapsedYellowColor = null;
 
             if (CanRunCompetition || ProgramIsRunning)
                 return;
@@ -218,6 +226,7 @@ namespace CompetitionsTimeControl.Controllers
             _showFinishMessage = true;
             CanRunCompetition = true;
             finishCurrentIntervalCallback = FinishCurrentInterval;
+            setLblIntervalsElapsedYellowColor = SetLblIntervalsElapsedYellowColor;
         }
 
         public bool StopCompetition()
@@ -271,6 +280,8 @@ namespace CompetitionsTimeControl.Controllers
 
             AdjustLabelIntervalsElapsed();
         }
+
+        private void SetLblIntervalsElapsedYellowColor() => _lblIntervalsElapsed.BackColor = Color.Yellow;
 
         public void KeepLastMillisecondUpdated(long elapsedMilliseconds) => _lastMillisecond = elapsedMilliseconds;
 
@@ -354,9 +365,6 @@ namespace CompetitionsTimeControl.Controllers
                     break;
 
                 case CompetitionProgramState.WaitToAdjustMusicVolumeToMax:
-                    if (beepsController.BeepsEventIsRunning)
-                        _lblIntervalsElapsed.BackColor = Color.Yellow;
-
                     if (beepsController.CanPerformBeepsEvent)
                         break;
                     
@@ -364,10 +372,10 @@ namespace CompetitionsTimeControl.Controllers
                         musicsController.ChangeVolumeInSeconds(_nextTimeToChangeVolume, MusicsController.ChangeVolume.ToMax);
                         
                     _programState = CompetitionProgramState.AdjustCurrentMusicVolumeToMax;
-                    _lblIntervalsElapsed.BackColor = Color.LimeGreen;
                     break;
 
                 case CompetitionProgramState.AdjustCurrentMusicVolumeToMax:
+                    _lblIntervalsElapsed.BackColor = Color.LimeGreen;
                     if (musicsController.SecondsToChangeVolume != null)
                         break;
                     

@@ -2,8 +2,8 @@
 using Newtonsoft.Json;
 using System.IO;
 using System.Text;
+using System.Windows.Forms;
 using WMPLib;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.ListView;
 
 namespace CompetitionsTimeControl.Controllers
 {
@@ -16,6 +16,8 @@ namespace CompetitionsTimeControl.Controllers
         private const int MusicPathColumnWidth = 400;
         private const byte AmountOfMusicsToAutoChangePlaylist = 2;
         private const double OffsetTimeToChangeMusicInMS = 0.167d;
+
+        private static readonly Color ListViewItemInvalidForeColor = Color.Red;
 
         public enum ChangeVolume { ToMin, ToMax }
 
@@ -96,9 +98,9 @@ namespace CompetitionsTimeControl.Controllers
             if (clearAllBefore)
                 ClearAllLists();
 
-            StringBuilder? sb = null;
+            StringBuilder? sbRepeatedMusics = null;
+            StringBuilder? sbInvalidMusics = null;
 
-            MusicsPathsList.AddRange(musicsArray);
             _listViewMusics.GridLines = true;
             int index = _listViewMusics.Items.Count;
 
@@ -112,9 +114,9 @@ namespace CompetitionsTimeControl.Controllers
 
                 if (_listViewMusics.FindItemWithText(musicName) != null)
                 {
-                    sb ??= new("As seguintes músicas já existem na lista e não foram incluídas novamente:\n\n");
+                    sbRepeatedMusics ??= new("As seguintes músicas já existem na lista e não foram incluídas novamente:\n\n");
 
-                    sb?.AppendLine($"  ➤  {musicName}");
+                    sbRepeatedMusics?.AppendLine($"  ➤  {musicName}");
                     continue;
                 }
 
@@ -122,24 +124,45 @@ namespace CompetitionsTimeControl.Controllers
                 {
                     BackColor = (index++ & 1) > 0 ? Color.Azure : Color.Beige
                 };
-
-                /*if (index is 2 or 4)
+                
+                if (!IsValidMusicFile(listViewItem, pathFileName, musicExtension))
                 {
-                    listViewItem.ForeColor = Color.Red; // Test for bad music in the list
-                }*/
+                    sbInvalidMusics ??= new("As seguintes músicas são inválidas ou não existem mais:\n\n");
+                    sbInvalidMusics?.AppendLine($"  ➤  {musicName}");
+                }
 
                 _listViewMusics.Items.Add(listViewItem);
+                MusicsPathsList.Add(pathFileName);
 
                 ret = true;
             }
 
-            if (sb != null)
+            if (sbRepeatedMusics != null)
             {
-                sb.Append("\nVerifique a última pasta selecionada e renomeie as músicas se necessário.");
+                sbRepeatedMusics.Append("\nVerifique a última pasta selecionada e renomeie as músicas se necessário.");
 
-                MessageBox.Show(sb.ToString(), "ATENÇÃO", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(sbRepeatedMusics.ToString(), "ATENÇÃO", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
 
+            if (sbInvalidMusics != null)
+            {
+                sbInvalidMusics.Append("\nElas foram marcadas em vermelho para que possam ser verificadas individualmente.");
+
+                MessageBox.Show(sbInvalidMusics.ToString(), "ATENÇÃO", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+
+            return ret;
+        }
+
+        private static bool IsValidMusicFile(ListViewItem listViewItem, string musicPath, string extension)
+        {
+            bool ret = true;
+
+            if (!File.Exists(musicPath) || !AudioFileController.IsCorrectFileType(musicPath, extension))
+            {
+                SetInvalidItem(listViewItem);
+                ret = false;
+            }
             return ret;
         }
 
@@ -263,13 +286,13 @@ namespace CompetitionsTimeControl.Controllers
 
             if (lvi != null && lvi.Selected)
             {
-                if (lvi.ForeColor == Color.Red)
+                if (IsInvalidItem(lvi))
                 {
-                    ShowInvalidMusicMessage();
+                    ShowInvalidMusicMessage(true);
                 }
                 else if (_listViewMusics.SelectedItems.Count > 0)
                 {
-                    TryPlayMusicBySelectionAndEnable(lvi.Index, musicMediaPlayer);
+                    TryPlayMusicBySelectionAndEnable(lvi, musicMediaPlayer);
                 }
             }
             else
@@ -279,10 +302,18 @@ namespace CompetitionsTimeControl.Controllers
             }
         }
 
-        private static void ShowInvalidMusicMessage()
+        private static bool IsInvalidItem(ListViewItem lvi) => lvi.ForeColor == ListViewItemInvalidForeColor;
+        private static void SetInvalidItem(ListViewItem lvi) => lvi.ForeColor = ListViewItemInvalidForeColor;
+        private static void SetValidItem(ListViewItem lvi) => lvi.ForeColor = SystemColors.WindowText;
+
+        private static void ShowInvalidMusicMessage(bool wasInvalidBefore)
         {
             StringBuilder sb = new("Esta música pode estar corrompida ou não existir mais na origem.\n\n");
-            sb.Append("As músicas listadas em vermelho NÃO são válidas e podem ser excluídas da lista.");
+
+            if (wasInvalidBefore)
+                sb.Append("As músicas listadas em vermelho NÃO são válidas e podem ser excluídas da lista.");
+            else
+                sb.Append("Ela foi marcada em vermelho para que possa ser verificada individualmente.");
 
             MessageBox.Show(sb.ToString(), "ATENÇÃO", MessageBoxButtons.OK, MessageBoxIcon.Warning);
         }
@@ -294,7 +325,7 @@ namespace CompetitionsTimeControl.Controllers
             
             for (int i = 0; i < listViewItemColl.Count; i++)
             {
-                if (listViewItemColl[i].ForeColor == SystemColors.WindowText)
+                if (!IsInvalidItem(listViewItemColl[i])) //listViewItemColl[i].ForeColor == SystemColors.WindowText)
                 {
                     HasJustOneValidMusic = !ret;
                     ret = true;
@@ -303,20 +334,77 @@ namespace CompetitionsTimeControl.Controllers
             return ret;
         }
 
-        private void TryPlayMusicBySelectionAndEnable(int selectedItemIndex, AxWindowsMediaPlayer musicMediaPlayer,
+        private void TryPlayMusicBySelectionAndEnable(ListViewItem lvi, AxWindowsMediaPlayer musicMediaPlayer,
             bool forceRestartMusic = false)
         {
+            string musicPath = MusicsPathsList[lvi.Index];
+
+            if (!IsValidMusicFile(lvi, musicPath, Path.GetExtension(musicPath)[1..]))
+            {
+                ShowInvalidMusicMessage(false);
+                return;
+            }
+
             forceRestartMusic = forceRestartMusic || musicMediaPlayer.playState == WMPPlayState.wmppsUndefined;
 
             IWMPMedia currentMedia = musicMediaPlayer.currentMedia;
 
-            if (forceRestartMusic || currentMedia == null || !currentMedia.sourceURL.Equals(MusicsPathsList[selectedItemIndex]))
+            if (forceRestartMusic || currentMedia == null || !currentMedia.sourceURL.Equals(musicPath))
             {
-                musicMediaPlayer.URL = MusicsPathsList[selectedItemIndex];
+                musicMediaPlayer.URL = musicPath;
             }
 
             musicMediaPlayer.Ctlcontrols.play();
             musicMediaPlayer.Ctlenabled = true;
+        }
+
+        public bool HasMusicsToPlaylist(out bool skipCanStartMessage)
+        {
+            skipCanStartMessage = false;
+
+            ListView.ListViewItemCollection listViewItemColl = _listViewMusics.Items;
+
+            int itemsCount = listViewItemColl.Count;
+            StringBuilder? sbInvalidMusics = null;
+
+            bool ret = itemsCount > 0;
+
+            for (int i = 0; i < itemsCount; i++)
+            {
+                ListViewItem lvi = listViewItemColl[i];
+
+                if (IsInvalidItem(lvi))
+                    continue;
+
+                string musicPath = MusicsPathsList[lvi.Index];
+                string musicName = Path.GetFileName(musicPath)[..^4];
+
+                if (!IsValidMusicFile(lvi, musicPath, Path.GetExtension(musicPath)[1..]))
+                {
+                    sbInvalidMusics ??= new("As seguintes músicas são inválidas ou não existem mais:\n\n");
+                    sbInvalidMusics?.AppendLine($"  ➤  {musicName}");
+                    ret = false;
+                }
+            }
+
+            if (sbInvalidMusics != null)
+            {
+                sbInvalidMusics.Append("\nElas foram marcadas em vermelho para que possam ser verificadas individualmente.");
+                MessageBox.Show(sbInvalidMusics.ToString(), "ATENÇÃO", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+
+                if (HasValidMusics())
+                {
+                    sbInvalidMusics.Clear();
+                    sbInvalidMusics.Append("Deseja iniciar a competição com as músicas válidas existentes?");
+
+                    ret = MessageBox.Show(sbInvalidMusics.ToString(), "ATENÇÃO", MessageBoxButtons.YesNo,
+                        MessageBoxIcon.Question) == DialogResult.Yes;
+                    
+                    skipCanStartMessage = ret;
+                }
+            }
+
+            return ret;
         }
 
         public void CreatePlaylist(AxWindowsMediaPlayer musicMediaPlayer, bool fromListBeginning)
@@ -340,7 +428,7 @@ namespace CompetitionsTimeControl.Controllers
                 
             int[] nextIndex = Enumerable.Range(0, itemsCount).ToArray();
             
-            if (itemsCount > 1 && PlaylistInRandomMode)
+            if (itemsCount > 1 && !HasJustOneValidMusic && PlaylistInRandomMode)
             {
                 int n = nextIndex.Length;
                 Random rnd = new();
@@ -354,7 +442,7 @@ namespace CompetitionsTimeControl.Controllers
 
             for (int i = 0; i < itemsCount; i++)
             {
-                if (listViewItemColl[nextIndex[i]].ForeColor == Color.Red)
+                if (IsInvalidItem(listViewItemColl[nextIndex[i]]))
                     continue;
 
                 string url = MusicsPathsList[nextIndex[i]];
@@ -385,14 +473,14 @@ namespace CompetitionsTimeControl.Controllers
                 {
                     ListViewItem lvi = _listViewMusics.SelectedItems[0];
 
-                    if (lvi.ForeColor == Color.Red)
+                    if (IsInvalidItem(lvi))
                     {
-                        ShowInvalidMusicMessage();
+                        ShowInvalidMusicMessage(true);
                     }
                     else
                     {
                         // Trocar a contagem por itens válidos
-                        TryPlayMusicBySelectionAndEnable(lvi.Index, musicMediaPlayer, _listViewMusics.Items.Count == 1);
+                        TryPlayMusicBySelectionAndEnable(lvi, musicMediaPlayer, _listViewMusics.Items.Count == 1);
                     }
                 }
             }
