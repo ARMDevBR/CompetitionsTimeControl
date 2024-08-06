@@ -35,7 +35,7 @@ namespace CompetitionsTimeControl.Controllers
                 {
                     return true;
                 }
-                else if (expectedExtension.Equals(".wav", StringComparison.OrdinalIgnoreCase) &&
+                else if (expectedExtension.Equals("wav", StringComparison.OrdinalIgnoreCase) &&
                     fileSignature.StartsWith(wavPrefix) && fileSignature.Contains(wavSuffix))
                 {
                     return true;

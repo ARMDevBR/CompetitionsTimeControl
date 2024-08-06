@@ -13,7 +13,7 @@ namespace CompetitionsTimeControl.Controllers
 
         public enum CompetitionProgram { None = -1, OnlyBeeps, MusicsAndBeeps }
         public enum InitializationProgram { None = -1, FromListBeginning, FromMusicPlaying }
-        public enum PlaylistRestart { None = -1, ShuffleList, SequentialList, InvertLastMode }
+        public enum PlaylistRestart { None = -1, SequentialList, ShuffleList, InvertLastMode }
         private enum CompetitionProgramState
         {
             WaitToResumeProgram, WaitToRunProgram, WaitToAdjustMusicVolumeToMin, AdjustCurrentMusicVolumeToMin,

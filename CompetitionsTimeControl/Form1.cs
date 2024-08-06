@@ -727,7 +727,18 @@ namespace CompetitionsTimeControl
                 MusicsController.PrepareForPause(TBMusicCurrentVol);
 
                 if (_competitionController.CanRunCompetition) // Check again in case of competition timeout
-                    BtnStartCompetition.Text = _competitionController.ProgramIsRunning ? "Pausar" : "Retomar";
+                {
+                    if (_competitionController.ProgramIsRunning)
+                    {
+                        BtnStartCompetition.Text = "Pausar";
+                        BtnStartCompetition.ImageIndex = 4;
+                    }
+                    else
+                    {
+                        BtnStartCompetition.Text = "Retoma";
+                        BtnStartCompetition.ImageIndex = 3;
+                    }
+                }
                 return;
             }
 
@@ -749,6 +760,7 @@ namespace CompetitionsTimeControl
                 DisableCompetitionControls();
                 SetEnableToolStripMenuItems(false);
                 BtnStartCompetition.Text = "Pausar";
+                BtnStartCompetition.ImageIndex = 4;
                 BtnStopCompetition.Enabled = true;
             }
         }

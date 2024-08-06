@@ -195,7 +195,7 @@ namespace CompetitionsTimeControl.Controllers
             {
                 if (_checkedMusicToDelete.Count > 0)
                 {
-                    toggleMarkAndExclude.Text = "Excluir marcadas";
+                    toggleMarkAndExclude.Text = "Excluir ?";
 
                     toolTip.SetToolTip(toggleMarkAndExclude, string.Concat(
                         "- Ao clicar novamente, as músicas com checkbox marcado serão excluídas da lista.\n",
@@ -203,7 +203,7 @@ namespace CompetitionsTimeControl.Controllers
                 }
                 else
                 {
-                    toggleMarkAndExclude.Text = "Selecione músicas";
+                    toggleMarkAndExclude.Text = "Check ✓";
 
                     toolTip.SetToolTip(toggleMarkAndExclude, string.Concat(
                         "- Ao clicar novamente, a função de exclusão individual será cancelada.\n",
@@ -212,7 +212,7 @@ namespace CompetitionsTimeControl.Controllers
             }
             else
             {
-                toggleMarkAndExclude.Text = "Marque e exclua";
+                toggleMarkAndExclude.Text = "Excluir seleção";
                 toolTip.SetToolTip(toggleMarkAndExclude, "Clique para ativar a função de exclusão das músicas na lista.");
             }
         }
@@ -304,7 +304,6 @@ namespace CompetitionsTimeControl.Controllers
 
         private static bool IsInvalidItem(ListViewItem lvi) => lvi.ForeColor == ListViewItemInvalidForeColor;
         private static void SetInvalidItem(ListViewItem lvi) => lvi.ForeColor = ListViewItemInvalidForeColor;
-        private static void SetValidItem(ListViewItem lvi) => lvi.ForeColor = SystemColors.WindowText;
 
         private static void ShowInvalidMusicMessage(bool wasInvalidBefore)
         {
@@ -325,7 +324,7 @@ namespace CompetitionsTimeControl.Controllers
             
             for (int i = 0; i < listViewItemColl.Count; i++)
             {
-                if (!IsInvalidItem(listViewItemColl[i])) //listViewItemColl[i].ForeColor == SystemColors.WindowText)
+                if (!IsInvalidItem(listViewItemColl[i]))
                 {
                     HasJustOneValidMusic = !ret;
                     ret = true;
@@ -466,8 +465,9 @@ namespace CompetitionsTimeControl.Controllers
         {
             if (togglePlayMusicBySelection.Checked)
             {
-                togglePlayMusicBySelection.Text = "Cancelar";
-                toolTip.SetToolTip(togglePlayMusicBySelection, "Desabilita tocar a música ao selecioná-la na lista.");
+                togglePlayMusicBySelection.Text = "  Parar";
+                togglePlayMusicBySelection.ImageIndex = 4;
+                toolTip.SetToolTip(togglePlayMusicBySelection, "Desabilita tocar qualquer música selecionada na lista.");
 
                 if (!startingCompetition && _listViewMusics.SelectedItems.Count > 0)
                 {
@@ -486,7 +486,8 @@ namespace CompetitionsTimeControl.Controllers
             }
             else
             {
-                togglePlayMusicBySelection.Text = "Selecionar e ouvir";
+                togglePlayMusicBySelection.Text = "Ouvir seleção";
+                togglePlayMusicBySelection.ImageIndex = 3;
                 toolTip.SetToolTip(togglePlayMusicBySelection, "Habilita tocar a música ao selecioná-la na lista.");
 
                 if (!startingCompetition)
@@ -502,12 +503,12 @@ namespace CompetitionsTimeControl.Controllers
 
             if (togglePlaylistMode.Checked)
             {
-                togglePlaylistMode.Text = "Lista aleatória";
+                togglePlaylistMode.ImageIndex = 6;
                 toolTip.SetToolTip(togglePlaylistMode, "Playlist vai tocar em ordem aleatória.");
             }
             else
             {
-                togglePlaylistMode.Text = "Lista sequencial";
+                togglePlaylistMode.ImageIndex = 5;
                 toolTip.SetToolTip(togglePlaylistMode, "Playlist vai tocar sequencialmente.");
             }
         }
@@ -522,7 +523,7 @@ namespace CompetitionsTimeControl.Controllers
                 _listViewMusics.Columns[1].Width = MusicFormatColumnWidth;
                 _listViewMusics.Columns[2].Width = MusicDurationColumnWidth;
                 _listViewMusics.Columns[3].Width = MusicPathColumnWidth;
-                toggleSeeDetails.Text = "Ver simplificada";
+                toggleSeeDetails.ImageIndex = 7;
             }
             else
             {
@@ -531,7 +532,7 @@ namespace CompetitionsTimeControl.Controllers
                 _listViewMusics.Columns[1].Width = 0;
                 _listViewMusics.Columns[2].Width = 0;
                 _listViewMusics.Columns[3].Width = 0;
-                toggleSeeDetails.Text = "Ver detalhada";
+                toggleSeeDetails.ImageIndex = 8;
             }
         }
 
