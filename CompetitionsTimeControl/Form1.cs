@@ -133,8 +133,6 @@ namespace CompetitionsTimeControl
 
         private void ThreadTimerTick(object? stateInfo)
         {
-            /*if (!TimerController.ThreadTimerIsRunning || _closingApplication)
-                return;*/
             try
             {
                 Invoke(() =>
@@ -210,9 +208,8 @@ namespace CompetitionsTimeControl
                 if (!_competitionController.CanRunCompetition && !_beepsController.CanPerformBeepsEvent)
                 {
                     PrepareBeepsTest(false);
-                    CheckEnableCompetitionControls();
                     ComboBoxProgramming.Enabled = true;
-                    BtnStartCompetition.Enabled = true;
+                    CheckEnableCompetitionControls();
                 }
             }
         }
@@ -464,7 +461,7 @@ namespace CompetitionsTimeControl
         {
             BtnAddMusics.Enabled = enable;
             TogglePlaylistMode.Enabled = enable;
-            EnableControlsHavingItems(enable);
+            EnableControlsHavingItems(enable && ListViewMusics.Items.Count > 0);
         }
 
         private void BtnAddMusics_Click(object sender, EventArgs e)
@@ -497,7 +494,7 @@ namespace CompetitionsTimeControl
 
         private void ToggleMarkAndExclude_CheckedChanged(object sender, EventArgs e)
         {
-            _musicsController?.DeleteCheckedMusics(!ToggleMarkAndExclude.Checked, MusicMediaPlayer);
+            _musicsController?.DeleteCheckedMusics(!ToggleMarkAndExclude.Checked);
 
             bool hasItemsInTheList = ListViewMusics.Items.Count > 0;
             bool hasValidMusics = _musicsController?.HasValidMusics() ?? false;
@@ -797,6 +794,7 @@ namespace CompetitionsTimeControl
             SetEnableToolStripMenuItems(true);
             CheckEnableCompetitionControls();
             BtnStartCompetition.Text = "Iniciar";
+            BtnStartCompetition.ImageIndex = 3;
             BtnStopCompetition.Enabled = false;
             ChooseHowToClearPlaylist(_competitionController.StopMusicsAtEnd);
         }

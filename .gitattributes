@@ -1,1 +1,2 @@
 Icons/*.png filter=lfs diff=lfs merge=lfs -text
+Icons[[:space:]]and[[:space:]]Images/* filter=lfs diff=lfs merge=lfs -text

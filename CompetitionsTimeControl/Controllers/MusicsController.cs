@@ -79,6 +79,7 @@ namespace CompetitionsTimeControl.Controllers
         private ChangeVolume _changeVolume;
         private AutoChangeMusicState _autoChangeMusicState;
         private readonly List<int> _checkedMusicToDelete;
+        private readonly List<double> _secondsOfEachMusic;
         private IWMPMedia _currentPlaylistMedia = null!;
         private IWMPMedia _lastPlaylistMedia = null!;
         private string _lastDirectory;
@@ -88,6 +89,7 @@ namespace CompetitionsTimeControl.Controllers
             _stepsHaveBeenConfigured = false;
             _stepsToChangeMusic = 0;
             _checkedMusicToDelete = [];
+            _secondsOfEachMusic = [];
             _listViewMusics = listViewMusics;
             _lblListViewMusicsStatus = lblListViewMusicsStatus;
             MusicsPathsList = [];
@@ -178,10 +180,12 @@ namespace CompetitionsTimeControl.Controllers
                 {
                     validMusicsAmount++;
                     totalValidPlaylistTime += media.duration;
+                    _secondsOfEachMusic.Add(media.duration);
                 }
                 else
                 {
                     invalidMusicsAmount++;
+                    _secondsOfEachMusic.Add(0d);
                     sbInvalidMusics ??= new("As seguintes músicas são inválidas ou não existem mais:\n\n");
                     sbInvalidMusics?.AppendLine($"  ➤  {musicName}");
                 }
@@ -209,12 +213,7 @@ namespace CompetitionsTimeControl.Controllers
                 MessageBox.Show(sbInvalidMusics.ToString(), "ATENÇÃO", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
             _listViewMusics.CheckBoxes = false; // Disable after buffering.
-
-            if (_listViewMusicsStatus != null)
-            {
-                _listViewMusicsStatus.AddValuesToParameters(validMusicsAmount, invalidMusicsAmount, totalValidPlaylistTime);
-                _lblListViewMusicsStatus.Text = _listViewMusicsStatus.LabelStatusText;
-            }
+            TryToUpdateListViewMusicsStatus(validMusicsAmount, invalidMusicsAmount, totalValidPlaylistTime);
 
             return ret;
         }
@@ -229,6 +228,15 @@ namespace CompetitionsTimeControl.Controllers
                 ret = false;
             }
             return ret;
+        }
+
+        private void TryToUpdateListViewMusicsStatus(int validMusicsAmount, int invalidMusicsAmount, double totalValidPlaylistTime)
+        {
+            if (_listViewMusicsStatus != null)
+            {
+                _listViewMusicsStatus.AddValuesToParameters(validMusicsAmount, invalidMusicsAmount, totalValidPlaylistTime);
+                _lblListViewMusicsStatus.Text = _listViewMusicsStatus.LabelStatusText;
+            }
         }
 
         public bool TryClearListViewMusics()
@@ -247,6 +255,7 @@ namespace CompetitionsTimeControl.Controllers
         private void ClearAllLists()
         {
             _checkedMusicToDelete.Clear();
+            _secondsOfEachMusic.Clear();
             MusicsPathsList.Clear();
             _listViewMusics.Items.Clear();
             _listViewMusics.CheckBoxes = false;
@@ -288,7 +297,7 @@ namespace CompetitionsTimeControl.Controllers
             }
         }
 
-        public void DeleteCheckedMusics(bool canDelete, AxWindowsMediaPlayer musicMediaPlayer)
+        public void DeleteCheckedMusics(bool canDelete)
         {
             if (!canDelete || _checkedMusicToDelete.Count <= 0)
             {
@@ -328,22 +337,18 @@ namespace CompetitionsTimeControl.Controllers
                     else
                     {
                         validMusicsAmount--;
-                        totalValidPlaylistTime -= musicMediaPlayer.newMedia(MusicsPathsList[indexToRemove]).duration;
+                        totalValidPlaylistTime -= _secondsOfEachMusic[indexToRemove];
                     }
 
                     lvi.Remove();
                     //_listViewMusics.Items.RemoveAt(indexToRemove);
                     MusicsPathsList.RemoveAt(indexToRemove);
+                    _secondsOfEachMusic.RemoveAt(indexToRemove);
                     _checkedMusicToDelete.RemoveAt(i);
                 }
 
                 RepaintListViewGrid(true);
-
-                if (_listViewMusicsStatus != null)
-                {
-                    _listViewMusicsStatus.AddValuesToParameters(validMusicsAmount, invalidMusicsAmount, totalValidPlaylistTime);
-                    _lblListViewMusicsStatus.Text = _listViewMusicsStatus.LabelStatusText;
-                }
+                TryToUpdateListViewMusicsStatus(validMusicsAmount, invalidMusicsAmount, totalValidPlaylistTime);
             }
             else
             {
@@ -426,6 +431,10 @@ namespace CompetitionsTimeControl.Controllers
                 {
                     HasJustOneValidMusic = !ret;
                     ret = true;
+
+                    // Stops execution on the second valid music
+                    if (!HasJustOneValidMusic)
+                        break;
                 }
             }
             return ret;
@@ -439,13 +448,8 @@ namespace CompetitionsTimeControl.Controllers
             if (!IsValidMusicFile(lvi, musicPath, Path.GetExtension(musicPath)[1..]))
             {
                 ShowInvalidMusicMessage(false);
-
-                if (_listViewMusicsStatus != null)
-                {
-                    _listViewMusicsStatus.AddValuesToParameters(-1, +1, -musicMediaPlayer.newMedia(musicPath).duration);
-                    _lblListViewMusicsStatus.Text = _listViewMusicsStatus.LabelStatusText;
-                }
-
+                TryToUpdateListViewMusicsStatus(-1, +1, -_secondsOfEachMusic[lvi.Index]);
+                
                 return;
             }
 
@@ -491,7 +495,7 @@ namespace CompetitionsTimeControl.Controllers
                 {
                     validMusicsAmount--;
                     invalidMusicsAmount++;
-                    totalValidPlaylistTime -= musicMediaPlayer.newMedia(musicPath).duration;
+                    totalValidPlaylistTime -= _secondsOfEachMusic[lvi.Index];
 
                     sbInvalidMusics ??= new("As seguintes músicas são inválidas ou não existem mais:\n\n");
                     sbInvalidMusics?.AppendLine($"  ➤  {musicName}");
@@ -514,12 +518,7 @@ namespace CompetitionsTimeControl.Controllers
                     
                     skipCanStartMessage = ret;
                 }
-
-                if (_listViewMusicsStatus != null)
-                {
-                    _listViewMusicsStatus.AddValuesToParameters(validMusicsAmount, invalidMusicsAmount, totalValidPlaylistTime);
-                    _lblListViewMusicsStatus.Text = _listViewMusicsStatus.LabelStatusText;
-                }
+                TryToUpdateListViewMusicsStatus(validMusicsAmount, invalidMusicsAmount, totalValidPlaylistTime);
             }
 
             return ret;

@@ -107,7 +107,6 @@
             NumUDCompetitionIntervalSeconds = new NumericUpDown();
             ComboBoxInitialization = new ComboBox();
             ComboBoxProgramming = new ComboBox();
-            ImageListMusicPlayerVolumeBanner = new ImageList(components);
             ((System.ComponentModel.ISupportInitialize)MusicMediaPlayer).BeginInit();
             ((System.ComponentModel.ISupportInitialize)TBMusicVolumeMin).BeginInit();
             GroupBoxMusicCtrls.SuspendLayout();
@@ -245,7 +244,7 @@
             LblListViewMusicsStatus.TabIndex = 65;
             LblListViewMusicsStatus.Text = "Músicas Válidas: 9999 - Inválidas: 9999 - Tempo total da playlist válida: 00:00:00";
             LblListViewMusicsStatus.TextAlign = ContentAlignment.MiddleCenter;
-            ToolTip.SetToolTip(LblListViewMusicsStatus, "Quantidade de músicas e tempo total aproximado da playlist.");
+            ToolTip.SetToolTip(LblListViewMusicsStatus, "Quantidade de músicas e tempo total aproximado (hh:mm:ss) da playlist.");
             // 
             // ToggleSeeDetails
             // 
@@ -1100,13 +1099,6 @@
             ComboBoxProgramming.TabIndex = 51;
             ComboBoxProgramming.SelectedIndexChanged += ComboBoxProgramming_SelectedIndexChanged;
             // 
-            // ImageListMusicPlayerVolumeBanner
-            // 
-            ImageListMusicPlayerVolumeBanner.ColorDepth = ColorDepth.Depth32Bit;
-            ImageListMusicPlayerVolumeBanner.ImageStream = (ImageListStreamer)resources.GetObject("ImageListMusicPlayerVolumeBanner.ImageStream");
-            ImageListMusicPlayerVolumeBanner.TransparentColor = Color.Transparent;
-            ImageListMusicPlayerVolumeBanner.Images.SetKeyName(0, "HideMediaPlayerVolumeBanner.png");
-            // 
             // MainForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -1236,6 +1228,5 @@
         private ImageList ImageListBeepsAndCompetition;
         private Label LblListViewMusicsStatus;
         private PictureBox PBMusicPlayerVolumeBanner;
-        private ImageList ImageListMusicPlayerVolumeBanner;
     }
 }
