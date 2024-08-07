@@ -17,8 +17,8 @@ namespace CompetitionsTimeControl.Controllers
                 string fileSignature = BitConverter.ToString(buffer).Replace("-", string.Empty).ToUpper();
 
                 // Assinaturas de arquivos comuns
-                // MP3: Assinaturas possíveis incluem "FFFB", "FFF3", "FFF2", "494433" (ID3)
-                string[] mp3Signatures = { "FFFB", "FFF3", "FFF2", "494433" };
+                // MP3: Possíveis: "FFFB", "FFF3", "FFF2", "494433" (ID3). Outras: "FFF0", "FFF1", "FFF4", "FFF5", "FFF6", "FFF7", "FFFD" 
+                string[] mp3Signatures = { "FFFB", "FFF3", "FFF2", "494433", "FFF0", "FFF1", "FFF4", "FFF5", "FFF6", "FFF7", "FFFD" };
                 // WMA: Assinatura "3026B2758E66CF11"
                 string wmaSignature = "3026B2758E66CF11";
                 // WAV: Assinatura "52494646" (RIFF) seguido de "57415645" (WAVE)

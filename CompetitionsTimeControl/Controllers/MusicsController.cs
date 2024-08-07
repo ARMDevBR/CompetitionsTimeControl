@@ -7,6 +7,43 @@ using WMPLib;
 
 namespace CompetitionsTimeControl.Controllers
 {
+    internal class ListViewMusicsStatus
+    {
+        public string LabelStatusText { get; private set; } = null!;
+        private int ValidMusicsAmount { get; set; }
+        private int InvalidMusicsAmount { get; set; }
+        private double TotalValidPlaylistTime { get; set; }
+
+        public ListViewMusicsStatus()
+        {
+            ClearAllParameters();
+        }
+
+        public void ClearAllParameters()
+        {
+            ValidMusicsAmount = 0;
+            InvalidMusicsAmount = 0;
+            TotalValidPlaylistTime = 0d;
+            SetLabelStatusText();
+        }
+
+        public void AddValuesToParameters(int addValidMusics, int addInvalidMusics, double addValidPlaylistTime)
+        {
+            ValidMusicsAmount += addValidMusics;
+            InvalidMusicsAmount += addInvalidMusics;
+            TotalValidPlaylistTime += addValidPlaylistTime;
+            if (ValidMusicsAmount == 0) TotalValidPlaylistTime = 0d;
+            SetLabelStatusText();
+        }
+
+        private void SetLabelStatusText()
+        {
+            LabelStatusText = string.Concat($"Músicas Válidas: {ValidMusicsAmount} - ",
+                $"Inválidas: {InvalidMusicsAmount} - ",
+                $"Tempo total da playlist válida: {TimeSpan.FromSeconds(TotalValidPlaylistTime):hh\\:mm\\:ss}");
+        }
+    }
+
     [JsonObject(MemberSerialization.OptIn)]
     internal class MusicsController
     {
@@ -14,7 +51,6 @@ namespace CompetitionsTimeControl.Controllers
         private const int MusicFormatColumnWidth = 75;
         private const int MusicDurationColumnWidth = 55;
         private const int MusicPathColumnWidth = 400;
-        private const byte AmountOfMusicsToAutoChangePlaylist = 2;
         private const double OffsetTimeToChangeMusicInMS = 0.167d;
 
         private static readonly Color ListViewItemInvalidForeColor = Color.Red;
@@ -33,6 +69,8 @@ namespace CompetitionsTimeControl.Controllers
         [JsonProperty] public byte CurrentMusicVolume { get; set; }
 
         private readonly ListView _listViewMusics;
+        private readonly Label _lblListViewMusicsStatus = null!;
+        private readonly ListViewMusicsStatus? _listViewMusicsStatus;
 
         private bool _stepsHaveBeenConfigured;
         private float _currentMusicVolume;
@@ -45,16 +83,23 @@ namespace CompetitionsTimeControl.Controllers
         private IWMPMedia _lastPlaylistMedia = null!;
         private string _lastDirectory;
 
-        public MusicsController(ListView listViewMusics)
+        public MusicsController(ListView listViewMusics, Label lblListViewMusicsStatus)
         {
             _stepsHaveBeenConfigured = false;
             _stepsToChangeMusic = 0;
             _checkedMusicToDelete = [];
             _listViewMusics = listViewMusics;
+            _lblListViewMusicsStatus = lblListViewMusicsStatus;
             MusicsPathsList = [];
             SecondsToChangeVolume = null;
             _lastDirectory = "";
             GenerateListHeaders();
+
+            if (_lblListViewMusicsStatus != null)
+            {
+                _listViewMusicsStatus = new();
+                _lblListViewMusicsStatus.Text = _listViewMusicsStatus.LabelStatusText;
+            }
         }
 
         public void GenerateListHeaders()
@@ -94,6 +139,9 @@ namespace CompetitionsTimeControl.Controllers
         public bool FillListView(string[] musicsArray, AxWindowsMediaPlayer musicMediaPlayer, bool clearAllBefore = false)
         {
             bool ret = false;
+            int validMusicsAmount = 0;
+            int invalidMusicsAmount = 0;
+            double totalValidPlaylistTime = 0d;
 
             if (clearAllBefore)
                 ClearAllLists();
@@ -106,10 +154,11 @@ namespace CompetitionsTimeControl.Controllers
 
             foreach (string pathFileName in musicsArray)
             {
+                IWMPMedia media = musicMediaPlayer.newMedia(pathFileName);
                 string nameWithExtension = Path.GetFileName(pathFileName);
                 string musicName = nameWithExtension[..^4];
                 string musicExtension = nameWithExtension[^3..];
-                string mediaDurationStr = musicMediaPlayer.newMedia(pathFileName).durationString;
+                string mediaDurationStr = media.durationString;
                 string path = Path.GetDirectoryName(pathFileName) ?? "";
 
                 if (_listViewMusics.FindItemWithText(musicName) != null)
@@ -125,14 +174,23 @@ namespace CompetitionsTimeControl.Controllers
                     BackColor = (index++ & 1) > 0 ? Color.Azure : Color.Beige
                 };
                 
-                if (!IsValidMusicFile(listViewItem, pathFileName, musicExtension))
+                if (IsValidMusicFile(listViewItem, pathFileName, musicExtension))
                 {
+                    validMusicsAmount++;
+                    totalValidPlaylistTime += media.duration;
+                }
+                else
+                {
+                    invalidMusicsAmount++;
                     sbInvalidMusics ??= new("As seguintes músicas são inválidas ou não existem mais:\n\n");
                     sbInvalidMusics?.AppendLine($"  ➤  {musicName}");
                 }
 
                 _listViewMusics.Items.Add(listViewItem);
                 MusicsPathsList.Add(pathFileName);
+
+                // Buffering the checkbox control to avoid delays in the SetMarkAndExcludeTextAndToolTip function.
+                _listViewMusics.CheckBoxes = true;
 
                 ret = true;
             }
@@ -149,6 +207,13 @@ namespace CompetitionsTimeControl.Controllers
                 sbInvalidMusics.Append("\nElas foram marcadas em vermelho para que possam ser verificadas individualmente.");
 
                 MessageBox.Show(sbInvalidMusics.ToString(), "ATENÇÃO", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+            _listViewMusics.CheckBoxes = false; // Disable after buffering.
+
+            if (_listViewMusicsStatus != null)
+            {
+                _listViewMusicsStatus.AddValuesToParameters(validMusicsAmount, invalidMusicsAmount, totalValidPlaylistTime);
+                _lblListViewMusicsStatus.Text = _listViewMusicsStatus.LabelStatusText;
             }
 
             return ret;
@@ -185,6 +250,12 @@ namespace CompetitionsTimeControl.Controllers
             MusicsPathsList.Clear();
             _listViewMusics.Items.Clear();
             _listViewMusics.CheckBoxes = false;
+
+            if (_listViewMusicsStatus != null)
+            {
+                _listViewMusicsStatus.ClearAllParameters();
+                _lblListViewMusicsStatus.Text = _listViewMusicsStatus.LabelStatusText;
+            }
         }
 
         public void SetMarkAndExcludeTextAndToolTip(CheckBox toggleMarkAndExclude, ToolTip toolTip)
@@ -217,7 +288,7 @@ namespace CompetitionsTimeControl.Controllers
             }
         }
 
-        public void DeleteCheckedMusics(bool canDelete)
+        public void DeleteCheckedMusics(bool canDelete, AxWindowsMediaPlayer musicMediaPlayer)
         {
             if (!canDelete || _checkedMusicToDelete.Count <= 0)
             {
@@ -237,15 +308,42 @@ namespace CompetitionsTimeControl.Controllers
             if (MessageBox.Show(sb.ToString(), "ATENÇÃO", MessageBoxButtons.YesNo,
                 MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) == DialogResult.Yes)
             {
+                int validMusicsAmount = 0;
+                int invalidMusicsAmount = 0;
+                double totalValidPlaylistTime = 0d;
+               
                 for (int i = _checkedMusicToDelete.Count - 1; i >= 0; i--)
                 {
                     int indexToRemove = _checkedMusicToDelete[i];
-                    _listViewMusics.Items.RemoveAt(indexToRemove);
+
+                    ListViewItem lvi = _listViewMusics.Items[indexToRemove];
+
+                    if (lvi == null)
+                        continue;
+
+                    if (IsInvalidItem(lvi))
+                    {
+                        invalidMusicsAmount--;
+                    }
+                    else
+                    {
+                        validMusicsAmount--;
+                        totalValidPlaylistTime -= musicMediaPlayer.newMedia(MusicsPathsList[indexToRemove]).duration;
+                    }
+
+                    lvi.Remove();
+                    //_listViewMusics.Items.RemoveAt(indexToRemove);
                     MusicsPathsList.RemoveAt(indexToRemove);
                     _checkedMusicToDelete.RemoveAt(i);
                 }
 
                 RepaintListViewGrid(true);
+
+                if (_listViewMusicsStatus != null)
+                {
+                    _listViewMusicsStatus.AddValuesToParameters(validMusicsAmount, invalidMusicsAmount, totalValidPlaylistTime);
+                    _lblListViewMusicsStatus.Text = _listViewMusicsStatus.LabelStatusText;
+                }
             }
             else
             {
@@ -341,6 +439,13 @@ namespace CompetitionsTimeControl.Controllers
             if (!IsValidMusicFile(lvi, musicPath, Path.GetExtension(musicPath)[1..]))
             {
                 ShowInvalidMusicMessage(false);
+
+                if (_listViewMusicsStatus != null)
+                {
+                    _listViewMusicsStatus.AddValuesToParameters(-1, +1, -musicMediaPlayer.newMedia(musicPath).duration);
+                    _lblListViewMusicsStatus.Text = _listViewMusicsStatus.LabelStatusText;
+                }
+
                 return;
             }
 
@@ -357,13 +462,17 @@ namespace CompetitionsTimeControl.Controllers
             musicMediaPlayer.Ctlenabled = true;
         }
 
-        public bool HasMusicsToPlaylist(out bool skipCanStartMessage)
+        public bool HasMusicsToPlaylist(AxWindowsMediaPlayer musicMediaPlayer, out bool skipCanStartMessage)
         {
             skipCanStartMessage = false;
 
             ListView.ListViewItemCollection listViewItemColl = _listViewMusics.Items;
 
             int itemsCount = listViewItemColl.Count;
+            int validMusicsAmount = 0;
+            int invalidMusicsAmount = 0;
+            double totalValidPlaylistTime = 0d;
+
             StringBuilder? sbInvalidMusics = null;
 
             bool ret = itemsCount > 0;
@@ -380,6 +489,10 @@ namespace CompetitionsTimeControl.Controllers
 
                 if (!IsValidMusicFile(lvi, musicPath, Path.GetExtension(musicPath)[1..]))
                 {
+                    validMusicsAmount--;
+                    invalidMusicsAmount++;
+                    totalValidPlaylistTime -= musicMediaPlayer.newMedia(musicPath).duration;
+
                     sbInvalidMusics ??= new("As seguintes músicas são inválidas ou não existem mais:\n\n");
                     sbInvalidMusics?.AppendLine($"  ➤  {musicName}");
                     ret = false;
@@ -400,6 +513,12 @@ namespace CompetitionsTimeControl.Controllers
                         MessageBoxIcon.Question) == DialogResult.Yes;
                     
                     skipCanStartMessage = ret;
+                }
+
+                if (_listViewMusicsStatus != null)
+                {
+                    _listViewMusicsStatus.AddValuesToParameters(validMusicsAmount, invalidMusicsAmount, totalValidPlaylistTime);
+                    _lblListViewMusicsStatus.Text = _listViewMusicsStatus.LabelStatusText;
                 }
             }
 
@@ -535,21 +654,6 @@ namespace CompetitionsTimeControl.Controllers
                 toggleSeeDetails.ImageIndex = 8;
             }
         }
-
-        /*public void SetMinVolumePercentage(byte limitMinMusicVolume)
-        {
-            LimitMinMusicVolume = limitMinMusicVolume;
-        }
-
-        public void SetMaxVolumePercentage(byte limitMaxMusicVolume)
-        {
-            LimitMaxMusicVolume = limitMaxMusicVolume;
-        }
-
-        public void SetVolumePercentage(byte musicVolume)
-        {
-            CurrentMusicVolume = musicVolume;
-        }*/
 
         public void SelectPlayingMusic(AxWindowsMediaPlayer musicMediaPlayer, ref bool setVisibleAndFocus)
         {

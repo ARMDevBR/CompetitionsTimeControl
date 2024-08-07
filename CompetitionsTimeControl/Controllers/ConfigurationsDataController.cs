@@ -55,8 +55,8 @@ namespace CompetitionsTimeControl.Controllers
                 string finalJson = JsonConvert.SerializeObject(dataController, Formatting.Indented);
                 File.WriteAllText(filePath, finalJson);
 
-                StringBuilder sb = new("Os dados foram salvos com sucesso!\n\n");
-                sb.Append($"Local do arquivo: [ {filePath} ]");
+                StringBuilder sb = new("Os dados foram salvos no local abaixo com sucesso!\n\n");
+                sb.Append($"[ {filePath} ]");
 
                 MessageBox.Show(sb.ToString(), "ATENÇÃO", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return true;

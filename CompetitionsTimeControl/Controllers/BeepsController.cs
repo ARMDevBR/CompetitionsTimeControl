@@ -120,11 +120,6 @@ namespace CompetitionsTimeControl.Controllers
             }
         }
 
-        /*public void SetVolumePercentage(byte beepVolume)
-        {
-            CurrentBeepsVolume = beepVolume;
-        }*/
-
         public bool ChangeBeepPairSelection(int selectedIndex, string text, AxWindowsMediaPlayer beepMediaPlayer)
         {
             bool ret = false;
@@ -239,14 +234,12 @@ namespace CompetitionsTimeControl.Controllers
                         in _timerForResumeMusicsInMilliSec, timeToDecrement, true))
                     {
                         _timerForResumeMusicsInMilliSec = 0;
-                        //setLblIntervalsElapsedBkColor?.Invoke(Color.LimeGreen);
                         CancelBeepsEvent();
                     }
                     break;
 
                 default:
                     CancelBeepsEvent();
-                    //setLblIntervalsElapsedBkColor?.Invoke(Color.LimeGreen);
                     break;
             }
 

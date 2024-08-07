@@ -1,6 +1,7 @@
 ﻿using CompetitionsTimeControl.Controllers;
 using System.Diagnostics;
 using System.Text;
+using System.Windows.Forms;
 using WMPLib;
 using static CompetitionsTimeControl.Controllers.CompetitionController;
 
@@ -73,7 +74,7 @@ namespace CompetitionsTimeControl
 
             if (_musicsController == null)
             {
-                _musicsController = new(ListViewMusics);
+                _musicsController = new(ListViewMusics, LblListViewMusicsStatus);
 
                 if (_musicsController != null)
                 {
@@ -285,6 +286,15 @@ namespace CompetitionsTimeControl
 
         private void ToolStripMenuItemReloadBeepList_Click(object sender, EventArgs e)
         {
+            StringBuilder sb = new("Deseja buscar por novos pares de beeps?\n\n");
+            sb.Append("As opções atuais serão apagadas e recarregadas ao prosseguir.");
+
+            if (sb == null || MessageBox.Show(sb.ToString(), "ATENÇÃO", MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question) == DialogResult.No)
+            {
+                return;
+            }
+            
             _beepsController?.GetBeepsSounds(ComboBoxBeepPair);
             ComboBoxBeepPair_SelectedIndexChanged(sender, EventArgs.Empty);
         }
@@ -487,7 +497,7 @@ namespace CompetitionsTimeControl
 
         private void ToggleMarkAndExclude_CheckedChanged(object sender, EventArgs e)
         {
-            _musicsController?.DeleteCheckedMusics(!ToggleMarkAndExclude.Checked);
+            _musicsController?.DeleteCheckedMusics(!ToggleMarkAndExclude.Checked, MusicMediaPlayer);
 
             bool hasItemsInTheList = ListViewMusics.Items.Count > 0;
             bool hasValidMusics = _musicsController?.HasValidMusics() ?? false;
@@ -646,9 +656,7 @@ namespace CompetitionsTimeControl
 
         private void ComboBoxInitialization_SelectedIndexChanged(object sender, EventArgs e)
         {
-            _competitionController?.ChangeInitializationProgramSelection(ComboBoxInitialization.SelectedIndex,
-                MusicMediaPlayer);
-
+            _competitionController?.ChangeInitializationProgramSelection(ComboBoxInitialization.SelectedIndex);
             EnableControlsToStartCompetition();
         }
 
@@ -742,7 +750,7 @@ namespace CompetitionsTimeControl
                 return;
             }
 
-            bool hasMusicsToPlaylist = _competitionController.ValidateHasMusicsToPlaylist(
+            bool hasMusicsToPlaylist = _competitionController.ValidateHasMusicsToPlaylist(MusicMediaPlayer,
                 _musicsController, out bool skipCanStartMessage);
             
             CheckEnableCompetitionControls();

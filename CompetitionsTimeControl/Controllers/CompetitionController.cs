@@ -105,7 +105,7 @@ namespace CompetitionsTimeControl.Controllers
             CompetitionProgramSetup = (CompetitionProgram)selectedIndex;
         }
 
-        public void ChangeInitializationProgramSelection(int selectedIndex, AxWindowsMediaPlayer musicMediaPlayer)
+        public void ChangeInitializationProgramSelection(int selectedIndex)
         {
             if (selectedIndex < -1 || selectedIndex > Enum.GetNames(typeof(InitializationProgram)).Length - 2)
                 return;
@@ -164,12 +164,13 @@ namespace CompetitionsTimeControl.Controllers
             return true;
         }
 
-        public bool ValidateHasMusicsToPlaylist(MusicsController musicsController, out bool skipCanStartMessage)
+        public bool ValidateHasMusicsToPlaylist(AxWindowsMediaPlayer musicMediaPlayer, MusicsController musicsController,
+            out bool skipCanStartMessage)
         {
             skipCanStartMessage = false;
 
             return CompetitionProgramSetup == CompetitionProgram.OnlyBeeps ||
-                musicsController.HasMusicsToPlaylist(out skipCanStartMessage);
+                musicsController.HasMusicsToPlaylist(musicMediaPlayer, out skipCanStartMessage);
         }
 
         public bool CanStartCompetition(bool skipCanStartMessage)

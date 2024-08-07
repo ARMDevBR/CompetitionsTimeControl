@@ -243,9 +243,9 @@
             LblListViewMusicsStatus.Name = "LblListViewMusicsStatus";
             LblListViewMusicsStatus.Size = new Size(440, 30);
             LblListViewMusicsStatus.TabIndex = 65;
-            LblListViewMusicsStatus.Text = "Músicas Válidas: 9999 - Inválidas: 9999 - Tempo da playlist válida: 00:00:00";
+            LblListViewMusicsStatus.Text = "Músicas Válidas: 9999 - Inválidas: 9999 - Tempo total da playlist válida: 00:00:00";
             LblListViewMusicsStatus.TextAlign = ContentAlignment.MiddleCenter;
-            ToolTip.SetToolTip(LblListViewMusicsStatus, "Quantidade de músicas e tempo total estimado da playlist.");
+            ToolTip.SetToolTip(LblListViewMusicsStatus, "Quantidade de músicas e tempo total aproximado da playlist.");
             // 
             // ToggleSeeDetails
             // 
@@ -327,7 +327,7 @@
             ListViewMusics.HeaderStyle = ColumnHeaderStyle.Nonclickable;
             ListViewMusics.Location = new Point(15, 77);
             ListViewMusics.Name = "ListViewMusics";
-            ListViewMusics.Size = new Size(440, 177);
+            ListViewMusics.Size = new Size(440, 173);
             ListViewMusics.TabIndex = 36;
             ListViewMusics.UseCompatibleStateImageBehavior = false;
             ListViewMusics.ItemChecked += ListViewMusics_ItemChecked;
