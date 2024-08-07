@@ -735,12 +735,12 @@ namespace CompetitionsTimeControl
                 {
                     if (_competitionController.ProgramIsRunning)
                     {
-                        BtnStartCompetition.Text = "Pausar";
+                        BtnStartCompetition.Text = " Pausar";
                         BtnStartCompetition.ImageIndex = 4;
                     }
                     else
                     {
-                        BtnStartCompetition.Text = "Retoma";
+                        BtnStartCompetition.Text = "Retomar";
                         BtnStartCompetition.ImageIndex = 3;
                     }
                 }
@@ -764,7 +764,7 @@ namespace CompetitionsTimeControl
                 TogglePlayMusicBySelection.Checked = false;
                 DisableCompetitionControls();
                 SetEnableToolStripMenuItems(false);
-                BtnStartCompetition.Text = "Pausar";
+                BtnStartCompetition.Text = " Pausar";
                 BtnStartCompetition.ImageIndex = 4;
                 BtnStopCompetition.Enabled = true;
             }
@@ -793,7 +793,7 @@ namespace CompetitionsTimeControl
             ComboBoxProgramming.Enabled = true;
             SetEnableToolStripMenuItems(true);
             CheckEnableCompetitionControls();
-            BtnStartCompetition.Text = "Iniciar";
+            BtnStartCompetition.Text = " Iniciar";
             BtnStartCompetition.ImageIndex = 3;
             BtnStopCompetition.Enabled = false;
             ChooseHowToClearPlaylist(_competitionController.StopMusicsAtEnd);

@@ -94,7 +94,7 @@ namespace CompetitionsTimeControl.Controllers
         {
             float amountOfSeconds = CompetitionAmountIntervals * CompetitionIntervalSeconds;
             string timeStr = TimeSpan.FromSeconds(amountOfSeconds).ToString("c"); // "c" = 00:00:00, hh:mm:ss
-            _lblCompetitionTotalTime.Text = $"Tempo total da competição {timeStr}";
+            _lblCompetitionTotalTime.Text = $"Tempo da competição {timeStr}";
         }
 
         public void ChangeCompetitionProgramSelection(int selectedIndex)

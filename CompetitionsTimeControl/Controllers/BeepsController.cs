@@ -247,7 +247,7 @@ namespace CompetitionsTimeControl.Controllers
             {
                 lblTestMessages.Text = string.Concat(
                     $"Antes dos beeps {GetTimeSpanFormat(_timerBeforePlayBeepsInMilliSec)} | ",
-                    $"Até último beep {GetTimeSpanFormat(_timerForAllBeepsInMilliSec)} | ",
+                    $"Até antes do último beep {GetTimeSpanFormat(_timerForAllBeepsInMilliSec)} | ",
                     $"Após beeps {GetTimeSpanFormat(_timerForResumeMusicsInMilliSec)}");
             }
         }
