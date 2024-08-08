@@ -518,7 +518,7 @@
             // LblTimeToChangeVolume
             // 
             LblTimeToChangeVolume.AutoSize = true;
-            LblTimeToChangeVolume.Location = new Point(5, 18);
+            LblTimeToChangeVolume.Location = new Point(4, 18);
             LblTimeToChangeVolume.Name = "LblTimeToChangeVolume";
             LblTimeToChangeVolume.Size = new Size(153, 19);
             LblTimeToChangeVolume.TabIndex = 56;
@@ -549,7 +549,7 @@
             // LblTimeBeforePlayBeeps
             // 
             LblTimeBeforePlayBeeps.AutoSize = true;
-            LblTimeBeforePlayBeeps.Location = new Point(5, 18);
+            LblTimeBeforePlayBeeps.Location = new Point(4, 18);
             LblTimeBeforePlayBeeps.Name = "LblTimeBeforePlayBeeps";
             LblTimeBeforePlayBeeps.Size = new Size(187, 19);
             LblTimeBeforePlayBeeps.TabIndex = 12;
@@ -559,7 +559,7 @@
             // LblAmountOfBeeps
             // 
             LblAmountOfBeeps.AutoSize = true;
-            LblAmountOfBeeps.Location = new Point(244, 18);
+            LblAmountOfBeeps.Location = new Point(243, 18);
             LblAmountOfBeeps.Name = "LblAmountOfBeeps";
             LblAmountOfBeeps.Size = new Size(140, 19);
             LblAmountOfBeeps.TabIndex = 14;
@@ -569,7 +569,7 @@
             // LblTimeForEachBeep
             // 
             LblTimeForEachBeep.AutoSize = true;
-            LblTimeForEachBeep.Location = new Point(244, 48);
+            LblTimeForEachBeep.Location = new Point(243, 48);
             LblTimeForEachBeep.Name = "LblTimeForEachBeep";
             LblTimeForEachBeep.Size = new Size(147, 19);
             LblTimeForEachBeep.TabIndex = 16;
@@ -579,7 +579,7 @@
             // LblTimeForResumeMusics
             // 
             LblTimeForResumeMusics.AutoSize = true;
-            LblTimeForResumeMusics.Location = new Point(5, 48);
+            LblTimeForResumeMusics.Location = new Point(4, 48);
             LblTimeForResumeMusics.Name = "LblTimeForResumeMusics";
             LblTimeForResumeMusics.Size = new Size(186, 19);
             LblTimeForResumeMusics.TabIndex = 18;
@@ -600,7 +600,7 @@
             // LblProgramming
             // 
             LblProgramming.AutoSize = true;
-            LblProgramming.Location = new Point(5, 18);
+            LblProgramming.Location = new Point(4, 18);
             LblProgramming.Name = "LblProgramming";
             LblProgramming.Size = new Size(90, 19);
             LblProgramming.TabIndex = 50;
@@ -610,7 +610,7 @@
             // LblInitialization
             // 
             LblInitialization.AutoSize = true;
-            LblInitialization.Location = new Point(5, 50);
+            LblInitialization.Location = new Point(4, 50);
             LblInitialization.Name = "LblInitialization";
             LblInitialization.Size = new Size(80, 19);
             LblInitialization.TabIndex = 52;
@@ -620,7 +620,7 @@
             // LblCompetitionIntervalTime
             // 
             LblCompetitionIntervalTime.AutoSize = true;
-            LblCompetitionIntervalTime.Location = new Point(5, 48);
+            LblCompetitionIntervalTime.Location = new Point(4, 48);
             LblCompetitionIntervalTime.Name = "LblCompetitionIntervalTime";
             LblCompetitionIntervalTime.Size = new Size(158, 19);
             LblCompetitionIntervalTime.TabIndex = 62;
@@ -631,7 +631,7 @@
             // 
             CheckBoxStopMusicsAtEnd.AutoSize = true;
             CheckBoxStopMusicsAtEnd.Enabled = false;
-            CheckBoxStopMusicsAtEnd.Location = new Point(9, 78);
+            CheckBoxStopMusicsAtEnd.Location = new Point(8, 78);
             CheckBoxStopMusicsAtEnd.Name = "CheckBoxStopMusicsAtEnd";
             CheckBoxStopMusicsAtEnd.Size = new Size(181, 23);
             CheckBoxStopMusicsAtEnd.TabIndex = 59;
@@ -643,7 +643,7 @@
             // LblCompetitionAmountIntervals
             // 
             LblCompetitionAmountIntervals.AutoSize = true;
-            LblCompetitionAmountIntervals.Location = new Point(5, 18);
+            LblCompetitionAmountIntervals.Location = new Point(4, 18);
             LblCompetitionAmountIntervals.Name = "LblCompetitionAmountIntervals";
             LblCompetitionAmountIntervals.Size = new Size(160, 19);
             LblCompetitionAmountIntervals.TabIndex = 60;
@@ -683,7 +683,7 @@
             // 
             CheckBoxStartWithBeeps.AutoSize = true;
             CheckBoxStartWithBeeps.Enabled = false;
-            CheckBoxStartWithBeeps.Location = new Point(9, 48);
+            CheckBoxStartWithBeeps.Location = new Point(8, 48);
             CheckBoxStartWithBeeps.Name = "CheckBoxStartWithBeeps";
             CheckBoxStartWithBeeps.Size = new Size(181, 23);
             CheckBoxStartWithBeeps.TabIndex = 58;
@@ -708,7 +708,7 @@
             // LblRepeatPlaylist
             // 
             LblRepeatPlaylist.AutoSize = true;
-            LblRepeatPlaylist.Location = new Point(5, 82);
+            LblRepeatPlaylist.Location = new Point(4, 82);
             LblRepeatPlaylist.Name = "LblRepeatPlaylist";
             LblRepeatPlaylist.Size = new Size(98, 19);
             LblRepeatPlaylist.TabIndex = 54;

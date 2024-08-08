@@ -298,7 +298,8 @@ namespace CompetitionsTimeControl
 
         private void ToolStripMenuItemAbout_Click(object sender, EventArgs e)
         {
-
+            AboutForm aboutForm = new();
+            aboutForm.ShowDialog();
         }
 
         private void ToolStripMenuItemCloseProgram_Click(object sender, EventArgs e)
