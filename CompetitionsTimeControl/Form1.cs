@@ -478,6 +478,7 @@ namespace CompetitionsTimeControl
                 if (ComboBoxProgramming.SelectedIndex > 0)
                     ComboBoxProgramming.SelectedIndex = 0;
 
+                TogglePlayMusicBySelection.Checked = false;
                 EnableControlsHavingItems(false);
             }
         }

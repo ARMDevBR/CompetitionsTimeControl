@@ -39,24 +39,25 @@
             LblSeparator1 = new Label();
             LblSoftwareNameAndVersion = new Label();
             ButtonOkClose = new Button();
+            label6 = new Label();
             ((System.ComponentModel.ISupportInitialize)PictureBoxLogo).BeginInit();
             SuspendLayout();
             // 
             // LinkLabelIcons8
             // 
             LinkLabelIcons8.AutoSize = true;
-            LinkLabelIcons8.Location = new Point(180, 405);
+            LinkLabelIcons8.Location = new Point(180, 425);
             LinkLabelIcons8.Name = "LinkLabelIcons8";
-            LinkLabelIcons8.Size = new Size(147, 15);
+            LinkLabelIcons8.Size = new Size(159, 15);
             LinkLabelIcons8.TabIndex = 0;
             LinkLabelIcons8.TabStop = true;
-            LinkLabelIcons8.Text = "Ícones utilizados da Icons8";
+            LinkLabelIcons8.Text = "Exemplo de ícones utilizados";
             LinkLabelIcons8.LinkClicked += LinkLabelIcons8_LinkClicked;
             // 
             // label1
             // 
             label1.AutoSize = true;
-            label1.Location = new Point(87, 300);
+            label1.Location = new Point(87, 320);
             label1.Name = "label1";
             label1.Size = new Size(327, 15);
             label1.TabIndex = 1;
@@ -65,7 +66,7 @@
             // label2
             // 
             label2.AutoSize = true;
-            label2.Location = new Point(63, 320);
+            label2.Location = new Point(63, 340);
             label2.Name = "label2";
             label2.Size = new Size(375, 15);
             label2.TabIndex = 2;
@@ -74,7 +75,7 @@
             // label3
             // 
             label3.AutoSize = true;
-            label3.Location = new Point(50, 385);
+            label3.Location = new Point(50, 405);
             label3.Name = "label3";
             label3.Size = new Size(133, 15);
             label3.TabIndex = 3;
@@ -83,7 +84,7 @@
             // label4
             // 
             label4.AutoSize = true;
-            label4.Location = new Point(50, 360);
+            label4.Location = new Point(50, 380);
             label4.Name = "label4";
             label4.Size = new Size(123, 15);
             label4.TabIndex = 4;
@@ -92,7 +93,7 @@
             // LinkLabelCopilotDesigner
             // 
             LinkLabelCopilotDesigner.AutoSize = true;
-            LinkLabelCopilotDesigner.Location = new Point(232, 385);
+            LinkLabelCopilotDesigner.Location = new Point(244, 405);
             LinkLabelCopilotDesigner.Name = "LinkLabelCopilotDesigner";
             LinkLabelCopilotDesigner.Size = new Size(95, 15);
             LinkLabelCopilotDesigner.TabIndex = 5;
@@ -103,7 +104,7 @@
             // label5
             // 
             label5.AutoSize = true;
-            label5.Location = new Point(50, 405);
+            label5.Location = new Point(50, 425);
             label5.Name = "label5";
             label5.Size = new Size(122, 15);
             label5.TabIndex = 6;
@@ -122,7 +123,7 @@
             // LblSeparator1
             // 
             LblSeparator1.BorderStyle = BorderStyle.Fixed3D;
-            LblSeparator1.Location = new Point(50, 285);
+            LblSeparator1.Location = new Point(50, 307);
             LblSeparator1.Name = "LblSeparator1";
             LblSeparator1.Size = new Size(400, 2);
             LblSeparator1.TabIndex = 8;
@@ -130,11 +131,11 @@
             // LblSoftwareNameAndVersion
             // 
             LblSoftwareNameAndVersion.AutoSize = true;
-            LblSoftwareNameAndVersion.Location = new Point(80, 260);
+            LblSoftwareNameAndVersion.Location = new Point(78, 260);
             LblSoftwareNameAndVersion.Name = "LblSoftwareNameAndVersion";
-            LblSoftwareNameAndVersion.Size = new Size(340, 15);
+            LblSoftwareNameAndVersion.Size = new Size(345, 15);
             LblSoftwareNameAndVersion.TabIndex = 9;
-            LblSoftwareNameAndVersion.Text = "Controle de tempo para competições intervaladas. Versão: 1.0.0";
+            LblSoftwareNameAndVersion.Text = "Controle de tempo para competições intervaladas - Versão: 1.0.1";
             // 
             // ButtonOkClose
             // 
@@ -146,11 +147,21 @@
             ButtonOkClose.UseVisualStyleBackColor = true;
             ButtonOkClose.Click += ButtonOkClose_Click;
             // 
+            // label6
+            // 
+            label6.AutoSize = true;
+            label6.Location = new Point(163, 280);
+            label6.Name = "label6";
+            label6.Size = new Size(174, 15);
+            label6.TabIndex = 11;
+            label6.Text = "Software Livre - Licença GPL 3.0";
+            // 
             // AboutForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(500, 477);
+            Controls.Add(label6);
             Controls.Add(ButtonOkClose);
             Controls.Add(LblSoftwareNameAndVersion);
             Controls.Add(LblSeparator1);
@@ -184,5 +195,6 @@
         private Label LblSeparator1;
         private Label LblSoftwareNameAndVersion;
         private Button ButtonOkClose;
+        private Label label6;
     }
 }

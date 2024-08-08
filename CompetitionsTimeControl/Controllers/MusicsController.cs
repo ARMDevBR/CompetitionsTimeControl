@@ -163,7 +163,7 @@ namespace CompetitionsTimeControl.Controllers
                 string mediaDurationStr = media.durationString;
                 string path = Path.GetDirectoryName(pathFileName) ?? "";
 
-                if (_listViewMusics.FindItemWithText(musicName) != null)
+                if (index > 0 && _listViewMusics.FindItemWithText(musicName, false, 0, false) != null)
                 {
                     sbRepeatedMusics ??= new("As seguintes músicas já existem na lista e não foram incluídas novamente:\n\n");
 

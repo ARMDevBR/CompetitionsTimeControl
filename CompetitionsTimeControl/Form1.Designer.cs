@@ -636,7 +636,7 @@
             CheckBoxStopMusicsAtEnd.Size = new Size(181, 23);
             CheckBoxStopMusicsAtEnd.TabIndex = 59;
             CheckBoxStopMusicsAtEnd.Text = "Parar músicas ao finalizar";
-            ToolTip.SetToolTip(CheckBoxStopMusicsAtEnd, "Se as músicas param ao final da competição ou continuam tocando até terminar a música atual.");
+            ToolTip.SetToolTip(CheckBoxStopMusicsAtEnd, "Se as músicas param ao final da competição ou a música atual continua tocando até terminar.");
             CheckBoxStopMusicsAtEnd.UseVisualStyleBackColor = true;
             CheckBoxStopMusicsAtEnd.CheckedChanged += CheckBoxStopMusicsAtEnd_CheckedChanged;
             // 
@@ -1009,7 +1009,6 @@
             NumUDTimeForResumeMusics.Size = new Size(45, 25);
             NumUDTimeForResumeMusics.TabIndex = 19;
             NumUDTimeForResumeMusics.TextAlign = HorizontalAlignment.Center;
-            NumUDTimeForResumeMusics.Value = new decimal(new int[] { 2, 0, 0, 0 });
             NumUDTimeForResumeMusics.ValueChanged += NumUDTimeForResumeMusics_ValueChanged;
             // 
             // NumUDTimeBeforePlayBeeps

@@ -5,7 +5,7 @@ namespace CompetitionsTimeControl
 {
     public partial class AboutForm : Form
     {
-        private const string Icons8Link = "https://icons8.com/icons/collections/7o2n2lsu603y1qzzuowv";
+        private const string Icons8Link = "https://icons8.com/icon/set/forms-audio/fluency";
         private const string CopilotDesigner = "https://copilot.microsoft.com/images/create";
 
         public AboutForm()
@@ -31,11 +31,11 @@ namespace CompetitionsTimeControl
         {
             try
             {
-                // Use 'ProcessStartInfo' para abrir o link no navegador padrão
+                // Use 'ProcessStartInfo' to open the link in the default browser
                 ProcessStartInfo psi = new()
                 {
                     FileName = link,
-                    UseShellExecute = true // Garante que o link será aberto com o programa associado (navegador)
+                    UseShellExecute = true // Ensures that the link will be opened with the associated program (browser)
                 };
                 Process.Start(psi);
             }
