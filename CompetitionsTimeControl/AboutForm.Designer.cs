@@ -131,11 +131,11 @@
             // LblSoftwareNameAndVersion
             // 
             LblSoftwareNameAndVersion.AutoSize = true;
-            LblSoftwareNameAndVersion.Location = new Point(78, 260);
+            LblSoftwareNameAndVersion.Location = new Point(76, 260);
             LblSoftwareNameAndVersion.Name = "LblSoftwareNameAndVersion";
-            LblSoftwareNameAndVersion.Size = new Size(345, 15);
+            LblSoftwareNameAndVersion.Size = new Size(348, 15);
             LblSoftwareNameAndVersion.TabIndex = 9;
-            LblSoftwareNameAndVersion.Text = "Controle de tempo para competições intervaladas - Versão: 1.0.1";
+            LblSoftwareNameAndVersion.Text = "Controle de Tempo para Competições Intervaladas - Versão: 1.0.2";
             // 
             // ButtonOkClose
             // 

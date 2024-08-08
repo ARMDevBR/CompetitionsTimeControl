@@ -6,6 +6,8 @@
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
+    <ApplicationIcon>bin\Release\net8.0-windows\Icons\ProgramIcon.ico</ApplicationIcon>
+    <AssemblyName>Controle de Tempo para Competições Intervaladas</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>

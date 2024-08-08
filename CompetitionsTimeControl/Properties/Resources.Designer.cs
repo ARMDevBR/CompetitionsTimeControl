@@ -79,5 +79,15 @@ namespace CompetitionsTimeControl.Properties {
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Icon semelhante a (Ícone).
+        /// </summary>
+        internal static System.Drawing.Icon ProgramIcon1 {
+            get {
+                object obj = ResourceManager.GetObject("ProgramIcon1", resourceCulture);
+                return ((System.Drawing.Icon)(obj));
+            }
+        }
     }
 }
