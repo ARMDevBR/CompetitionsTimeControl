@@ -1,5 +1,6 @@
 # Controle de Tempo para Competições Intervaladas
 <img src="/Icons and Images/ProgramLogo.png">
+
 ## Introdução
 
 O objetivo do programa é controlar o tempo dos intervalos (tiros) de uma competição (ou treino) por meio de beeps de contagem regressiva e um beep marcador de início do tiro.
@@ -10,7 +11,7 @@ Opcionalmente pode-se deixar uma playlist de músicas locais tocando de fundo.
 
 **Opções gerais do software no menu "Configuração":**
 - Abrir uma configuração previamente salva;
-- Salvar novamente a configuração que foi aberta ou recém salva;
+- Salvar novamente a configuração que foi aberta ou salva recentemente;
 - Salvar a configuração com outro nome ou salvá-la pela primeira vez;
 - Habilitar visualização de dicas nos textos dos controles ou botões ao mover o mouse sobre eles;
 - Recarregar a lista de beeps disponível;
@@ -18,9 +19,9 @@ Opcionalmente pode-se deixar uma playlist de músicas locais tocando de fundo.
 **Controles relacionados aos beeps marcadores de contagem regressiva e início:**
 - Escolher o par (contagem/início) de beeps disponível;
 - Definir o tempo extra antes de iniciar os beeps;
+- Definir o tempo extra após término do último beep;
 - Definir a quantidade de beeps desejado;
 - Definir o tempo entre cada beep;
-- Definir o tempo extra após término do último beep;
 - Definir o volume máximo para os beeps;
 
 **Controles relacionados às músicas de fundo:**
@@ -36,7 +37,7 @@ Opcionalmente pode-se deixar uma playlist de músicas locais tocando de fundo.
 **Controles relacionados à execução da competição e a quantidade e tempo dos intervalos:**
 - Definir se a competição vai acontecer apenas com beeps ou beeps e músicas de fundo;
 - Definir se a competição com beeps e músicas de fundo inicia a playlist a partir da música que já estiver tocando ou da música inicial da playlist criada;
-- Definir se a competição com beeps e músicas de fundo reinicia a playlist de modo sequencial, randômico ou inverte o último modo para o caso da playlist tocando terminar antes da competição finalizar;
+- Definir se a competição com beeps e músicas de fundo reinicia a playlist (caso a mesma termine antes da competição finalizar) de modo sequencial, randômico ou inverte o último modo;
 - Definir o tempo em segundos para o volume da música tocando mudar para o limite mínimo ao iniciar os beeps de contagem e para o volume da música mudar para o limite máximo ao finalizar o evento dos beeps;
 - Definir se a competição já começa tocando os beeps como preparação para a largada ou se começa imediatamente com o evento dos beeps sendo acionados apenas a partir do fim do primeiro tiro;
 - Definir se - ao finalizar a competição - as músicas de fundo param de tocar imediatamente ou continua tocando a música atual até a mesma finalizar;
@@ -51,7 +52,8 @@ Se a tela do programa não abrir, um aviso será dado informando que o ".NET Des
 
 ## Instalação
 
-Este software não possui um instalador padrão, sendo apenas uma tela a ser executada. Para isto basta descompactar o arquivo [CompetitionsTimeControl.zip](/Download) em algum lugar no seu computador e abrir o programa *Controle de Tempo para Competições Intervaladas.exe* conforme mostrado na imagem abaixo.
+Este software não possui um instalador padrão, sendo apenas uma tela a ser executada. Para isto basta descompactar o arquivo [CompetitionsTimeControl.zip](/Download) em algum lugar no seu computador e abrir o programa **Controle de Tempo para Competições Intervaladas.exe** conforme mostrado na imagem abaixo.
+
 <img src="/Icons and Images/ProgramInFolder.png">
 
 ## Uso
