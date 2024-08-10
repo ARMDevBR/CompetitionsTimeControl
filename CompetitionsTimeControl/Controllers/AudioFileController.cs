@@ -9,24 +9,26 @@ namespace CompetitionsTimeControl.Controllers
             {
                 FileStream reader = new(filePath, FileMode.Open, FileAccess.Read);
 
-                // Buffer para armazenar as assinaturas de arquivos
+                // Buffer for storing file signatures
                 byte[] buffer = new byte[12];
                 reader.Read(buffer, 0, buffer.Length);
 
-                // Converte o buffer para uma string hexadecimal
+                // Converts the buffer to a hexadecimal string
                 string fileSignature = BitConverter.ToString(buffer).Replace("-", string.Empty).ToUpper();
 
-                // Assinaturas de arquivos comuns
-                // MP3: Possíveis: "FFFB", "FFF3", "FFF2", "494433" (ID3). Outras: "FFF0", "FFF1", "FFF4", "FFF5", "FFF6", "FFF7", "FFFD" 
-                string[] mp3Signatures = { "FFFB", "FFF3", "FFF2", "494433", "FFF0", "FFF1", "FFF4", "FFF5", "FFF6", "FFF7", "FFFD" };
-                // WMA: Assinatura "3026B2758E66CF11"
+                string mp3ID3signature = "494433";
+
+                string[] mp3CommonSignatures = ["FFF0", "FFF1", "FFF2", "FFF3", "FFF4", "FFF5", "FFF6", "FFF7", "FFFB", "FFFD"];
+                
                 string wmaSignature = "3026B2758E66CF11";
-                // WAV: Assinatura "52494646" (RIFF) seguido de "57415645" (WAVE)
+
+                // Signature "52494646" (RIFF) followed by "57415645" (WAVE)
                 string wavPrefix = "52494646";
                 string wavSuffix = "57415645";
-
-                if (expectedExtension.Equals("mp3", StringComparison.OrdinalIgnoreCase) &&
-                    Array.Exists(mp3Signatures, sig => fileSignature.StartsWith(sig)))
+                
+                if (expectedExtension.Equals("mp3", StringComparison.OrdinalIgnoreCase) && (
+                    fileSignature.StartsWith(mp3ID3signature) || mp3CommonSignatures.Contains(fileSignature[..4])))
+                    //Array.Exists(mp3CommonSignatures, sig => fileSignature.StartsWith(sig)))
                 {
                     return true;
                 }

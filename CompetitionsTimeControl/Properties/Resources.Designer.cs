@@ -71,22 +71,22 @@ namespace CompetitionsTimeControl.Properties {
         }
         
         /// <summary>
-        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        ///   Consulta um recurso localizado do tipo System.Drawing.Icon semelhante a (Ícone).
         /// </summary>
-        internal static System.Drawing.Bitmap ProgramIcon {
+        internal static System.Drawing.Icon ProgramIcon {
             get {
                 object obj = ResourceManager.GetObject("ProgramIcon", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
+                return ((System.Drawing.Icon)(obj));
             }
         }
         
         /// <summary>
-        ///   Consulta um recurso localizado do tipo System.Drawing.Icon semelhante a (Ícone).
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Icon ProgramIcon1 {
+        internal static System.Drawing.Bitmap ProgramLogo {
             get {
-                object obj = ResourceManager.GetObject("ProgramIcon1", resourceCulture);
-                return ((System.Drawing.Icon)(obj));
+                object obj = ResourceManager.GetObject("ProgramLogo", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
     }

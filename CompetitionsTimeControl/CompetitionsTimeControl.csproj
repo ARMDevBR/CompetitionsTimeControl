@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
-    <ApplicationIcon>bin\Release\net8.0-windows\Icons\ProgramIcon.ico</ApplicationIcon>
+    <ApplicationIcon>ProgramIcon.ico</ApplicationIcon>
     <AssemblyName>Controle de Tempo para Competições Intervaladas</AssemblyName>
   </PropertyGroup>
 
@@ -14,6 +14,11 @@
     <Compile Remove="bin\**" />
     <EmbeddedResource Remove="bin\**" />
     <None Remove="bin\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="ProgramIcon.ico" />
+    <None Remove="Resources\ProgramIcon.png" />
   </ItemGroup>
 
   <ItemGroup>

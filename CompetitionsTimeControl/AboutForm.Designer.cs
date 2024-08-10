@@ -112,7 +112,7 @@
             // 
             // PictureBoxLogo
             // 
-            PictureBoxLogo.Image = Properties.Resources.ProgramIcon;
+            PictureBoxLogo.Image = Properties.Resources.ProgramLogo;
             PictureBoxLogo.Location = new Point(125, 1);
             PictureBoxLogo.Name = "PictureBoxLogo";
             PictureBoxLogo.Size = new Size(250, 250);

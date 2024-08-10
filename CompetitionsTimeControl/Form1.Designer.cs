@@ -559,7 +559,7 @@
             // LblAmountOfBeeps
             // 
             LblAmountOfBeeps.AutoSize = true;
-            LblAmountOfBeeps.Location = new Point(243, 18);
+            LblAmountOfBeeps.Location = new Point(241, 18);
             LblAmountOfBeeps.Name = "LblAmountOfBeeps";
             LblAmountOfBeeps.Size = new Size(140, 19);
             LblAmountOfBeeps.TabIndex = 14;
@@ -569,7 +569,7 @@
             // LblTimeForEachBeep
             // 
             LblTimeForEachBeep.AutoSize = true;
-            LblTimeForEachBeep.Location = new Point(243, 48);
+            LblTimeForEachBeep.Location = new Point(241, 48);
             LblTimeForEachBeep.Name = "LblTimeForEachBeep";
             LblTimeForEachBeep.Size = new Size(147, 19);
             LblTimeForEachBeep.TabIndex = 16;
@@ -867,7 +867,7 @@
             GroupBoxBeepsCtrls.Controls.Add(GroupBoxBeepsAmountAndTimes);
             GroupBoxBeepsCtrls.FlatStyle = FlatStyle.System;
             GroupBoxBeepsCtrls.Font = new Font("Segoe UI", 10F);
-            GroupBoxBeepsCtrls.Location = new Point(15, 40);
+            GroupBoxBeepsCtrls.Location = new Point(15, 35);
             GroupBoxBeepsCtrls.Name = "GroupBoxBeepsCtrls";
             GroupBoxBeepsCtrls.Size = new Size(920, 172);
             GroupBoxBeepsCtrls.TabIndex = 9;
