@@ -7,6 +7,11 @@ O objetivo do programa é controlar o tempo dos intervalos (tiros) de uma compet
 
 Opcionalmente pode-se deixar uma playlist de músicas locais tocando de fundo.
 
+Abaixo uma imagem mostrando como a tela é ao abrir pela primeira vez e como ela fica ao término da execução de uma programação de competição de 15 tiros de 5 minutos (300 segundos) cada tiro.
+
+<img src="/Icons and Images/Start And End Samples.png">
+
+
 ## Funcionalidades
 
 **Opções gerais do software no menu "Configuração":**
@@ -21,7 +26,7 @@ Opcionalmente pode-se deixar uma playlist de músicas locais tocando de fundo.
 - Definir o tempo extra antes de iniciar os beeps;
 - Definir o tempo extra após término do último beep;
 - Definir a quantidade de beeps desejado;
-- Definir o tempo entre cada beep;
+- Definir o tempo para cada beep de contagem;
 - Definir o volume máximo para os beeps;
 
 **Controles relacionados às músicas de fundo:**
@@ -48,15 +53,19 @@ Opcionalmente pode-se deixar uma playlist de músicas locais tocando de fundo.
 
 O software utiliza dois mini-players na tela, um para tocar os beeps e outro para as músicas. Estes controles utilizam o Windows Media Player do sistema operacional Windows. Portanto, o mesmo deve estar previamente instalado, o que costuma ser o padrão do sistema.
 
-Se a tela do programa não abrir, um aviso será dado informando que o ".NET Desktop Runtime" precisa ser instalado e um link redirecionando para a página de download será mostrado. Aqui um exemplo do link para o [.NET 8.0 Desktop Runtime v8.0.7 - Windows x64 Installer]([Baixar .NET 8.0 Desktop Runtime (v8.0.7) - Windows x64 Installer (microsoft.com)](https://dotnet.microsoft.com/pt-br/download/dotnet/thank-you/runtime-desktop-8.0.7-windows-x64-installer?cid=getdotnetcore)).
+Se a tela do programa não abrir, um aviso será dado informando que o ".NET Desktop Runtime" precisa ser instalado e um link redirecionando para a página de download será mostrado. Aqui um exemplo do link para o [.NET 8.0 Desktop Runtime v8.0.7 - Windows x64 Installer](https://dotnet.microsoft.com/pt-br/download/dotnet/thank-you/runtime-desktop-8.0.7-windows-x64-installer?cid=getdotnetcore).
 
 ## Instalação
+
+No momento disponível apenas no sistema operacional Windows. Foi testado no Windows 10 e Windows 11.
 
 Este software não possui um instalador padrão, sendo apenas uma tela a ser executada. Para isto basta descompactar o arquivo [CompetitionsTimeControl.zip](/Download) em algum lugar no seu computador e abrir o programa **Controle de Tempo para Competições Intervaladas.exe** conforme mostrado na imagem abaixo.
 
 <img src="/Icons and Images/ProgramInFolder.png">
 
 ## Uso
+
+Como usar...
 
 ## Licença
 
