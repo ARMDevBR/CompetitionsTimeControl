@@ -22,6 +22,7 @@ namespace CompetitionsTimeControl.Controllers
         public string LowBeepPath => _currentBeepPair?.LowBeepPath ?? "";
 
         [JsonProperty] public string CurrentBeepPairText { get; private set; }
+        [JsonProperty] public bool HasHalfIntervalBeep { get; set; }
         [JsonProperty] public float TimeBeforePlayBeeps { get; set; }
         [JsonProperty] public int AmountOfBeeps { get; set; }
         [JsonProperty] public float TimeForEachBeep { get; set; }
@@ -37,6 +38,7 @@ namespace CompetitionsTimeControl.Controllers
             TimerController.FromSecondsToMilliseconds(TimeForEachBeep * (AmountOfBeeps - 1)
                 + TimeBeforePlayBeeps + TimeForResumeMusics + HighBeepDuration);
 
+        public int LowBeepDuration { get; private set; }
         public int HighBeepDuration { get; private set; }
         public bool CanPerformBeepsEvent { get; set; }
 
@@ -132,7 +134,9 @@ namespace CompetitionsTimeControl.Controllers
 
             if (_currentBeepPair != null)
             {
-                IWMPMedia media = beepMediaPlayer.newMedia(HighBeepPath);
+                IWMPMedia media = beepMediaPlayer.newMedia(LowBeepPath);
+                LowBeepDuration = (int)media.duration;
+                media = beepMediaPlayer.newMedia(HighBeepPath);
                 HighBeepDuration = (int)media.duration;
                 ret = true;
             }
@@ -175,7 +179,7 @@ namespace CompetitionsTimeControl.Controllers
         }
 
         public void TryPerformBeeps(AxWindowsMediaPlayer beepMediaPlayer, int timeToDecrement, in Label lblTestMessages,
-            Action? finishCurrentIntervalCallback, Action? setLblIntervalsElapsedYellowColor)
+            Action<bool>? finishCurrentIntervalCallback, Action? setLblIntervalsElapsedYellowColor)
         {
             switch (_beepState)
             {
@@ -216,7 +220,7 @@ namespace CompetitionsTimeControl.Controllers
                         else
                         {
                             PlayBeep(beepMediaPlayer, HighBeepPath);
-                            finishCurrentIntervalCallback?.Invoke();
+                            finishCurrentIntervalCallback?.Invoke(HasHalfIntervalBeep);
                             _beepState = BeepState.TimeForResumeMusicsVolume;
                         }
                     }

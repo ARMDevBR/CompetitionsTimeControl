@@ -104,8 +104,9 @@ namespace CompetitionsTimeControl.Controllers
                 string readChecksum = dataController.Checksum ?? "";
                 dataController.Checksum = null;
                 string recalculatedJson = JsonConvert.SerializeObject(dataController, Formatting.Indented);
+                string recalculatedChecksum = CalculateChecksum(recalculatedJson);
 
-                if (readChecksum == CalculateChecksum(recalculatedJson))
+                if (readChecksum == recalculatedChecksum)
                 {
                     filePath = openFileDialog.FileName;
                     _lastDirectory = Path.GetDirectoryName(filePath) ?? "";

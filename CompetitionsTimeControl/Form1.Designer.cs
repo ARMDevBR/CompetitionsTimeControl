@@ -76,10 +76,10 @@
             CheckBoxStartWithBeeps = new CheckBox();
             LblCompetitionElapsedTime = new Label();
             LblRepeatPlaylist = new Label();
-            LblCompetitionTotalTime = new Label();
+            LblIntervalAndCompetitionFormatedTime = new Label();
             LblCurrentIntervalElapsedTime = new Label();
             LblTestMessages = new Label();
-            BtnBeepsTest = new Button();
+            LblHalfIntervalBeep = new Label();
             BeepMediaPlayer = new AxWMPLib.AxWindowsMediaPlayer();
             MenuStrip = new MenuStrip();
             ToolStripMenuItemConfiguration = new ToolStripMenuItem();
@@ -91,17 +91,19 @@
             ToolStripMenuItemAbout = new ToolStripMenuItem();
             ToolStripMenuItemCloseProgram = new ToolStripMenuItem();
             GroupBoxBeepsCtrls = new GroupBox();
+            ComboBoxHalfIntervalBeep = new ComboBox();
             BtnStartBeepTest = new Button();
             BtnCountdownBeepTest = new Button();
-            GroupBoxBeepsVolume = new GroupBox();
-            LblBeepVolumePercent = new Label();
-            TBBeepVolume = new TrackBar();
+            BtnBeepsTest = new Button();
             ComboBoxBeepPair = new ComboBox();
             GroupBoxBeepsAmountAndTimes = new GroupBox();
             NumUDTimeForEachBeep = new NumericUpDown();
             NumUDAmountOfBeeps = new NumericUpDown();
             NumUDTimeForResumeMusics = new NumericUpDown();
             NumUDTimeBeforePlayBeeps = new NumericUpDown();
+            GroupBoxBeepsVolume = new GroupBox();
+            LblBeepVolumePercent = new Label();
+            TBBeepVolume = new TrackBar();
             GroupBoxProgram = new GroupBox();
             GroupBoxTransitionsControls = new GroupBox();
             GroupBoxCompetitionControls = new GroupBox();
@@ -123,13 +125,13 @@
             ((System.ComponentModel.ISupportInitialize)BeepMediaPlayer).BeginInit();
             MenuStrip.SuspendLayout();
             GroupBoxBeepsCtrls.SuspendLayout();
-            GroupBoxBeepsVolume.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)TBBeepVolume).BeginInit();
             GroupBoxBeepsAmountAndTimes.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)NumUDTimeForEachBeep).BeginInit();
             ((System.ComponentModel.ISupportInitialize)NumUDAmountOfBeeps).BeginInit();
             ((System.ComponentModel.ISupportInitialize)NumUDTimeForResumeMusics).BeginInit();
             ((System.ComponentModel.ISupportInitialize)NumUDTimeBeforePlayBeeps).BeginInit();
+            GroupBoxBeepsVolume.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)TBBeepVolume).BeginInit();
             GroupBoxProgram.SuspendLayout();
             GroupBoxTransitionsControls.SuspendLayout();
             GroupBoxCompetitionControls.SuspendLayout();
@@ -141,10 +143,10 @@
             // MusicMediaPlayer
             // 
             MusicMediaPlayer.Enabled = true;
-            MusicMediaPlayer.Location = new Point(480, 127);
+            MusicMediaPlayer.Location = new Point(480, 129);
             MusicMediaPlayer.Name = "MusicMediaPlayer";
             MusicMediaPlayer.OcxState = (AxHost.State)resources.GetObject("MusicMediaPlayer.OcxState");
-            MusicMediaPlayer.Size = new Size(425, 90);
+            MusicMediaPlayer.Size = new Size(425, 89);
             MusicMediaPlayer.TabIndex = 44;
             MusicMediaPlayer.PlayStateChange += MusicMediaPlayer_PlayStateChange;
             // 
@@ -238,7 +240,7 @@
             // PBMusicPlayerVolumeBanner
             // 
             PBMusicPlayerVolumeBanner.Image = (Image)resources.GetObject("PBMusicPlayerVolumeBanner.Image");
-            PBMusicPlayerVolumeBanner.Location = new Point(590, 183);
+            PBMusicPlayerVolumeBanner.Location = new Point(590, 184);
             PBMusicPlayerVolumeBanner.Name = "PBMusicPlayerVolumeBanner";
             PBMusicPlayerVolumeBanner.Size = new Size(178, 32);
             PBMusicPlayerVolumeBanner.TabIndex = 66;
@@ -349,7 +351,7 @@
             GroupBoxMusicVolume.Controls.Add(TBMusicCurrentVol);
             GroupBoxMusicVolume.FlatStyle = FlatStyle.System;
             GroupBoxMusicVolume.Font = new Font("Segoe UI", 10F);
-            GroupBoxMusicVolume.Location = new Point(480, 214);
+            GroupBoxMusicVolume.Location = new Point(480, 215);
             GroupBoxMusicVolume.Name = "GroupBoxMusicVolume";
             GroupBoxMusicVolume.Size = new Size(425, 73);
             GroupBoxMusicVolume.TabIndex = 45;
@@ -404,7 +406,7 @@
             GroupBoxMusicVols.Controls.Add(TBMusicVolumeMin);
             GroupBoxMusicVols.FlatStyle = FlatStyle.System;
             GroupBoxMusicVols.Font = new Font("Segoe UI", 10F);
-            GroupBoxMusicVols.Location = new Point(480, 15);
+            GroupBoxMusicVols.Location = new Point(480, 17);
             GroupBoxMusicVols.Name = "GroupBoxMusicVols";
             GroupBoxMusicVols.Size = new Size(425, 106);
             GroupBoxMusicVols.TabIndex = 37;
@@ -505,7 +507,7 @@
             // NumUDTimeToVolMin
             // 
             NumUDTimeToVolMin.Enabled = false;
-            NumUDTimeToVolMin.Location = new Point(158, 16);
+            NumUDTimeToVolMin.Location = new Point(155, 16);
             NumUDTimeToVolMin.Maximum = new decimal(new int[] { 5, 0, 0, 0 });
             NumUDTimeToVolMin.Minimum = new decimal(new int[] { 2, 0, 0, 0 });
             NumUDTimeToVolMin.Name = "NumUDTimeToVolMin";
@@ -590,7 +592,7 @@
             // 
             LblBeepVolume.AutoSize = true;
             LblBeepVolume.Font = new Font("Segoe UI", 10F);
-            LblBeepVolume.Location = new Point(15, 33);
+            LblBeepVolume.Location = new Point(15, 27);
             LblBeepVolume.Name = "LblBeepVolume";
             LblBeepVolume.Size = new Size(55, 19);
             LblBeepVolume.TabIndex = 21;
@@ -715,17 +717,17 @@
             LblRepeatPlaylist.Text = "Repetir Playlist";
             ToolTip.SetToolTip(LblRepeatPlaylist, "Como recomeçar a playlist se ela terminar antes do fim da prova.");
             // 
-            // LblCompetitionTotalTime
+            // LblIntervalAndCompetitionFormatedTime
             // 
-            LblCompetitionTotalTime.BorderStyle = BorderStyle.Fixed3D;
-            LblCompetitionTotalTime.Font = new Font("Segoe UI", 9F);
-            LblCompetitionTotalTime.Location = new Point(8, 76);
-            LblCompetitionTotalTime.Name = "LblCompetitionTotalTime";
-            LblCompetitionTotalTime.Size = new Size(193, 30);
-            LblCompetitionTotalTime.TabIndex = 64;
-            LblCompetitionTotalTime.Text = "Tempo da competição 00:00:00";
-            LblCompetitionTotalTime.TextAlign = ContentAlignment.MiddleCenter;
-            ToolTip.SetToolTip(LblCompetitionTotalTime, "Tempo total no formato de horas, minutos e segundos (hh:mm:ss).");
+            LblIntervalAndCompetitionFormatedTime.BorderStyle = BorderStyle.Fixed3D;
+            LblIntervalAndCompetitionFormatedTime.Font = new Font("Segoe UI", 9F);
+            LblIntervalAndCompetitionFormatedTime.Location = new Point(8, 76);
+            LblIntervalAndCompetitionFormatedTime.Name = "LblIntervalAndCompetitionFormatedTime";
+            LblIntervalAndCompetitionFormatedTime.Size = new Size(193, 30);
+            LblIntervalAndCompetitionFormatedTime.TabIndex = 64;
+            LblIntervalAndCompetitionFormatedTime.Text = "Tiro de: 00:00 - Prova de: 00:00:00";
+            LblIntervalAndCompetitionFormatedTime.TextAlign = ContentAlignment.MiddleCenter;
+            ToolTip.SetToolTip(LblIntervalAndCompetitionFormatedTime, "Tempo do intervalo em minutos e segundos e tempo total da prova (formato hh:mm:ss).");
             // 
             // LblCurrentIntervalElapsedTime
             // 
@@ -744,38 +746,32 @@
             // 
             LblTestMessages.BorderStyle = BorderStyle.FixedSingle;
             LblTestMessages.Font = new Font("Segoe UI", 9F);
-            LblTestMessages.Location = new Point(15, 53);
+            LblTestMessages.Location = new Point(480, 88);
             LblTestMessages.Name = "LblTestMessages";
-            LblTestMessages.Size = new Size(439, 30);
+            LblTestMessages.Size = new Size(425, 30);
             LblTestMessages.TabIndex = 27;
             LblTestMessages.Text = "Antes dos beeps 00.000 | Até antes do último beep 00.000 | Após beeps 00.000";
             LblTestMessages.TextAlign = ContentAlignment.MiddleCenter;
             ToolTip.SetToolTip(LblTestMessages, "Tempos de cada etapa do evento dos beeps, em segundos e milissegundos.");
             LblTestMessages.Visible = false;
             // 
-            // BtnBeepsTest
+            // LblHalfIntervalBeep
             // 
-            BtnBeepsTest.Enabled = false;
-            BtnBeepsTest.Font = new Font("Segoe UI", 10F);
-            BtnBeepsTest.ImageIndex = 0;
-            BtnBeepsTest.ImageList = ImageListBeepsAndCompetition;
-            BtnBeepsTest.Location = new Point(15, 53);
-            BtnBeepsTest.Name = "BtnBeepsTest";
-            BtnBeepsTest.Size = new Size(136, 30);
-            BtnBeepsTest.TabIndex = 24;
-            BtnBeepsTest.Text = "Testar beeps";
-            BtnBeepsTest.TextImageRelation = TextImageRelation.ImageBeforeText;
-            BtnBeepsTest.UseVisualStyleBackColor = true;
-            BtnBeepsTest.Click += BtnBeepsTest_Click;
-            BtnBeepsTest.MouseHover += BtnBeepTest_MouseHover;
+            LblHalfIntervalBeep.AutoSize = true;
+            LblHalfIntervalBeep.Location = new Point(15, 57);
+            LblHalfIntervalBeep.Name = "LblHalfIntervalBeep";
+            LblHalfIntervalBeep.Size = new Size(149, 19);
+            LblHalfIntervalBeep.TabIndex = 31;
+            LblHalfIntervalBeep.Text = "Beep de meio intervalo";
+            ToolTip.SetToolTip(LblHalfIntervalBeep, "Se haverá um beep indicador que divide o tempo do intervalo em metade esforço e metade descanso.");
             // 
             // BeepMediaPlayer
             // 
             BeepMediaPlayer.Enabled = true;
-            BeepMediaPlayer.Location = new Point(480, 22);
+            BeepMediaPlayer.Location = new Point(480, 127);
             BeepMediaPlayer.Name = "BeepMediaPlayer";
             BeepMediaPlayer.OcxState = (AxHost.State)resources.GetObject("BeepMediaPlayer.OcxState");
-            BeepMediaPlayer.Size = new Size(425, 61);
+            BeepMediaPlayer.Size = new Size(425, 30);
             BeepMediaPlayer.TabIndex = 28;
             // 
             // MenuStrip
@@ -856,15 +852,17 @@
             // GroupBoxBeepsCtrls
             // 
             GroupBoxBeepsCtrls.Anchor = AnchorStyles.Left;
+            GroupBoxBeepsCtrls.Controls.Add(LblHalfIntervalBeep);
+            GroupBoxBeepsCtrls.Controls.Add(ComboBoxHalfIntervalBeep);
             GroupBoxBeepsCtrls.Controls.Add(BtnStartBeepTest);
             GroupBoxBeepsCtrls.Controls.Add(BtnCountdownBeepTest);
             GroupBoxBeepsCtrls.Controls.Add(BtnBeepsTest);
-            GroupBoxBeepsCtrls.Controls.Add(GroupBoxBeepsVolume);
             GroupBoxBeepsCtrls.Controls.Add(BeepMediaPlayer);
             GroupBoxBeepsCtrls.Controls.Add(LblBeepPair);
             GroupBoxBeepsCtrls.Controls.Add(ComboBoxBeepPair);
-            GroupBoxBeepsCtrls.Controls.Add(LblTestMessages);
             GroupBoxBeepsCtrls.Controls.Add(GroupBoxBeepsAmountAndTimes);
+            GroupBoxBeepsCtrls.Controls.Add(GroupBoxBeepsVolume);
+            GroupBoxBeepsCtrls.Controls.Add(LblTestMessages);
             GroupBoxBeepsCtrls.FlatStyle = FlatStyle.System;
             GroupBoxBeepsCtrls.Font = new Font("Segoe UI", 10F);
             GroupBoxBeepsCtrls.Location = new Point(15, 35);
@@ -874,15 +872,27 @@
             GroupBoxBeepsCtrls.TabStop = false;
             GroupBoxBeepsCtrls.Text = "CONTROLES DOS BEEPS";
             // 
+            // ComboBoxHalfIntervalBeep
+            // 
+            ComboBoxHalfIntervalBeep.DropDownStyle = ComboBoxStyle.DropDownList;
+            ComboBoxHalfIntervalBeep.Enabled = false;
+            ComboBoxHalfIntervalBeep.FormattingEnabled = true;
+            ComboBoxHalfIntervalBeep.Items.AddRange(new object[] { "NÃO - Descanso é o tempo restante do tiro", "SIM - Transição do esforço para o descanso" });
+            ComboBoxHalfIntervalBeep.Location = new Point(168, 54);
+            ComboBoxHalfIntervalBeep.Name = "ComboBoxHalfIntervalBeep";
+            ComboBoxHalfIntervalBeep.Size = new Size(287, 25);
+            ComboBoxHalfIntervalBeep.TabIndex = 30;
+            ComboBoxHalfIntervalBeep.SelectedIndexChanged += ComboBoxHalfIntervalBeep_SelectedIndexChanged;
+            // 
             // BtnStartBeepTest
             // 
             BtnStartBeepTest.Enabled = false;
             BtnStartBeepTest.Font = new Font("Segoe UI", 10F);
             BtnStartBeepTest.ImageIndex = 2;
             BtnStartBeepTest.ImageList = ImageListBeepsAndCompetition;
-            BtnStartBeepTest.Location = new Point(320, 53);
+            BtnStartBeepTest.Location = new Point(775, 88);
             BtnStartBeepTest.Name = "BtnStartBeepTest";
-            BtnStartBeepTest.Size = new Size(136, 30);
+            BtnStartBeepTest.Size = new Size(131, 30);
             BtnStartBeepTest.TabIndex = 26;
             BtnStartBeepTest.Text = "Beep de início";
             BtnStartBeepTest.TextImageRelation = TextImageRelation.ImageBeforeText;
@@ -895,64 +905,39 @@
             BtnCountdownBeepTest.Font = new Font("Segoe UI", 10F);
             BtnCountdownBeepTest.ImageIndex = 1;
             BtnCountdownBeepTest.ImageList = ImageListBeepsAndCompetition;
-            BtnCountdownBeepTest.Location = new Point(167, 53);
+            BtnCountdownBeepTest.Location = new Point(627, 88);
             BtnCountdownBeepTest.Name = "BtnCountdownBeepTest";
-            BtnCountdownBeepTest.Size = new Size(136, 30);
+            BtnCountdownBeepTest.Size = new Size(131, 30);
             BtnCountdownBeepTest.TabIndex = 25;
             BtnCountdownBeepTest.Text = "Beep contagem";
             BtnCountdownBeepTest.TextImageRelation = TextImageRelation.ImageBeforeText;
             BtnCountdownBeepTest.UseVisualStyleBackColor = true;
             BtnCountdownBeepTest.Click += BtnCountdownBeepTest_Click;
             // 
-            // GroupBoxBeepsVolume
+            // BtnBeepsTest
             // 
-            GroupBoxBeepsVolume.Controls.Add(LblBeepVolumePercent);
-            GroupBoxBeepsVolume.Controls.Add(LblBeepVolume);
-            GroupBoxBeepsVolume.Controls.Add(TBBeepVolume);
-            GroupBoxBeepsVolume.FlatStyle = FlatStyle.System;
-            GroupBoxBeepsVolume.Font = new Font("Segoe UI", 10F);
-            GroupBoxBeepsVolume.Location = new Point(480, 80);
-            GroupBoxBeepsVolume.Name = "GroupBoxBeepsVolume";
-            GroupBoxBeepsVolume.Size = new Size(425, 78);
-            GroupBoxBeepsVolume.TabIndex = 20;
-            GroupBoxBeepsVolume.TabStop = false;
-            // 
-            // LblBeepVolumePercent
-            // 
-            LblBeepVolumePercent.Font = new Font("Segoe UI", 9F);
-            LblBeepVolumePercent.Location = new Point(377, 33);
-            LblBeepVolumePercent.Name = "LblBeepVolumePercent";
-            LblBeepVolumePercent.Size = new Size(35, 15);
-            LblBeepVolumePercent.TabIndex = 23;
-            LblBeepVolumePercent.Text = "50%";
-            LblBeepVolumePercent.TextAlign = ContentAlignment.TopRight;
-            // 
-            // TBBeepVolume
-            // 
-            TBBeepVolume.AutoSize = false;
-            TBBeepVolume.BackColor = SystemColors.Control;
-            TBBeepVolume.LargeChange = 0;
-            TBBeepVolume.Location = new Point(70, 29);
-            TBBeepVolume.Maximum = 0;
-            TBBeepVolume.Minimum = -100;
-            TBBeepVolume.Name = "TBBeepVolume";
-            TBBeepVolume.RightToLeft = RightToLeft.Yes;
-            TBBeepVolume.RightToLeftLayout = true;
-            TBBeepVolume.Size = new Size(315, 30);
-            TBBeepVolume.SmallChange = 5;
-            TBBeepVolume.TabIndex = 22;
-            TBBeepVolume.TickFrequency = 5;
-            TBBeepVolume.Value = -50;
-            TBBeepVolume.ValueChanged += TBBeepVolume_ValueChanged;
+            BtnBeepsTest.Enabled = false;
+            BtnBeepsTest.Font = new Font("Segoe UI", 10F);
+            BtnBeepsTest.ImageIndex = 0;
+            BtnBeepsTest.ImageList = ImageListBeepsAndCompetition;
+            BtnBeepsTest.Location = new Point(479, 88);
+            BtnBeepsTest.Name = "BtnBeepsTest";
+            BtnBeepsTest.Size = new Size(131, 30);
+            BtnBeepsTest.TabIndex = 24;
+            BtnBeepsTest.Text = "Testar beeps";
+            BtnBeepsTest.TextImageRelation = TextImageRelation.ImageBeforeText;
+            BtnBeepsTest.UseVisualStyleBackColor = true;
+            BtnBeepsTest.Click += BtnBeepsTest_Click;
+            BtnBeepsTest.MouseHover += BtnBeepTest_MouseHover;
             // 
             // ComboBoxBeepPair
             // 
             ComboBoxBeepPair.DropDownStyle = ComboBoxStyle.DropDownList;
             ComboBoxBeepPair.Enabled = false;
             ComboBoxBeepPair.FormattingEnabled = true;
-            ComboBoxBeepPair.Location = new Point(165, 22);
+            ComboBoxBeepPair.Location = new Point(168, 22);
             ComboBoxBeepPair.Name = "ComboBoxBeepPair";
-            ComboBoxBeepPair.Size = new Size(290, 25);
+            ComboBoxBeepPair.Size = new Size(287, 25);
             ComboBoxBeepPair.TabIndex = 11;
             ComboBoxBeepPair.SelectedIndexChanged += ComboBoxBeepPair_SelectedIndexChanged;
             // 
@@ -1022,6 +1007,47 @@
             NumUDTimeBeforePlayBeeps.TextAlign = HorizontalAlignment.Center;
             NumUDTimeBeforePlayBeeps.ValueChanged += NumUDTimeBeforePlayBeeps_ValueChanged;
             // 
+            // GroupBoxBeepsVolume
+            // 
+            GroupBoxBeepsVolume.Controls.Add(LblBeepVolumePercent);
+            GroupBoxBeepsVolume.Controls.Add(LblBeepVolume);
+            GroupBoxBeepsVolume.Controls.Add(TBBeepVolume);
+            GroupBoxBeepsVolume.FlatStyle = FlatStyle.System;
+            GroupBoxBeepsVolume.Font = new Font("Segoe UI", 10F);
+            GroupBoxBeepsVolume.Location = new Point(480, 14);
+            GroupBoxBeepsVolume.Name = "GroupBoxBeepsVolume";
+            GroupBoxBeepsVolume.Size = new Size(425, 66);
+            GroupBoxBeepsVolume.TabIndex = 20;
+            GroupBoxBeepsVolume.TabStop = false;
+            // 
+            // LblBeepVolumePercent
+            // 
+            LblBeepVolumePercent.Font = new Font("Segoe UI", 9F);
+            LblBeepVolumePercent.Location = new Point(377, 28);
+            LblBeepVolumePercent.Name = "LblBeepVolumePercent";
+            LblBeepVolumePercent.Size = new Size(35, 15);
+            LblBeepVolumePercent.TabIndex = 23;
+            LblBeepVolumePercent.Text = "50%";
+            LblBeepVolumePercent.TextAlign = ContentAlignment.TopRight;
+            // 
+            // TBBeepVolume
+            // 
+            TBBeepVolume.AutoSize = false;
+            TBBeepVolume.BackColor = SystemColors.Control;
+            TBBeepVolume.LargeChange = 0;
+            TBBeepVolume.Location = new Point(70, 23);
+            TBBeepVolume.Maximum = 0;
+            TBBeepVolume.Minimum = -100;
+            TBBeepVolume.Name = "TBBeepVolume";
+            TBBeepVolume.RightToLeft = RightToLeft.Yes;
+            TBBeepVolume.RightToLeftLayout = true;
+            TBBeepVolume.Size = new Size(315, 30);
+            TBBeepVolume.SmallChange = 5;
+            TBBeepVolume.TabIndex = 22;
+            TBBeepVolume.TickFrequency = 5;
+            TBBeepVolume.Value = -50;
+            TBBeepVolume.ValueChanged += TBBeepVolume_ValueChanged;
+            // 
             // GroupBoxProgram
             // 
             GroupBoxProgram.Controls.Add(GroupBoxTransitionsControls);
@@ -1049,9 +1075,9 @@
             GroupBoxTransitionsControls.Controls.Add(NumUDTimeToVolMin);
             GroupBoxTransitionsControls.Controls.Add(LblTimeToChangeVolume);
             GroupBoxTransitionsControls.Controls.Add(CheckBoxStartWithBeeps);
-            GroupBoxTransitionsControls.Location = new Point(250, 14);
+            GroupBoxTransitionsControls.Location = new Point(253, 14);
             GroupBoxTransitionsControls.Name = "GroupBoxTransitionsControls";
-            GroupBoxTransitionsControls.Size = new Size(205, 113);
+            GroupBoxTransitionsControls.Size = new Size(202, 113);
             GroupBoxTransitionsControls.TabIndex = 73;
             GroupBoxTransitionsControls.TabStop = false;
             // 
@@ -1059,7 +1085,7 @@
             // 
             GroupBoxCompetitionControls.Controls.Add(NumUDCompetitionIntervalSeconds);
             GroupBoxCompetitionControls.Controls.Add(NumUDCompetitionAmountIntervals);
-            GroupBoxCompetitionControls.Controls.Add(LblCompetitionTotalTime);
+            GroupBoxCompetitionControls.Controls.Add(LblIntervalAndCompetitionFormatedTime);
             GroupBoxCompetitionControls.Controls.Add(LblCompetitionIntervalTime);
             GroupBoxCompetitionControls.Controls.Add(LblCompetitionAmountIntervals);
             GroupBoxCompetitionControls.Location = new Point(480, 14);
@@ -1104,7 +1130,7 @@
             GroupBoxProgramming.Controls.Add(LblRepeatPlaylist);
             GroupBoxProgramming.Location = new Point(15, 14);
             GroupBoxProgramming.Name = "GroupBoxProgramming";
-            GroupBoxProgramming.Size = new Size(228, 113);
+            GroupBoxProgramming.Size = new Size(231, 113);
             GroupBoxProgramming.TabIndex = 74;
             GroupBoxProgramming.TabStop = false;
             // 
@@ -1114,7 +1140,7 @@
             ComboBoxProgramming.Enabled = false;
             ComboBoxProgramming.FormattingEnabled = true;
             ComboBoxProgramming.Items.AddRange(new object[] { "Somente beeps", "Músicas e beeps" });
-            ComboBoxProgramming.Location = new Point(99, 16);
+            ComboBoxProgramming.Location = new Point(102, 16);
             ComboBoxProgramming.Name = "ComboBoxProgramming";
             ComboBoxProgramming.Size = new Size(122, 25);
             ComboBoxProgramming.TabIndex = 51;
@@ -1126,7 +1152,7 @@
             ComboBoxRepeatPlaylist.Enabled = false;
             ComboBoxRepeatPlaylist.FormattingEnabled = true;
             ComboBoxRepeatPlaylist.Items.AddRange(new object[] { "Lista normal", "Lista randômica", "Inverter anterior" });
-            ComboBoxRepeatPlaylist.Location = new Point(99, 80);
+            ComboBoxRepeatPlaylist.Location = new Point(102, 80);
             ComboBoxRepeatPlaylist.Name = "ComboBoxRepeatPlaylist";
             ComboBoxRepeatPlaylist.Size = new Size(122, 25);
             ComboBoxRepeatPlaylist.TabIndex = 55;
@@ -1138,7 +1164,7 @@
             ComboBoxInitialization.Enabled = false;
             ComboBoxInitialization.FormattingEnabled = true;
             ComboBoxInitialization.Items.AddRange(new object[] { "Começo da lista", "Música tocando" });
-            ComboBoxInitialization.Location = new Point(99, 48);
+            ComboBoxInitialization.Location = new Point(102, 48);
             ComboBoxInitialization.Name = "ComboBoxInitialization";
             ComboBoxInitialization.Size = new Size(122, 25);
             ComboBoxInitialization.TabIndex = 53;
@@ -1179,15 +1205,15 @@
             MenuStrip.PerformLayout();
             GroupBoxBeepsCtrls.ResumeLayout(false);
             GroupBoxBeepsCtrls.PerformLayout();
-            GroupBoxBeepsVolume.ResumeLayout(false);
-            GroupBoxBeepsVolume.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)TBBeepVolume).EndInit();
             GroupBoxBeepsAmountAndTimes.ResumeLayout(false);
             GroupBoxBeepsAmountAndTimes.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)NumUDTimeForEachBeep).EndInit();
             ((System.ComponentModel.ISupportInitialize)NumUDAmountOfBeeps).EndInit();
             ((System.ComponentModel.ISupportInitialize)NumUDTimeForResumeMusics).EndInit();
             ((System.ComponentModel.ISupportInitialize)NumUDTimeBeforePlayBeeps).EndInit();
+            GroupBoxBeepsVolume.ResumeLayout(false);
+            GroupBoxBeepsVolume.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)TBBeepVolume).EndInit();
             GroupBoxProgram.ResumeLayout(false);
             GroupBoxTransitionsControls.ResumeLayout(false);
             GroupBoxTransitionsControls.PerformLayout();
@@ -1214,7 +1240,6 @@
         private ToolTip ToolTip;
         private TrackBar TBMusicVolumeMax;
         private AxWMPLib.AxWindowsMediaPlayer BeepMediaPlayer;
-        private Button BtnBeepsTest;
         private MenuStrip MenuStrip;
         private ToolStripMenuItem ToolStripMenuItemConfiguration;
         private ToolStripMenuItem ToolStripMenuItemAbout;
@@ -1275,7 +1300,7 @@
         private ToolStripMenuItem ToolStripMenuItemCloseProgram;
         private Label LblCurrentIntervalElapsedTime;
         private ToolStripMenuItem ToolStripMenuItemSaveConfigurationAs;
-        private Label LblCompetitionTotalTime;
+        private Label LblIntervalAndCompetitionFormatedTime;
         private ImageList ImageListMusics;
         private ImageList ImageListBeepsAndCompetition;
         private Label LblListViewMusicsStatus;
@@ -1284,5 +1309,8 @@
         private GroupBox GroupBoxCompetitionControls;
         private GroupBox GroupBoxTransitionsControls;
         private GroupBox GroupBoxProgramming;
+        private Button BtnBeepsTest;
+        private ComboBox ComboBoxHalfIntervalBeep;
+        private Label LblHalfIntervalBeep;
     }
 }

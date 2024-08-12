@@ -10,18 +10,21 @@ namespace CompetitionsTimeControl
     public partial class MainForm : Form
     {
         public const string SupportedExtensions = "*.mp3; *.wma; *.wav";
+        public const byte TicksToStartCompetition = 5;
 
         private string CurrentConfigurationFile { get; set; }
 
-        private Action? _finishCurrentIntervalCallback;
+        private Action<bool>? _finishCurrentIntervalCallback;
         private Action? _setLblIntervalsElapsedYellowColor;
         private bool _recreatePlaylist;
         private bool _setVisibleAndFocus;
         private bool _closingApplication;
+        private byte _ticksToStartCounter;
         private BeepsController _beepsController = null!;
         private CompetitionController _competitionController = null!;
         private MusicsController _musicsController = null!;
-        private Stopwatch _stopwatch;
+        private readonly Stopwatch _stopwatch;
+        private readonly string _originalFormText;
         private long _lastMillisecond;
 
         public MainForm()
@@ -35,6 +38,8 @@ namespace CompetitionsTimeControl
             _setLblIntervalsElapsedYellowColor = null;
             _recreatePlaylist = false;
             _closingApplication = false;
+            _ticksToStartCounter = TicksToStartCompetition;
+            _originalFormText = this.Text;
 
             TimerController.CreateThreadTimer(ThreadTimerTick);
             _stopwatch = new Stopwatch();
@@ -56,6 +61,9 @@ namespace CompetitionsTimeControl
             MusicMediaPlayer.Ctlenabled = false;
         }
 
+        private void SetFormTextWithCurrentFileName()
+            => this.Text = $"{_originalFormText} [ {Path.GetFileName(CurrentConfigurationFile)} ]";
+
         private void MainForm_Activated(object sender, EventArgs e)
         {
             if (_beepsController == null)
@@ -69,6 +77,7 @@ namespace CompetitionsTimeControl
                     _beepsController.TimeForEachBeep = (float)NumUDTimeForEachBeep.Value;
                     _beepsController.CurrentBeepsVolume = (byte)(TBBeepVolume.Value * -1);
                     _beepsController.TimeForResumeMusics = (float)NumUDTimeForResumeMusics.Value;
+                    ComboBoxHalfIntervalBeep.SelectedIndex = 0;
                 }
             }
 
@@ -86,7 +95,7 @@ namespace CompetitionsTimeControl
 
             if (_competitionController == null)
             {
-                _competitionController = new(LblCompetitionTotalTime, ProgressBarCurrentIntervalElapsed, LblIntervalsElapsed,
+                _competitionController = new(LblIntervalAndCompetitionFormatedTime, ProgressBarCurrentIntervalElapsed, LblIntervalsElapsed,
                     ProgressBarCompetitionElapsedTime, LblCurrentIntervalElapsedTime, LblCompetitionElapsedTime);
 
                 if (_competitionController != null)
@@ -153,12 +162,6 @@ namespace CompetitionsTimeControl
             if (_closingApplication)
                 return;
 
-            /*if (_stopwatch.ElapsedMilliseconds < _lastMillisecond)
-            {
-                _lastMillisecond = 0;
-                _stopwatch.Restart();
-            }*/
-
             long currentMillisecond = _stopwatch.ElapsedMilliseconds; // up to 2 trillion hours
 
             int elapsedTime = (int)Math.Abs(currentMillisecond - _lastMillisecond);
@@ -174,7 +177,7 @@ namespace CompetitionsTimeControl
             if (_competitionController.CanRunCompetition)
             {
                 _competitionController.TryPerformCompetition(_beepsController, _musicsController,
-                    ChooseHowToClearPlaylist, StopCompetition, _stopwatch.ElapsedMilliseconds);
+                    ChooseHowToClearPlaylist, StopCompetition, PerformCountdownBeep, _stopwatch.ElapsedMilliseconds);
 
                 if (_musicsController.SecondsToChangeVolume != null && _competitionController.ProgramIsRunning)
                 {
@@ -212,6 +215,21 @@ namespace CompetitionsTimeControl
                     CheckEnableCompetitionControls();
                 }
             }
+
+            // Competition start separated from BtnStartCompetition_Click by '_ticksToStartCounter' ticks.
+            // OBS: Workaround to avoid intermittent freezing (as it doesn't always happen) of the form when
+            //      the competition is started with beeps and music at the same time.
+            if (!_competitionController.CanRunCompetition && !_competitionController.ProgramIsRunning &&
+                _competitionController.IsPreparationComplete)
+            {
+                if (_ticksToStartCounter > 0)
+                {
+                    _ticksToStartCounter--;
+                    return;
+                }
+
+                _competitionController.StartCompetition();
+            }
         }
 
         #region STRIP MENU
@@ -232,6 +250,7 @@ namespace CompetitionsTimeControl
                 return;
 
             ComboBoxBeepPair.Text = dataBeepsController.CurrentBeepPairText;
+            ComboBoxHalfIntervalBeep.SelectedIndex = dataBeepsController.HasHalfIntervalBeep ? 1 : 0;
             NumUDTimeBeforePlayBeeps.Value = (decimal)dataBeepsController.TimeBeforePlayBeeps;
             NumUDAmountOfBeeps.Value = dataBeepsController.AmountOfBeeps;
             NumUDTimeForEachBeep.Value = (decimal)dataBeepsController.TimeForEachBeep;
@@ -259,6 +278,7 @@ namespace CompetitionsTimeControl
 
             CurrentConfigurationFile = filePath;
             ToolStripMenuItemSaveConfiguration.Enabled = CurrentConfigurationFile != "";
+            SetFormTextWithCurrentFileName();
         }
 
         private void ToolStripMenuItemSaveConfiguration_Click(object sender, EventArgs e)
@@ -273,12 +293,19 @@ namespace CompetitionsTimeControl
                 _musicsController, _competitionController);
 
             ToolStripMenuItemSaveConfiguration.Enabled = CurrentConfigurationFile != "";
+            SetFormTextWithCurrentFileName();
         }
 
         private void ToolStripMenuItemEnableTextAndButtonsTips_Click(object sender, EventArgs e)
         {
             ToolStripMenuItemEnableTextAndButtonsTips.Checked = !ToolStripMenuItemEnableTextAndButtonsTips.Checked;
             ToolTip.Active = ToolStripMenuItemEnableTextAndButtonsTips.Checked;
+
+            if (!ToolTip.Active)
+                return;
+
+            MusicsController.UpdateAllDinamicToolTip(ToggleMarkAndExclude, _musicsController?.HasCheckedMusicToDelete ?? false,
+                TogglePlayMusicBySelection, TogglePlaylistMode, ToolTip);
         }
 
         private void ToolStripMenuItemReloadBeepList_Click(object sender, EventArgs e)
@@ -291,7 +318,7 @@ namespace CompetitionsTimeControl
             {
                 return;
             }
-            
+
             _beepsController?.GetBeepsSounds(ComboBoxBeepPair);
             ComboBoxBeepPair_SelectedIndexChanged(sender, EventArgs.Empty);
         }
@@ -334,6 +361,12 @@ namespace CompetitionsTimeControl
                 ComboBoxProgramming.SelectedIndex = -1;
             }
             EnableControlsToStartCompetition();
+        }
+
+        private void ComboBoxHalfIntervalBeep_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (_beepsController != null)
+                _beepsController.HasHalfIntervalBeep = ComboBoxHalfIntervalBeep.SelectedIndex > 0;
         }
 
         private void NumUDTimeBeforePlayBeeps_ValueChanged(object sender, EventArgs e)
@@ -389,6 +422,7 @@ namespace CompetitionsTimeControl
         private void SetEnableBeepsControls(bool enable)
         {
             ComboBoxBeepPair.Enabled = enable;
+            ComboBoxHalfIntervalBeep.Enabled = enable;
             NumUDTimeBeforePlayBeeps.Enabled = enable;
             NumUDAmountOfBeeps.Enabled = enable;
             NumUDTimeForEachBeep.Enabled = enable;
@@ -400,7 +434,17 @@ namespace CompetitionsTimeControl
 
         private void BtnCountdownBeepTest_Click(object sender, EventArgs e)
         {
+            PerformCountdownBeep();
+        }
+
+        private void PerformCountdownBeep()
+        {
             BeepsController.PlayBeep(BeepMediaPlayer, _beepsController.LowBeepPath);
+
+            if (_setLblIntervalsElapsedYellowColor == null || _competitionController?.CanPerformHalfIntervalBeep == false)
+                return;
+            
+            _setLblIntervalsElapsedYellowColor();
         }
 
         private void BtnStartBeepTest_Click(object sender, EventArgs e)
@@ -436,7 +480,7 @@ namespace CompetitionsTimeControl
                     break;
 
                 case PlaylistRestart.InvertLastMode:
-                    isToCheckTogglePlaylistMode = currentModeIsShuffle ? false : true;
+                    isToCheckTogglePlaylistMode = !currentModeIsShuffle;
                     recreatePlaylist = true;
                     break;
             }
@@ -524,8 +568,8 @@ namespace CompetitionsTimeControl
 
         private void TogglePlayMusicBySelection_CheckedChanged(object sender, EventArgs e)
         {
-            _musicsController?.TogglePlayMusicBySelectionCheckedChanged(
-                TogglePlayMusicBySelection, ToolTip, MusicMediaPlayer, _competitionController.CanRunCompetition);
+            _musicsController?.TogglePlayMusicBySelectionCheckedChanged(TogglePlayMusicBySelection, ToolTip,
+                MusicMediaPlayer, _competitionController.CanRunCompetition || _competitionController.IsPreparationComplete);
         }
 
         private void TogglePlaylistMode_CheckedChanged(object sender, EventArgs e)
@@ -749,17 +793,18 @@ namespace CompetitionsTimeControl
                 return;
             }
 
-            bool hasMusicsToPlaylist = _competitionController.ValidateHasMusicsToPlaylist(MusicMediaPlayer,
-                _musicsController, out bool skipCanStartMessage);
-            
+            bool hasMusicsToPlaylist = _competitionController.ValidateHasMusicsToPlaylist(_musicsController,
+                out bool skipCanStartMessage);
+
             CheckEnableCompetitionControls();
 
-            if (_competitionController.ValidateBeepsEventTimes(_beepsController) && hasMusicsToPlaylist &&
+            if (_competitionController.ValidateBeepsEventTimes(_beepsController) &&
+                _competitionController.HasTimeForHalfIntervalBeep(_beepsController) && hasMusicsToPlaylist &&
                 _competitionController.CanStartCompetition(skipCanStartMessage))
             {
                 _setVisibleAndFocus = true;
                 _competitionController.BlockListviewAndCreatePlaylist(MusicMediaPlayer, _musicsController);
-                _competitionController.StartCompetition(out _finishCurrentIntervalCallback, out _setLblIntervalsElapsedYellowColor);
+                _competitionController.PrepareToStart(out _finishCurrentIntervalCallback, out _setLblIntervalsElapsedYellowColor);
 
                 SetEnableBeepsControls(false);
                 SetEnableMusicsControls(false);
@@ -769,6 +814,7 @@ namespace CompetitionsTimeControl
                 BtnStartCompetition.Text = " Pausar";
                 BtnStartCompetition.ImageIndex = 4;
                 BtnStopCompetition.Enabled = true;
+                _ticksToStartCounter = TicksToStartCompetition;
             }
         }
 

@@ -28,7 +28,6 @@ namespace CompetitionsTimeControl.Controllers
                 
                 if (expectedExtension.Equals("mp3", StringComparison.OrdinalIgnoreCase) && (
                     fileSignature.StartsWith(mp3ID3signature) || mp3CommonSignatures.Contains(fileSignature[..4])))
-                    //Array.Exists(mp3CommonSignatures, sig => fileSignature.StartsWith(sig)))
                 {
                     return true;
                 }

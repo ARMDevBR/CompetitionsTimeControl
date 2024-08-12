@@ -61,6 +61,7 @@ namespace CompetitionsTimeControl.Controllers
 
         public byte? SecondsToChangeVolume { get; private set; }
         public bool HasJustOneValidMusic { get; private set; }
+        public bool HasCheckedMusicToDelete => _checkedMusicToDelete != null && _checkedMusicToDelete.Count > 0;
         [JsonProperty] public List<string> MusicsPathsList { get; private set; }
         [JsonProperty] public bool PlaylistInRandomMode { get; private set; }
         [JsonProperty] public bool IsSimplifiedView { get; private set; }
@@ -271,35 +272,52 @@ namespace CompetitionsTimeControl.Controllers
         {
             _listViewMusics.CheckBoxes = toggleMarkAndExclude.Checked;
 
+            if (toolTip.Active)
+                SetToggleMarkAndExcludeToolTip(toggleMarkAndExclude, HasCheckedMusicToDelete, toolTip);
+
             if (toggleMarkAndExclude.Checked)
             {
-                if (_checkedMusicToDelete.Count > 0)
-                {
-                    toggleMarkAndExclude.Text = "Excluir ?";
+                toggleMarkAndExclude.Text = HasCheckedMusicToDelete ? "Excluir ?" : "Check ✓";
+            }
+            else
+            {
+                toggleMarkAndExclude.Text = "  Excluir   seleção";
+            }
+        }
 
-                    toolTip.SetToolTip(toggleMarkAndExclude, string.Concat(
-                        "- Ao clicar novamente, as músicas com checkbox marcado serão excluídas da lista.\n",
-                        "- Desmarque todas as músicas que não queira excluir da lista."));
+        private static void SetToggleMarkAndExcludeToolTip(CheckBox toggleMarkAndExclude, bool hasMusicToDelete,
+            ToolTip toolTip)
+        {
+            string toolTipStr;
+
+            if (toggleMarkAndExclude.Checked)
+            {
+                if (hasMusicToDelete)
+                {
+                    toolTipStr = """
+                        - Ao clicar novamente, as músicas com checkbox marcado serão excluídas da lista.
+                        - Desmarque todas as músicas que não queira excluir da lista.
+                        """;
                 }
                 else
                 {
-                    toggleMarkAndExclude.Text = "Check ✓";
-
-                    toolTip.SetToolTip(toggleMarkAndExclude, string.Concat(
-                        "- Ao clicar novamente, a função de exclusão individual será cancelada.\n",
-                        "- Marque o checkbox das músicas que deseja excluir da lista."));
+                    toolTipStr = """
+                        - Ao clicar novamente, a função de exclusão individual será cancelada.
+                        - Marque o checkbox das músicas que deseja excluir da lista.
+                        """;
                 }
             }
             else
             {
-                toggleMarkAndExclude.Text = "Excluir seleção";
-                toolTip.SetToolTip(toggleMarkAndExclude, "Clique para ativar a função de exclusão das músicas na lista.");
+                toolTipStr = "Clique para ativar a função de exclusão das músicas na lista.";
             }
+
+            toolTip.SetToolTip(toggleMarkAndExclude, toolTipStr);
         }
 
         public void DeleteCheckedMusics(bool canDelete)
         {
-            if (!canDelete || _checkedMusicToDelete.Count <= 0)
+            if (!canDelete || !HasCheckedMusicToDelete)
             {
                 _checkedMusicToDelete.Clear();
                 return;
@@ -466,7 +484,7 @@ namespace CompetitionsTimeControl.Controllers
             musicMediaPlayer.Ctlenabled = true;
         }
 
-        public bool HasMusicsToPlaylist(AxWindowsMediaPlayer musicMediaPlayer, out bool skipCanStartMessage)
+        public bool HasMusicsToPlaylist(out bool skipCanStartMessage)
         {
             skipCanStartMessage = false;
 
@@ -581,32 +599,28 @@ namespace CompetitionsTimeControl.Controllers
         public void TogglePlayMusicBySelectionCheckedChanged(CheckBox togglePlayMusicBySelection, ToolTip toolTip,
             AxWindowsMediaPlayer musicMediaPlayer, bool startingCompetition)
         {
+            if (toolTip.Active)
+                SetTogglePlayMusicBySelectionToolTip(togglePlayMusicBySelection, toolTip);
+            
             if (togglePlayMusicBySelection.Checked)
             {
-                togglePlayMusicBySelection.Text = "  Parar";
+                togglePlayMusicBySelection.Text = "   Parar";
                 togglePlayMusicBySelection.ImageIndex = 4;
-                toolTip.SetToolTip(togglePlayMusicBySelection, "Desabilita tocar qualquer música selecionada na lista.");
-
+                
                 if (!startingCompetition && _listViewMusics.SelectedItems.Count > 0)
                 {
                     ListViewItem lvi = _listViewMusics.SelectedItems[0];
 
                     if (IsInvalidItem(lvi))
-                    {
                         ShowInvalidMusicMessage(true);
-                    }
                     else
-                    {
-                        // Trocar a contagem por itens válidos
                         TryPlayMusicBySelectionAndEnable(lvi, musicMediaPlayer, _listViewMusics.Items.Count == 1);
-                    }
                 }
             }
             else
             {
                 togglePlayMusicBySelection.Text = "Ouvir seleção";
                 togglePlayMusicBySelection.ImageIndex = 3;
-                toolTip.SetToolTip(togglePlayMusicBySelection, "Habilita tocar a música ao selecioná-la na lista.");
 
                 if (!startingCompetition)
                 {
@@ -615,20 +629,37 @@ namespace CompetitionsTimeControl.Controllers
             }
         }
 
+        private static void SetTogglePlayMusicBySelectionToolTip(CheckBox togglePlayMusicBySelection, ToolTip toolTip)
+        {
+            string toolTipStr = togglePlayMusicBySelection.Checked
+                ? "Desabilita tocar qualquer música selecionada na lista."
+                : "Habilita tocar a música ao selecioná-la na lista.";
+
+            toolTip.SetToolTip(togglePlayMusicBySelection, toolTipStr);
+        }
+
         public void TogglePlaylistModeCheckedChanged(CheckBox togglePlaylistMode, ToolTip toolTip)
         {
             PlaylistInRandomMode = togglePlaylistMode.Checked;
 
-            if (togglePlaylistMode.Checked)
-            {
-                togglePlaylistMode.ImageIndex = 6;
-                toolTip.SetToolTip(togglePlaylistMode, "Playlist vai tocar em ordem aleatória.");
-            }
-            else
-            {
-                togglePlaylistMode.ImageIndex = 5;
-                toolTip.SetToolTip(togglePlaylistMode, "Playlist vai tocar sequencialmente.");
-            }
+            if (toolTip.Active)
+                SetTogglePlaylistModeToolTip(togglePlaylistMode, toolTip);
+
+            togglePlaylistMode.ImageIndex = PlaylistInRandomMode ? 6 : 5;
+        }
+
+        private static void SetTogglePlaylistModeToolTip(CheckBox togglePlaylistMode, ToolTip toolTip)
+        {
+            string toolTipStr = togglePlaylistMode.Checked ? "em ordem aleatória" : "sequencialmente";
+            toolTip.SetToolTip(togglePlaylistMode, $"Playlist vai tocar {toolTipStr}.");
+        }
+
+        public static void UpdateAllDinamicToolTip(CheckBox toggleMarkAndExclude, bool hasMusicToDelete,
+            CheckBox togglePlayMusicBySelection, CheckBox togglePlaylistMode, ToolTip toolTip)
+        {
+            SetToggleMarkAndExcludeToolTip(toggleMarkAndExclude, hasMusicToDelete, toolTip);
+            SetTogglePlayMusicBySelectionToolTip(togglePlayMusicBySelection, toolTip);
+            SetTogglePlaylistModeToolTip(togglePlaylistMode, toolTip);
         }
 
         public void ToggleSeeDetailsCheckedChanged(CheckBox toggleSeeDetails)
@@ -681,7 +712,7 @@ namespace CompetitionsTimeControl.Controllers
         }
 
         /// <summary>
-        /// Work through to fix Media Player Visualizations bug that occurs when a song in
+        /// Workaround to fix Media Player Visualizations bug that occurs when a song in
         /// a playlist ends and switches to the next song, canceling the visualization.
         /// 
         /// OBS: Using the previous or next command does not cancel the visualization.
@@ -693,12 +724,8 @@ namespace CompetitionsTimeControl.Controllers
             switch (_autoChangeMusicState)
             {
                 case AutoChangeMusicState.WaitForStopAndChange:
-                    if (_currentPlaylistMedia == null)// ||
-                        //musicMediaPlayer.playState != WMPPlayState.wmppsPlaying)// ||
-                        //musicMediaPlayer.currentPlaylist.count < AmountOfMusicsToAutoChangePlaylist)
-                    {
+                    if (_currentPlaylistMedia == null)
                         return;
-                    }
 
                     double durationAndCurrPositionDifference = _currentPlaylistMedia.duration -
                         musicMediaPlayer.Ctlcontrols.currentPosition;
