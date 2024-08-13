@@ -59,11 +59,23 @@ Abaixo uma imagem mostrando como a tela é ao abrir pela primeira vez e um exemp
 
 No momento disponível apenas para o sistema operacional Windows. Foi testado nos Windows 10 e 11.
 
-Este software não possui um instalador padrão, sendo apenas uma tela a ser executada. Para isto basta descompactar o arquivo [CompetitionsTimeControl.zip](/Download) em algum lugar no seu computador e abrir o programa **Controle de Tempo para Competições Intervaladas.exe** conforme mostrado na imagem abaixo.
+Este software não possui um instalador padrão, sendo apenas uma tela a ser executada.
+
+Para baixar o arquivo, clique no link  [CompetitionsTimeControl v1.0.0.zip](/Download/CompetitionsTimeControl v1.0.0.zip) e depois clique em "View raw" ou no botão de download conforme destacados em vermelho na imagem abaixo.
+
+<p align="center">
+  <img src="/Icons and Images/HowToDownload.png">
+</p>
+
+Após esta etapa será solicitado um local no seu computador para salvar o arquivo compactado no formato .zip. Salve ele e depois descompacte os arquivos.
+Para abrir o programa, vá até o local dos arquivos compactados e abra o  **Controle de Tempo para Competições Intervaladas.exe** conforme mostrado na imagem abaixo.
+
 
 <p align="center">
   <img src="/Icons and Images/ProgramInFolder.png">
 </p>
+
+Se não abrir o programa ainda, leia a seção "Pré-Requisitos" abaixo.
 
 ## Pré-Requisitos
 
@@ -71,9 +83,12 @@ O software utiliza dois mini-players na tela, um para tocar os beeps e outro par
 
 Se a tela do programa não abrir, um aviso será dado informando que o ".NET Desktop Runtime" precisa ser instalado e um link redirecionando para a página de download será mostrado. Aqui um exemplo do link para a versão [.NET 8.0 Desktop Runtime v8.0.7 - Windows x64 Installer](https://dotnet.microsoft.com/pt-br/download/dotnet/thank-you/runtime-desktop-8.0.7-windows-x64-installer?cid=getdotnetcore).
 
+Após esta etapa, o programa já estará pronto para funcionar. 
+Se a tela ainda não abrir de imediato, uma janela do sistema operacional poderá aparecer solicitando o aceite de confiança do usuário por estar rodando um software que não foi instalado de forma convencional. Basta encontrar algo como "Mais opções" ou similar para que a opção de aceitar abrir o programa apareça.
+
 ## Uso
 
-Como usar...
+Como usar... EM BREVE
 
 ## Licença
 
@@ -103,7 +118,3 @@ Os ícones dos botões são do site [Icons8](https://icons8.com/icon/set/forms-a
 
 **Versão 1.0.0**
 - Versão concluída com todas as funcionalidades previstas.
-
-## Referências
-
-Vídeo demonstrando a utilização do programa:
