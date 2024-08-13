@@ -61,7 +61,7 @@ No momento disponível apenas para o sistema operacional Windows. Foi testado no
 
 Este software não possui um instalador padrão, sendo apenas uma tela a ser executada.
 
-Para baixar o arquivo, clique no link  [CompetitionsTimeControl v1.0.0.zip](/Download/CompetitionsTimeControl v1.0.0.zip) e depois clique em "View raw" ou no botão de download conforme destacados em vermelho na imagem abaixo.
+Para baixar o arquivo, clique no link  [CompetitionsTimeControl v1.0.0.zip](/Download/CompetitionsTimeControl_v1.0.0.zip) e depois clique em "View raw" ou no botão de download conforme destacados em vermelho na imagem abaixo.
 
 <p align="center">
   <img src="/Icons and Images/HowToDownload.png">
