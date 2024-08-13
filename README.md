@@ -33,6 +33,7 @@ Abaixo uma imagem mostrando como a tela é ao abrir pela primeira vez e um exemp
 - Definir a quantidade de beeps desejado;
 - Definir o tempo para cada beep de contagem;
 - Definir o volume máximo para os beeps;
+- Usar os botões para ouvir a sequência de beeps configurada ou ouvir individualmente o beep de contagem, ou de início;
 
 **Controles relacionados às músicas de fundo:**
 - Adicionar músicas na lista de músicas do programa (formatos permitidos: mp3, wav, wma);
@@ -56,7 +57,7 @@ Abaixo uma imagem mostrando como a tela é ao abrir pela primeira vez e um exemp
 
 ## Instalação
 
-No momento disponível apenas no sistema operacional Windows. Foi testado no Windows 10 e Windows 11.
+No momento disponível apenas para o sistema operacional Windows. Foi testado nos Windows 10 e 11.
 
 Este software não possui um instalador padrão, sendo apenas uma tela a ser executada. Para isto basta descompactar o arquivo [CompetitionsTimeControl.zip](/Download) em algum lugar no seu computador e abrir o programa **Controle de Tempo para Competições Intervaladas.exe** conforme mostrado na imagem abaixo.
 
