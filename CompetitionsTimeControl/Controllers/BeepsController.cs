@@ -209,6 +209,15 @@ namespace CompetitionsTimeControl.Controllers
                     break;
 
                 case BeepState.PerformBeeps:
+                    void PlayLastBeepAndChangeState()
+                    {
+                        _timerForEachBeepInMilliSec = 0;
+                        _timerForAllBeepsInMilliSec = 0;
+                        PlayBeep(beepMediaPlayer, HighBeepPath);
+                        finishCurrentIntervalCallback?.Invoke(HasHalfIntervalBeep);
+                        _beepState = BeepState.TimeForResumeMusicsVolume;
+                    }
+
                     if (TimerController.PerformCountdown(ref _timerForEachBeepInMilliSec, ref _timerForEachBeepInMilliSec,
                         _rechargeForEachBeepInMilliSec, timeToDecrement, false))
                     {
@@ -219,9 +228,8 @@ namespace CompetitionsTimeControl.Controllers
                         }
                         else
                         {
-                            PlayBeep(beepMediaPlayer, HighBeepPath);
-                            finishCurrentIntervalCallback?.Invoke(HasHalfIntervalBeep);
-                            _beepState = BeepState.TimeForResumeMusicsVolume;
+                            PlayLastBeepAndChangeState();
+                            break;
                         }
                     }
 
@@ -229,7 +237,7 @@ namespace CompetitionsTimeControl.Controllers
                     if (TimerController.PerformCountdown(ref _timerForAllBeepsInMilliSec, ref _timerForResumeMusicsInMilliSec,
                         in _timerForAllBeepsInMilliSec, timeToDecrement, true))
                     {
-                        _timerForAllBeepsInMilliSec = 0;
+                        PlayLastBeepAndChangeState();
                     }
                     break;
 
