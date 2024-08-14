@@ -465,6 +465,7 @@ namespace CompetitionsTimeControl.Controllers
 
                 case CompetitionProgramState.FinishCompetition:
                     chooseHowToClearPlaylist(StopMusicsAtEnd);
+                    IsPreparationComplete = false;
                     ProgramIsRunning = false;
                     CanRunCompetition = false;
                     _programState = CompetitionProgramState.WaitToRunProgram;

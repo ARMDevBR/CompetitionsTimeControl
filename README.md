@@ -61,7 +61,7 @@ No momento disponível apenas para o sistema operacional Windows. Foi testado no
 
 Este software não possui um instalador padrão, sendo apenas uma tela a ser executada.
 
-Para baixar o arquivo, clique no link [CompetitionsTimeControl_v1.1.1.zip](/Download/CompetitionsTimeControl_v1.1.1.zip) e depois clique em "View raw" ou no botão de download conforme destacados em vermelho na imagem abaixo.
+Para baixar o arquivo, clique no link [CompetitionsTimeControl_v1.1.2.zip](/Download/CompetitionsTimeControl_v1.1.2.zip) e depois clique em "View raw" ou no botão de download conforme destacados em vermelho na imagem abaixo.
 
 <p align="center">
   <img src="/Icons and Images/HowToDownload.png">
@@ -160,7 +160,10 @@ Se a tela ainda não abrir de imediato, uma janela do sistema operacional poder�
   <img src="/Icons and Images/HalfIntervalBeep.gif">
 </p>
 
-Ainda há muitas validações que o sistema faz e que não foram mostradas. Mas eventualmente serão conforme o uso do programa.
+Ainda há muitas validações que o sistema faz e que não foram mostradas. Mas eventualmente serão conforme a utilização do programa pelo usuário.
+
+Vídeo no youtube demonstrando o funcionamento do software:
+[![YouTube](http://i.ytimg.com/vi/APAvHpSrE9c/hqdefault.jpg)](https://www.youtube.com/watch?v=APAvHpSrE9c)
 
 ## Licença
 
@@ -175,6 +178,9 @@ O logotipo e ícone do programa foi gerado por IA através do [Copilot Designer]
 Os ícones dos botões são do site [Icons8](https://icons8.com/icon/set/forms-audio/fluency).
 
 ## Histórico de Versões
+
+**Versão 1.1.2**
+- Melhoria em verificações internas após alterações na versão 1.0.0 devido ao bug de congelamento de tela.
 
 **Versão 1.1.1**
 - Resolução de bug que não zerava corretamente o cronômetro utilizado pelo teste dos beeps;

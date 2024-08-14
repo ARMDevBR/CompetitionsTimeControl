@@ -10,7 +10,7 @@ namespace CompetitionsTimeControl
     public partial class MainForm : Form
     {
         public const string SupportedExtensions = "*.mp3; *.wma; *.wav";
-        public const byte TicksToStartCompetition = 5;
+        public const byte TicksToStartCompetition = 7;
 
         private string CurrentConfigurationFile { get; set; }
 
@@ -208,7 +208,8 @@ namespace CompetitionsTimeControl
                 _beepsController.TryPerformBeeps(BeepMediaPlayer, elapsedTime, LblTestMessages,
                     _finishCurrentIntervalCallback, _setLblIntervalsElapsedYellowColor);
 
-                if (!_competitionController.CanRunCompetition && !_beepsController.CanPerformBeepsEvent)
+                if (!_competitionController.CanRunCompetition && !_competitionController.IsPreparationComplete
+                    && !_beepsController.CanPerformBeepsEvent)
                 {
                     PrepareBeepsTest(false);
                     ComboBoxProgramming.Enabled = true;
@@ -562,8 +563,11 @@ namespace CompetitionsTimeControl
 
         private void ListViewMusics_ItemSelectionChanged(object sender, ListViewItemSelectionChangedEventArgs e)
         {
-            if (!_competitionController?.CanRunCompetition ?? false)
+            if (_competitionController != null && !_competitionController.CanRunCompetition &&
+                !_competitionController.IsPreparationComplete)
+            {
                 _musicsController?.PlayPauseSelectedMusic(TogglePlayMusicBySelection.Checked, e.Item, MusicMediaPlayer);
+            }
         }
 
         private void TogglePlayMusicBySelection_CheckedChanged(object sender, EventArgs e)
@@ -617,7 +621,7 @@ namespace CompetitionsTimeControl
         private void MusicMediaPlayer_PlayStateChange(object sender, AxWMPLib._WMPOCXEvents_PlayStateChangeEvent e)
         {
             if (_competitionController.CompetitionProgramSetup != CompetitionProgram.MusicsAndBeeps ||
-                !_competitionController.CanRunCompetition)
+                !_competitionController.CanRunCompetition || _competitionController.IsPreparationComplete)
             {
                 return;
             }
@@ -772,7 +776,7 @@ namespace CompetitionsTimeControl
             if (_beepsController == null || _musicsController == null || _competitionController == null)
                 return;
 
-            if (_competitionController.CanRunCompetition)
+            if (_competitionController.CanRunCompetition || _competitionController.IsPreparationComplete)
             {
                 _competitionController.TogglePause();
                 MusicsController.PrepareForPause(TBMusicCurrentVol);
