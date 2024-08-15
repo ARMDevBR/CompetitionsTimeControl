@@ -58,7 +58,7 @@ namespace CompetitionsTimeControl.Controllers
                 StringBuilder sb = new("Os dados foram salvos no local abaixo com sucesso!\n\n");
                 sb.Append($"[ {filePath} ]");
 
-                MessageBox.Show(sb.ToString(), "ATENÇÃO", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(sb.ToString(), "INFORMAÇÃO", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return true;
             }
             catch (IOException ex)

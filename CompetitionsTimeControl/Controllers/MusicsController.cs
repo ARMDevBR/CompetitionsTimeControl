@@ -204,7 +204,7 @@ namespace CompetitionsTimeControl.Controllers
             {
                 sbRepeatedMusics.Append("\nVerifique a última pasta selecionada e renomeie as músicas se necessário.");
 
-                MessageBox.Show(sbRepeatedMusics.ToString(), "ATENÇÃO", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(sbRepeatedMusics.ToString(), "INFORMAÇÃO", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
 
             if (sbInvalidMusics != null)

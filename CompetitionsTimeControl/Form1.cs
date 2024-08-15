@@ -250,6 +250,7 @@ namespace CompetitionsTimeControl
             if (dataBeepsController == null || dataMusicsController == null || dataCompetitionController == null)
                 return;
 
+            this.Enabled = false;
             ComboBoxBeepPair.Text = dataBeepsController.CurrentBeepPairText;
             ComboBoxHalfIntervalBeep.SelectedIndex = dataBeepsController.HasHalfIntervalBeep ? 1 : 0;
             NumUDTimeBeforePlayBeeps.Value = (decimal)dataBeepsController.TimeBeforePlayBeeps;
@@ -280,21 +281,32 @@ namespace CompetitionsTimeControl
             CurrentConfigurationFile = filePath;
             ToolStripMenuItemSaveConfiguration.Enabled = CurrentConfigurationFile != "";
             SetFormTextWithCurrentFileName();
+            MessageBox.Show("Os dados foram carregados com sucesso!", "INFORMAÇÃO", MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
+
+            this.Enabled = true;
         }
 
         private void ToolStripMenuItemSaveConfiguration_Click(object sender, EventArgs e)
         {
+            this.Enabled = false;
+
             ConfigurationsDataController.SaveFileConfiguration(CurrentConfigurationFile, _beepsController,
                 _musicsController, _competitionController);
+
+            this.Enabled = true;
         }
 
         private void ToolStripMenuItemSaveConfigurationAs_Click(object sender, EventArgs e)
         {
+            this.Enabled = false;
+
             CurrentConfigurationFile = ConfigurationsDataController.SaveFileConfigurationAs(_beepsController,
                 _musicsController, _competitionController);
 
             ToolStripMenuItemSaveConfiguration.Enabled = CurrentConfigurationFile != "";
             SetFormTextWithCurrentFileName();
+            this.Enabled = true;
         }
 
         private void ToolStripMenuItemEnableTextAndButtonsTips_Click(object sender, EventArgs e)
@@ -320,8 +332,10 @@ namespace CompetitionsTimeControl
                 return;
             }
 
+            this.Enabled = false;
             _beepsController?.GetBeepsSounds(ComboBoxBeepPair);
             ComboBoxBeepPair_SelectedIndexChanged(sender, EventArgs.Empty);
+            this.Enabled = true;
         }
 
         private void ToolStripMenuItemAbout_Click(object sender, EventArgs e)

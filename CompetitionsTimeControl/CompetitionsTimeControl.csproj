@@ -17,6 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove="AboutForm.resx~RF4e3dd8.TMP" />
     <None Remove="ProgramIcon.ico" />
     <None Remove="Resources\ProgramIcon.png" />
   </ItemGroup>

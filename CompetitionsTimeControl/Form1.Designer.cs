@@ -80,6 +80,8 @@
             LblCurrentIntervalElapsedTime = new Label();
             LblTestMessages = new Label();
             LblHalfIntervalBeep = new Label();
+            BtnStartBeepTest = new Button();
+            BtnCountdownBeepTest = new Button();
             BeepMediaPlayer = new AxWMPLib.AxWindowsMediaPlayer();
             MenuStrip = new MenuStrip();
             ToolStripMenuItemConfiguration = new ToolStripMenuItem();
@@ -92,8 +94,6 @@
             ToolStripMenuItemCloseProgram = new ToolStripMenuItem();
             GroupBoxBeepsCtrls = new GroupBox();
             ComboBoxHalfIntervalBeep = new ComboBox();
-            BtnStartBeepTest = new Button();
-            BtnCountdownBeepTest = new Button();
             BtnBeepsTest = new Button();
             ComboBoxBeepPair = new ComboBox();
             GroupBoxBeepsAmountAndTimes = new GroupBox();
@@ -597,7 +597,7 @@
             LblBeepVolume.Size = new Size(55, 19);
             LblBeepVolume.TabIndex = 21;
             LblBeepVolume.Text = "Volume";
-            ToolTip.SetToolTip(LblBeepVolume, "Define o volume para os beeps.");
+            ToolTip.SetToolTip(LblBeepVolume, "Define o volume geral para os beeps.");
             // 
             // LblProgramming
             // 
@@ -765,6 +765,38 @@
             LblHalfIntervalBeep.Text = "Beep de meio intervalo";
             ToolTip.SetToolTip(LblHalfIntervalBeep, "Se haverá um beep indicador que divide o tempo do intervalo em metade esforço e metade descanso.");
             // 
+            // BtnStartBeepTest
+            // 
+            BtnStartBeepTest.Enabled = false;
+            BtnStartBeepTest.Font = new Font("Segoe UI", 10F);
+            BtnStartBeepTest.ImageIndex = 2;
+            BtnStartBeepTest.ImageList = ImageListBeepsAndCompetition;
+            BtnStartBeepTest.Location = new Point(775, 88);
+            BtnStartBeepTest.Name = "BtnStartBeepTest";
+            BtnStartBeepTest.Size = new Size(131, 30);
+            BtnStartBeepTest.TabIndex = 26;
+            BtnStartBeepTest.Text = "Beep de início";
+            BtnStartBeepTest.TextImageRelation = TextImageRelation.ImageBeforeText;
+            ToolTip.SetToolTip(BtnStartBeepTest, "Aciona uma vez o som utilizado como beep de início do intervalo.");
+            BtnStartBeepTest.UseVisualStyleBackColor = true;
+            BtnStartBeepTest.Click += BtnStartBeepTest_Click;
+            // 
+            // BtnCountdownBeepTest
+            // 
+            BtnCountdownBeepTest.Enabled = false;
+            BtnCountdownBeepTest.Font = new Font("Segoe UI", 10F);
+            BtnCountdownBeepTest.ImageIndex = 1;
+            BtnCountdownBeepTest.ImageList = ImageListBeepsAndCompetition;
+            BtnCountdownBeepTest.Location = new Point(627, 88);
+            BtnCountdownBeepTest.Name = "BtnCountdownBeepTest";
+            BtnCountdownBeepTest.Size = new Size(131, 30);
+            BtnCountdownBeepTest.TabIndex = 25;
+            BtnCountdownBeepTest.Text = "Beep contagem";
+            BtnCountdownBeepTest.TextImageRelation = TextImageRelation.ImageBeforeText;
+            ToolTip.SetToolTip(BtnCountdownBeepTest, "Aciona uma vez o som utilizado como beep de contagem e meio intervalo.");
+            BtnCountdownBeepTest.UseVisualStyleBackColor = true;
+            BtnCountdownBeepTest.Click += BtnCountdownBeepTest_Click;
+            // 
             // BeepMediaPlayer
             // 
             BeepMediaPlayer.Enabled = true;
@@ -883,36 +915,6 @@
             ComboBoxHalfIntervalBeep.Size = new Size(287, 25);
             ComboBoxHalfIntervalBeep.TabIndex = 30;
             ComboBoxHalfIntervalBeep.SelectedIndexChanged += ComboBoxHalfIntervalBeep_SelectedIndexChanged;
-            // 
-            // BtnStartBeepTest
-            // 
-            BtnStartBeepTest.Enabled = false;
-            BtnStartBeepTest.Font = new Font("Segoe UI", 10F);
-            BtnStartBeepTest.ImageIndex = 2;
-            BtnStartBeepTest.ImageList = ImageListBeepsAndCompetition;
-            BtnStartBeepTest.Location = new Point(775, 88);
-            BtnStartBeepTest.Name = "BtnStartBeepTest";
-            BtnStartBeepTest.Size = new Size(131, 30);
-            BtnStartBeepTest.TabIndex = 26;
-            BtnStartBeepTest.Text = "Beep de início";
-            BtnStartBeepTest.TextImageRelation = TextImageRelation.ImageBeforeText;
-            BtnStartBeepTest.UseVisualStyleBackColor = true;
-            BtnStartBeepTest.Click += BtnStartBeepTest_Click;
-            // 
-            // BtnCountdownBeepTest
-            // 
-            BtnCountdownBeepTest.Enabled = false;
-            BtnCountdownBeepTest.Font = new Font("Segoe UI", 10F);
-            BtnCountdownBeepTest.ImageIndex = 1;
-            BtnCountdownBeepTest.ImageList = ImageListBeepsAndCompetition;
-            BtnCountdownBeepTest.Location = new Point(627, 88);
-            BtnCountdownBeepTest.Name = "BtnCountdownBeepTest";
-            BtnCountdownBeepTest.Size = new Size(131, 30);
-            BtnCountdownBeepTest.TabIndex = 25;
-            BtnCountdownBeepTest.Text = "Beep contagem";
-            BtnCountdownBeepTest.TextImageRelation = TextImageRelation.ImageBeforeText;
-            BtnCountdownBeepTest.UseVisualStyleBackColor = true;
-            BtnCountdownBeepTest.Click += BtnCountdownBeepTest_Click;
             // 
             // BtnBeepsTest
             // 
