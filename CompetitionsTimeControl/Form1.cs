@@ -285,6 +285,7 @@ namespace CompetitionsTimeControl
                 MessageBoxIcon.Information);
 
             this.Enabled = true;
+            EnableControlsToStartCompetition();
         }
 
         private void ToolStripMenuItemSaveConfiguration_Click(object sender, EventArgs e)
@@ -295,6 +296,7 @@ namespace CompetitionsTimeControl
                 _musicsController, _competitionController);
 
             this.Enabled = true;
+            EnableControlsToStartCompetition();
         }
 
         private void ToolStripMenuItemSaveConfigurationAs_Click(object sender, EventArgs e)
@@ -307,6 +309,7 @@ namespace CompetitionsTimeControl
             ToolStripMenuItemSaveConfiguration.Enabled = CurrentConfigurationFile != "";
             SetFormTextWithCurrentFileName();
             this.Enabled = true;
+            EnableControlsToStartCompetition();
         }
 
         private void ToolStripMenuItemEnableTextAndButtonsTips_Click(object sender, EventArgs e)
@@ -323,19 +326,20 @@ namespace CompetitionsTimeControl
 
         private void ToolStripMenuItemReloadBeepList_Click(object sender, EventArgs e)
         {
+            this.Enabled = false;
             StringBuilder sb = new("Deseja buscar por novos pares de beeps?\n\n");
             sb.Append("As opções atuais serão apagadas e recarregadas ao prosseguir.");
 
             if (sb == null || MessageBox.Show(sb.ToString(), "ATENÇÃO", MessageBoxButtons.YesNo,
                 MessageBoxIcon.Question) == DialogResult.No)
             {
+                this.Enabled = true;
                 return;
             }
 
-            this.Enabled = false;
             _beepsController?.GetBeepsSounds(ComboBoxBeepPair);
-            ComboBoxBeepPair_SelectedIndexChanged(sender, EventArgs.Empty);
             this.Enabled = true;
+            ComboBoxBeepPair_SelectedIndexChanged(sender, EventArgs.Empty);
         }
 
         private void ToolStripMenuItemAbout_Click(object sender, EventArgs e)

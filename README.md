@@ -61,7 +61,7 @@ No momento disponível apenas para o sistema operacional Windows. Foi testado no
 
 Este software não possui um instalador padrão, sendo apenas uma tela a ser executada.
 
-Para baixar o arquivo, clique no link [CompetitionsTimeControl_v1.1.3.zip](/Download/CompetitionsTimeControl_v1.1.3.zip) e depois clique em "View raw" ou no botão de download conforme destacados em vermelho na imagem abaixo.
+Para baixar o arquivo, clique no link [CompetitionsTimeControl_v1.1.4.zip](/Download/CompetitionsTimeControl_v1.1.4.zip) e depois clique em "View raw" ou no botão de download conforme destacados em vermelho na imagem abaixo.
 
 <p align="center">
   <img src="/Icons and Images/HowToDownload.png">
@@ -81,7 +81,7 @@ Dentro da mesma existem várias pastas contendo os pares de beeps que aparecem c
   <img src="/Icons and Images/BeepsSoundsFolder.png">
 </p>
 
-Também é possível baixar a pasta com todos os beeps pelo link [AllBeepSounds.zip](/Download/AllBeepSounds.zip) e depois clicar em "View raw" ou no botão de download da mesma maneira que é feito para baixar o programa **CompetitionsTimeControl_v1.1.3.zip**, como explicado acima nesta mesma seção.
+Também é possível baixar a pasta com todos os beeps pelo link [AllBeepSounds.zip](/Download/AllBeepSounds.zip) e depois clicar em "View raw" ou no botão de download da mesma maneira feito para baixar o programa **CompetitionsTimeControl_v1.1.4.zip**, como explicado acima nesta mesma seção.
 Depois de baixado, basta descompactar e substituir a pasta "BeepSounds" existente.
 
 Se não abrir o programa ainda, leia a seção "Pré-Requisitos" abaixo.
@@ -178,6 +178,9 @@ O logotipo e ícone do programa foi gerado por IA através do [Copilot Designer]
 Os ícones dos botões são do site [Icons8](https://icons8.com/icon/set/forms-audio/fluency).
 
 ## Histórico de Versões
+
+**Versão 1.1.4**
+- Resolvido bug em que o formulário liberado após alguma operação de leitura ou escrita de arquivo pelo menu Configuração mantinha o botão de iniciar a competição bloqueado.
 
 **Versão 1.1.3**
 - Adicionado texto de dica para os botões "Beep contagem" e "Beep de início";
