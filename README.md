@@ -9,6 +9,8 @@ O objetivo do programa é controlar o tempo dos intervalos (tiros) de uma compet
 
 Opcionalmente pode-se deixar uma playlist de músicas locais tocando de fundo.
 
+A versão atual do software é a 1.2.0 e a mesma pode ser baixada conforme as instruções na seção "Instalação" abaixo.
+
 Abaixo uma imagem mostrando como a tela é ao abrir pela primeira vez e um exemplo de como ela fica ao término da execução de uma programação de competição de 30 tiros de 2 minutos (120 segundos) cada tiro.
 
 <p align="center">
@@ -61,7 +63,7 @@ No momento disponível apenas para o sistema operacional Windows. Foi testado no
 
 Este software não possui um instalador padrão, sendo apenas uma tela a ser executada.
 
-Para baixar o arquivo, clique no link [CompetitionsTimeControl_v1.1.4.zip](/Download/CompetitionsTimeControl_v1.1.4.zip) e depois clique em "View raw" ou no botão de download conforme destacados em vermelho na imagem abaixo.
+Para baixar o arquivo, clique no link [CompetitionsTimeControl_v1.2.0.zip](/Download/CompetitionsTimeControl_v1.2.0.zip) e depois clique em "View raw" ou no botão de download conforme destacados em vermelho na imagem abaixo.
 
 <p align="center">
   <img src="/Icons and Images/HowToDownload.png">
@@ -81,8 +83,8 @@ Dentro da mesma existem várias pastas contendo os pares de beeps que aparecem c
   <img src="/Icons and Images/BeepsSoundsFolder.png">
 </p>
 
-Também é possível baixar a pasta com todos os beeps pelo link [AllBeepSounds.zip](/Download/AllBeepSounds.zip) e depois clicar em "View raw" ou no botão de download da mesma maneira feito para baixar o programa **CompetitionsTimeControl_v1.1.4.zip**, como explicado acima nesta mesma seção.
-Depois de baixado, basta descompactar e substituir a pasta "BeepSounds" existente.
+Também é possível baixar a pasta com todos os beeps pelo link [AllBeepSounds.zip](/Download/AllBeepSounds.zip) e depois clicar em "View raw" ou no botão de download da mesma maneira feito para baixar o programa **CompetitionsTimeControl_v1.2.0.zip**, como explicado acima nesta mesma seção.
+Após baixado, basta descompactar e substituir a pasta "BeepSounds" existente.
 
 Se não abrir o programa ainda, leia a seção "Pré-Requisitos" abaixo.
 
@@ -90,12 +92,24 @@ Se não abrir o programa ainda, leia a seção "Pré-Requisitos" abaixo.
 
 O software utiliza dois mini-players na tela, um para tocar os beeps e outro para as músicas. Estes controles utilizam o Windows Media Player do sistema operacional Windows. Portanto, o mesmo deve estar previamente instalado, o que costuma ser o padrão do sistema.
 
+O software foi criado com controles em posições e tamanhos fixos na tela, não possuindo redimensionamento automático. Por isto a tela não permite redimensionamento pelas bordas e nem maximizar a mesma.
+
+Por este mesmo motivo, a tela foi projetada para resoluções maiores que a HD (1280 x 720) e com a escala ajustada para 100%. Se a resolução utilizada for menor ou a escala maior que as recomendadas aqui, a tela pode ficar inutilizável.
+
+Para verificar as configurações atuais, clique com o botão direito do mouse na imagem de fundo do seu desktop e escolha a opção "**Configurações de exibição**". Na tela que abrir, procure as configurações conforme mostrado abaixo na imagem representando a configuração no Windows 10.
+<p align="center">
+  <img src="/Icons and Images/ScreenScaleAndResolution.png">
+</p>
+
+
 Se a tela do programa não abrir, um aviso será dado informando que o ".NET Desktop Runtime" precisa ser instalado e um link redirecionando para a página de download será mostrado. Aqui um exemplo do link para a versão [.NET 8.0 Desktop Runtime v8.0.7 - Windows x64 Installer](https://dotnet.microsoft.com/pt-br/download/dotnet/thank-you/runtime-desktop-8.0.7-windows-x64-installer?cid=getdotnetcore).
 
 Após esta etapa, o programa já estará pronto para funcionar. 
 Se a tela ainda não abrir de imediato, uma janela do sistema operacional poderá aparecer solicitando o aceite de confiança do usuário por estar rodando um software que não foi instalado de forma convencional. Basta encontrar algo como "Mais opções" ou similar para que a opção de aceitar abrir o programa apareça.
 
 ## Uso
+
+OBS: Os gifs mostram a versão 1.1.1. A versão atual é a 1.2.0 e possui um elemento visual a mais ao iniciar a prova, não havendo diferença nas funcionalidades.
 
 **Configurando e testando os beeps:**
 - Os beeps são lidos automaticamente da pasta "BeepSounds" que se encontra na mesma pasta do programa "Controle de Tempo para Competições Intervaladas.exe". Leia a seção "Instalação" acima para mais informações;
@@ -162,7 +176,7 @@ Se a tela ainda não abrir de imediato, uma janela do sistema operacional poder�
 
 Ainda há muitas validações que o sistema faz e que não foram mostradas. Mas eventualmente serão conforme a utilização do programa pelo usuário.
 
-Vídeo no youtube demonstrando o funcionamento do software:
+Abaixo um vídeo do YouTube demonstrando o funcionamento do software (ainda na versão 1.1.2):
 [![YouTube](http://i.ytimg.com/vi/APAvHpSrE9c/hqdefault.jpg)](https://www.youtube.com/watch?v=APAvHpSrE9c)
 
 ## Licença
@@ -178,6 +192,9 @@ O logotipo e ícone do programa foi gerado por IA através do [Copilot Designer]
 Os ícones dos botões são do site [Icons8](https://icons8.com/icon/set/forms-audio/fluency).
 
 ## Histórico de Versões
+
+**Versão 1.2.0**
+- Adicionado elemento visual como contador regressivo de 3 segundos para começar a prova. Isto servirá para contornar o problema de congelamento da tela ao iniciar a prova com músicas e beeps ao mesmo tempo, pois os ajustes da versão 1.0.0 não corrigiram o problema por completo.
 
 **Versão 1.1.4**
 - Resolvido bug em que o formulário liberado após alguma operação de leitura ou escrita de arquivo pelo menu Configuração mantinha o botão de iniciar a competição bloqueado.

@@ -10,7 +10,8 @@ namespace CompetitionsTimeControl
     public partial class MainForm : Form
     {
         public const string SupportedExtensions = "*.mp3; *.wma; *.wav";
-        public const byte TicksToStartCompetition = 7;
+        public const string StartCompetitionCounterText = "PROVA COMEÇA EM ...\r\n\r\n3";
+        public const int TimerToStartCompetitionInSec = 3;
 
         private string CurrentConfigurationFile { get; set; }
 
@@ -19,7 +20,9 @@ namespace CompetitionsTimeControl
         private bool _recreatePlaylist;
         private bool _setVisibleAndFocus;
         private bool _closingApplication;
-        private byte _ticksToStartCounter;
+        private byte _counterToStartCompetition;
+        private int _timerToStartCompetitionInMs;
+        private int _chargeTimerToStartCompetitionInMs;
         private BeepsController _beepsController = null!;
         private CompetitionController _competitionController = null!;
         private MusicsController _musicsController = null!;
@@ -38,7 +41,7 @@ namespace CompetitionsTimeControl
             _setLblIntervalsElapsedYellowColor = null;
             _recreatePlaylist = false;
             _closingApplication = false;
-            _ticksToStartCounter = TicksToStartCompetition;
+            _counterToStartCompetition = TimerToStartCompetitionInSec;
             _originalFormText = this.Text;
 
             TimerController.CreateThreadTimer(ThreadTimerTick);
@@ -217,19 +220,35 @@ namespace CompetitionsTimeControl
                 }
             }
 
-            // Competition start separated from BtnStartCompetition_Click by '_ticksToStartCounter' ticks.
+            // Competition starts separated from BtnStartCompetition_Click by 'TimerToStartCompetitionInSec' seconds countdown.
             // OBS: Workaround to avoid intermittent freezing (as it doesn't always happen) of the form when
             //      the competition is started with beeps and music at the same time.
             if (!_competitionController.CanRunCompetition && !_competitionController.ProgramIsRunning &&
                 _competitionController.IsPreparationComplete)
             {
-                if (_ticksToStartCounter > 0)
-                {
-                    _ticksToStartCounter--;
-                    return;
-                }
+                this.Enabled = false;
 
-                _competitionController.StartCompetition();
+                if (TimerController.PerformCountdown(ref _timerToStartCompetitionInMs, ref _timerToStartCompetitionInMs,
+                    _chargeTimerToStartCompetitionInMs, elapsedTime, true))
+                {
+                    int length = TextBoxCountdownToStart.Text.Length;
+                    string text = TextBoxCountdownToStart.Text[..(length - 1)];
+
+                    if (_counterToStartCompetition > 0)
+                    {
+                        _counterToStartCompetition--;
+                        text = $"{text}{_counterToStartCompetition}";
+                        TextBoxCountdownToStart.Text = text;
+                    }
+
+                    if (_counterToStartCompetition == 0)
+                    {
+                        TextBoxCountdownToStart.Visible = false;
+                        TextBoxCountdownToStart.Text = StartCompetitionCounterText;
+                        this.Enabled = true;
+                        _competitionController.StartCompetition();
+                    }
+                }
             }
         }
 
@@ -475,7 +494,8 @@ namespace CompetitionsTimeControl
         {
             string toolTipMessage = _beepsController?.GetBtnConfigTestToolTipMsg() ?? string.Empty;
 
-            ToolTip.SetToolTip(BtnBeepsTest, toolTipMessage);
+            if (ToolTip.Active)
+                ToolTip.SetToolTip(BtnBeepsTest, toolTipMessage);
         }
         #endregion
 
@@ -836,7 +856,10 @@ namespace CompetitionsTimeControl
                 BtnStartCompetition.Text = " Pausar";
                 BtnStartCompetition.ImageIndex = 4;
                 BtnStopCompetition.Enabled = true;
-                _ticksToStartCounter = TicksToStartCompetition;
+                _counterToStartCompetition = TimerToStartCompetitionInSec;
+                _timerToStartCompetitionInMs = TimerController.FromSecondsToMilliseconds(1);
+                _chargeTimerToStartCompetitionInMs = _timerToStartCompetitionInMs;
+                TextBoxCountdownToStart.Visible = true;
             }
         }
 

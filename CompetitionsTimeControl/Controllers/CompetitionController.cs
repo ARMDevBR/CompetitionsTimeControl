@@ -540,8 +540,8 @@ namespace CompetitionsTimeControl.Controllers
                     musicsController.ChangeVolumeInSeconds(0, MusicsController.ChangeVolume.ToMax);
             }
 
-            _lblCurrIntervalsElapsedTime.Text = TimeSpan.FromMilliseconds(intervalElapsedTimeInMs).ToString(@"hh\:mm\:ss");
             _lblCompetitionElapsedTime.Text = TimeSpan.FromMilliseconds(competitionElapsedTimeInMs).ToString(@"hh\:mm\:ss");
+            _lblCurrIntervalsElapsedTime.Text = TimeSpan.FromMilliseconds(intervalElapsedTimeInMs).ToString(@"hh\:mm\:ss");
 
             if (!CanRunCompetition && _showFinishMessage)
             {

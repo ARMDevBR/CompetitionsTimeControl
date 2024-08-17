@@ -135,7 +135,7 @@
             LblSoftwareNameAndVersion.Name = "LblSoftwareNameAndVersion";
             LblSoftwareNameAndVersion.Size = new Size(348, 15);
             LblSoftwareNameAndVersion.TabIndex = 9;
-            LblSoftwareNameAndVersion.Text = "Controle de Tempo para Competições Intervaladas - Versão: 1.1.4";
+            LblSoftwareNameAndVersion.Text = "Controle de Tempo para Competições Intervaladas - Versão: 1.2.0";
             // 
             // ButtonOkClose
             // 
